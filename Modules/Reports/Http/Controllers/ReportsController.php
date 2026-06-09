@@ -44,4 +44,10 @@ class ReportsController extends Controller
 
         return view('reports::daily-operations.index');
     }
+
+    public function profitLossReport() {
+        abort_if(Gate::denies('access_reports'), 403);
+
+        return view('reports::profit-loss.index');
+    }
 }

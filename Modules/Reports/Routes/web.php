@@ -30,4 +30,7 @@ Route::group(['middleware' => 'auth'], function () {
     // Daily Operations Report
     Route::get('/daily-operations-report', 'ReportsController@dailyOperationsReport')
         ->name('daily-operations-report.index');
+    // Profit / Loss Report
+    Route::get('/profit-loss-report', 'ReportsController@profitLossReport')
+        ->name('profit-loss-report.index');
 });

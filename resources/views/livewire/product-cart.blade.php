@@ -313,8 +313,15 @@
                                 data-product-id="{{ $cart_item->id }}"
                                 class="{{ $_isInvalidRow ? 'table-danger invalid-row' : '' }}">
                                 <td class="align-middle product-name col-product-name">
-                                    {{ $cart_item->name }}
-                                    {{-- @include('livewire.includes.product-cart-modal') --}}
+                                    @if(!$isReadOnly && str_contains(strtolower($cart_item->name), 'silicon'))
+                                        <input type="text"
+                                            class="form-control form-control-sm"
+                                            wire:model.blur="custom_product_names.{{ $cart_item->rowId }}"
+                                            placeholder="{{ $cart_item->name }}"
+                                            title="You can customise the product name for this item">
+                                    @else
+                                        {{ $cart_item->name }}
+                                    @endif
                                 </td>
 
                                 <td class="align-middle text-center product-code col-product-code">

@@ -703,11 +703,17 @@
                             elements.draftIdField.value = state.draftId;
                         }
 
-                        updateStatus(isManual ? 'Draft saved manually' : 'Draft saved', 'success');
-
-                        setTimeout(() => {
-                            updateStatus('Auto-saving...', 'info');
-                        }, 3000);
+                        if (isManual) {
+                            updateStatus('Draft saved! Redirecting...', 'success');
+                            setTimeout(() => {
+                                window.location.href = '{{ route("purchases.index") }}';
+                            }, 1200);
+                        } else {
+                            updateStatus('Draft saved', 'success');
+                            setTimeout(() => {
+                                updateStatus('Auto-saving...', 'info');
+                            }, 3000);
+                        }
                     } else {
                         if (result.message === 'Insufficient data to save draft') {
                             return;

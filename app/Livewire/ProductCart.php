@@ -42,8 +42,22 @@ class ProductCart extends Component
     // Multiple-codes support: keyed by product_id
     public $product_codes  = []; // all available codes per product
     public $selected_code  = []; // the currently selected code per product
+    public $custom_product_names = []; // editable names for silicon mobile cover items (keyed by rowId)
     // Cache product master buy_price to avoid repeated DB queries during render
     protected $productBuyPriceCache = [];
+
+    public function updatedCustomProductNames($value, $rowId) {
+        if ($this->readonly || trim($value) === '') {
+            return;
+        }
+        try {
+            $this->cart()->update($rowId, ['name' => trim($value)]);
+            $this->invalidateCache();
+            $this->updateValidity();
+        } catch (\Throwable $e) {
+            // Row may not exist yet — ignore
+        }
+    }
 
     public function updatedCustomerAdditionalDiscount($value) {
         // Keep this as a default-for-new-items value only.
@@ -272,8 +286,10 @@ class ProductCart extends Component
                 $this->product_codes[$cart_item->id] = $allCodes;
                 $this->selected_code[$cart_item->id] = $savedCode ?? ($allCodes[0] ?? '');
 
-                // Don't modify the MRP in edit mode - it should already be correct from when the item was originally added
-                // The current cart item price might be discounted, but the MRP option should contain the original price
+                // Pre-populate editable name for silicon products in edit mode
+                if (str_contains(strtolower($cart_item->name), 'silicon')) {
+                    $this->custom_product_names[$cart_item->rowId] = $cart_item->name;
+                }
             }
         } else {
             $this->purchase_type = 1;
@@ -297,6 +313,7 @@ class ProductCart extends Component
             $this->gst_percent = [];
             $this->product_codes = [];
             $this->selected_code = [];
+            $this->custom_product_names = [];
         }
 
         // (debug logging removed)
@@ -606,7 +623,7 @@ class ProductCart extends Component
         // Prefer to keep the product master MRP (if provided) as the displayed MRP.
         $display_mrp = array_key_exists('mrp', $fullProduct) && $fullProduct['mrp'] !== null ? (float)$fullProduct['mrp'] : (float)$base_rate;
 
-        $cart->add([
+        $newCartItem = $cart->add([
             'id'      => $fullProduct['id'],
             'name'    => $fullProduct['product_name'],
             'qty'     => $initialQty,
@@ -637,6 +654,10 @@ class ProductCart extends Component
                 'rate_type'             => ($this->purchase_type == 4 ? 'N' : 'M')
             ]
         ]);
+        if (str_contains(strtolower($fullProduct['product_name']), 'silicon')) {
+            $this->custom_product_names[$newCartItem->rowId] = $fullProduct['product_name'];
+        }
+
         $this->check_quantity[$fullProduct['id']] = $stock;
         $this->quantity[$fullProduct['id']] = $initialQty;
         $this->discount_type[$fullProduct['id']] = 'percentage'; // Default to percentage for Dis % column

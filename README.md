@@ -45,8 +45,11 @@ Default admin: `super.admin@test.com` / `12345678`
 | Product | Removed barcode, sub-category, MRP, HSN, rack/bin, image. "Compatibility" → "Comments" |
 | Customer | Removed GST, PAN, Aadhaar, country, discounts, salesman. Added VAT ID |
 | Supplier | Removed GST, country, bank details, type/style, additional discount% |
-| Sales | Removed HSN, discounts, CGST, IGST, TCS, adj, Net Rate |
+| Sales | Removed HSN, discounts, CGST, IGST, TCS, adj, Net Rate. Invoice redesigned (no India-specific fields) |
 | Purchase | Removed same as Sales. Added draft save, payment status, reorder option |
+| Sale Invoice | Redesigned: removed HSN/SGST/CGST columns, added Tax column, removed "Rupees" text, added paid/balance due rows |
+| Sale — product cart | Silicon mobile cover items have editable product name field |
+| Reports | Added Profit/Loss report route. Renamed "Purchase Order Report" → "Current Stock Report". Removed GSTR from menu |
 
 ---
 

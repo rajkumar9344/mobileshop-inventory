@@ -278,7 +278,6 @@ $(function(){
                 $('#excess_amount_display').val('0.00');
                 $('#excess_amount').val('0.00');
             }
-
             // process bills response
             var results = (res && res.results) ? res.results : [];
             if (results.length) {

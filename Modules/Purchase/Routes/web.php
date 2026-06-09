@@ -39,6 +39,8 @@ Route::group(['middleware' => 'auth'], function () {
     //Sales
     // View (readonly) - show the edit UI in readonly mode
     Route::get('purchases/{purchase}/view', 'PurchaseController@view')->name('purchases.view');
+    // Reorder: create a new draft purchase pre-filled from an existing one
+    Route::get('purchases/{purchase}/reorder', 'PurchaseController@reorder')->name('purchases.reorder');
     Route::resource('purchases', 'PurchaseController');
     Route::get('/purchases-totals', 'PurchaseController@totals')->name('purchases.totals');
 

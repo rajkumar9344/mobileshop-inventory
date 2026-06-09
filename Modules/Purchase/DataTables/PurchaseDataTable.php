@@ -29,12 +29,6 @@ class PurchaseDataTable extends DataTable
             ->addColumn('invoice_date_formatted', function ($data) {
                 return $data->invoice_date ? \Carbon\Carbon::parse($data->invoice_date)->format('d-m-Y') : '';
             })
-            ->addColumn('overall_cgst', function ($data) {
-                return format_currency($data->overall_cgst ?? 0);
-            })
-            ->addColumn('overall_sgst', function ($data) {
-                return format_currency($data->overall_sgst ?? 0);
-            })
             ->addColumn('overall_tax_amount', function ($data) {
                 return format_currency($data->overall_tax_amount ?? $data->tax_amount ?? 0);
             })
@@ -44,21 +38,25 @@ class PurchaseDataTable extends DataTable
             ->addColumn('paid_amount', function ($data) {
                 return format_currency($data->paid_amount ?? 0);
             })
-            ->addColumn('discount_amount', function ($data) {
-                return format_currency($data->discount_amount ?? 0);
-            })
             ->addColumn('balance_amount', function ($data) {
                 return format_currency($data->due_amount ?? 0);
             })
+            ->addColumn('payment_status', function ($data) {
+                $status = $data->payment_status ?? 'Unpaid';
+                $class = match($status) {
+                    'Paid'    => 'badge-success',
+                    'Partial' => 'badge-warning',
+                    default   => 'badge-danger',
+                };
+                return '<span class="badge ' . $class . '">' . $status . '</span>';
+            })
             ->addColumn('status', function ($data) {
-                // Only show status badge for completed purchases, not for drafts
-                // return $data->status === 'Completed' ? $data->status_badge : '';
-                  return $data->status_badge;
+                return $data->status_badge;
             })
             ->addColumn('action', function ($data) {
                 return view('purchase::partials.actions', compact('data'));
             })
-            ->rawColumns(['reference', 'status', 'action']);
+            ->rawColumns(['reference', 'payment_status', 'status', 'action']);
     }
 
     public function query(Purchase $model) {
@@ -140,7 +138,7 @@ class PurchaseDataTable extends DataTable
                                 'tr' .
                                 <'row'<'col-md-5'i><'col-md-7 mt-2'p>>")
             ->lengthMenu([5, 10, 25, 50, 100])
-            ->orderBy(11)
+            ->orderBy(0, 'desc')
             ->buttons(
                 Button::make('excel')
                     ->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel'),
@@ -181,35 +179,28 @@ class PurchaseDataTable extends DataTable
                 ->title('Area')
                 ->className('text-center align-middle'),
 
-            Column::computed('overall_cgst')
-                ->title('CGST')
-                ->className('text-end align-middle'),
-
-            Column::computed('overall_sgst')
-                ->title('SGST')
-                ->className('text-end align-middle'),
-
             Column::computed('overall_tax_amount')
-                ->title('TAX Amount')
+                ->title('Tax Amount')
                 ->className('text-end align-middle'),
 
             Column::computed('overall_bill_amount')
-                ->title('Overall Bill Amount')
+                ->title('Bill Amount')
                 ->className('text-end align-middle'),
 
             Column::computed('paid_amount')
-                ->title('Paid Amount')
-                ->className('text-end align-middle'),
-
-            Column::computed('discount_amount')
-                ->title('Discount')
+                ->title('Paid')
                 ->className('text-end align-middle'),
 
             Column::computed('balance_amount')
-                ->title('Balance Amount')
+                ->title('Balance')
                 ->className('text-end align-middle'),
 
+            Column::computed('payment_status')
+                ->title('Payment')
+                ->className('text-center align-middle'),
+
             Column::computed('status')
+                ->title('Status')
                 ->className('text-center align-middle'),
 
             Column::computed('action')

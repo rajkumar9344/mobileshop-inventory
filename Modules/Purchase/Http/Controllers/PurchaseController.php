@@ -1215,4 +1215,51 @@ class PurchaseController extends Controller
 
         return redirect()->route('purchases.index');
     }
+
+    public function reorder(Purchase $purchase) {
+        $this->authorize('create_purchases');
+
+        $purchase->load('purchaseDetails');
+
+        // Generate new reference number
+        $lastPurchase = Purchase::latest('id')->first();
+        $nextNumber = $lastPurchase ? $lastPurchase->id + 1 : 1;
+        $newReference = 'PU' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+
+        // Create a new Draft purchase copying header from original
+        $newPurchase = Purchase::create([
+            'date'             => now()->format('Y-m-d'),
+            'reference'        => $newReference,
+            'supplier_id'      => $purchase->supplier_id,
+            'supplier_name'    => $purchase->supplier_name,
+            'invoice_no'       => '',
+            'invoice_date'     => now()->format('Y-m-d'),
+            'area'             => $purchase->area,
+            'purchase_type'    => $purchase->purchase_type ?? 1,
+            'tax_percentage'   => 0,
+            'tax_amount'       => 0,
+            'discount_percentage' => 0,
+            'discount_amount'  => 0,
+            'shipping_amount'  => 0,
+            'total_amount'     => $purchase->total_amount,
+            'paid_amount'      => 0,
+            'due_amount'       => $purchase->total_amount,
+            'status'           => 'Draft',
+            'payment_status'   => 'Unpaid',
+            'note'             => 'Reorder from ' . $purchase->reference,
+        ]);
+
+        // Copy line items (no stock change — draft)
+        foreach ($purchase->purchaseDetails as $detail) {
+            $newPurchase->purchaseDetails()->create(
+                collect($detail->toArray())
+                    ->except(['id', 'purchase_id', 'created_at', 'updated_at'])
+                    ->toArray()
+            );
+        }
+
+        toast('Reorder draft created from ' . $purchase->reference . '. Review and confirm below.', 'info');
+
+        return redirect()->route('purchases.edit', $newPurchase);
+    }
 }

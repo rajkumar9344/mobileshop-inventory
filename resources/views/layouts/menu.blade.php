@@ -256,8 +256,13 @@
         </a>
         <ul class="c-sidebar-nav-dropdown-items">
             <li class="c-sidebar-nav-item">
+                <a class="c-sidebar-nav-link {{ request()->routeIs('profit-loss-report.index') ? 'c-active' : '' }}" href="{{ route('profit-loss-report.index') }}">
+                    <i class="c-sidebar-nav-icon bi bi-graph-up-arrow" style="line-height: 1;"></i> Profit / Loss Report
+                </a>
+            </li>
+            <li class="c-sidebar-nav-item">
                 <a class="c-sidebar-nav-link {{ request()->routeIs('stock-report.index') ? 'c-active' : '' }}" href="{{ route('stock-report.index') }}">
-                    <i class="c-sidebar-nav-icon bi bi-clipboard-data" style="line-height: 1;"></i> Purchase Order Report
+                    <i class="c-sidebar-nav-icon bi bi-clipboard-data" style="line-height: 1;"></i> Current Stock Report
                 </a>
             </li>
             <li class="c-sidebar-nav-item">
@@ -273,11 +278,6 @@
             <li class="c-sidebar-nav-item">
                 <a class="c-sidebar-nav-link {{ request()->routeIs('customers-payment-report.index') ? 'c-active' : '' }}" href="{{ route('customers-payment-report.index') }}">
                     <i class="c-sidebar-nav-icon bi bi-cash" style="line-height: 1;"></i> Customers Payment Report
-                </a>
-            </li>
-            <li class="c-sidebar-nav-item">
-                <a class="c-sidebar-nav-link {{ request()->routeIs('gstr-report.index') ? 'c-active' : '' }}" href="{{ route('gstr-report.index') }}">
-                    <i class="c-sidebar-nav-icon bi bi-file-earmark-text" style="line-height: 1;"></i> GSTR Report
                 </a>
             </li>
             <li class="c-sidebar-nav-item">

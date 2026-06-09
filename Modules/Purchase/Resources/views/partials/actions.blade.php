@@ -20,6 +20,13 @@
                 <i class="bi bi-pencil mr-2 text-primary" style="line-height: 1;"></i> Edit
             </a>
         @endcan
+        @can('create_purchases')
+            @if($data->status !== 'Draft')
+                <a href="{{ route('purchases.reorder', $data->id) }}" class="dropdown-item">
+                    <i class="bi bi-arrow-repeat mr-2 text-success" style="line-height: 1;"></i> Reorder
+                </a>
+            @endif
+        @endcan
         {{-- Invoice generation removed per request: hide Invoice option in list actions --}}
         @can('view_purchases')
             <a href="{{ route('purchases.view', $data->id) }}" class="dropdown-item">

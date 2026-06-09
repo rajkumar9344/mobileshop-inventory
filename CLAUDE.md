@@ -98,12 +98,37 @@ Note: SalesReturn and PurchasesReturn had no visible due_date/days/discount UI �
 - [x] Purchase Return: fields already hidden-only — no UI changes needed
 - [x] Sales Return: fields already hidden-only — no UI changes needed
 
-### Phase 5 — New Features
-- [ ] Purchase: reorder/repurchase option, save as draft, payment status
-- [ ] Sales: editable product name for silicon mobile cover only
-- [ ] Sales/Purchase receipt: credit adjustment against specific invoice
-- [ ] Reports: Profit/Loss (monthly/per invoice/per customer), Current Stock
-- [ ] Invoice/Purchase redesign as customer's invoice format
+### Phase 5 — New Features (COMPLETE ✓)
+- [x] Purchase: save as draft redirect, reorder button, payment status in DataTable
+- [x] Sales: editable product name for silicon mobile cover items
+- [x] Invoice redesign: removed India-specific fields (HSN, SGST, CGST columns, "Rupees" text, vehicle fields, GST No); added Tax column, paid/balance due rows, "Thank you" footer
+- [x] Reports: Profit/Loss report route added and accessible from menu; "Purchase Order Report" renamed to "Current Stock Report"; GSTR report removed from menu
+- [ ] Sales/Purchase receipt: credit adjustment against specific invoice — DEFERRED (requirements unclear)
+
+#### Purchase Phase 5 detail
+- **Save as Draft**: clicking "Save as Draft" button now auto-saves via AJAX and redirects to purchases.index (was staying on page)
+- **Reorder**: `GET /purchases/{purchase}/reorder` → creates a new Draft purchase with same supplier/items, redirects to edit for review/confirmation. Button shown in actions dropdown for non-Draft purchases (requires create_purchases permission)
+- **Payment Status**: DataTable now shows Payment Status badge (Paid/Partial/Unpaid) column; removed CGST, SGST, Discount columns (always 0)
+- Files: `Routes/web.php`, `Http/Controllers/PurchaseController.php`, `Resources/views/partials/actions.blade.php`, `DataTables/PurchaseDataTable.php`, `Resources/views/create.blade.php`
+
+#### Sale Invoice Phase 5 detail
+- **Redesigned** `Modules/Sale/Resources/views/partials/invoice.blade.php`
+- Removed: HSN column, SGST column, CGST column, Vehicle Name/No, "GST NO:" always-on label, "Rupees X only" amount-in-words
+- Added: single "Tax" column, Paid row, Balance Due row (only if > 0), "Thank you for your purchase!" footer
+- VAT No shown conditionally if `settings()->company_gst` is set
+- Customer phone and VAT ID shown if present
+
+#### Sale — Editable Product Name Phase 5 detail
+- Silicon mobile cover items show an editable text input in the product cart (create/edit sale)
+- `wire:model.blur` bound to `custom_product_names[rowId]` Livewire property
+- `updatedCustomProductNames()` calls `Cart::update()` to persist the new name to the cart so controllers receive the custom name
+- Initialized on mount (edit mode) and on `productSelected()` (new additions)
+- File: `app/Livewire/ProductCart.php`, `resources/views/livewire/product-cart.blade.php`
+
+#### Reports Phase 5 detail
+- Route added: `GET /profit-loss-report` → `ReportsController@profitLossReport` → `reports::profit-loss.index`
+- Menu: Profit/Loss Report added at top of reports list; "Purchase Order Report" renamed "Current Stock Report"; GSTR Report removed
+- Files: `Modules/Reports/Routes/web.php`, `Modules/Reports/Http/Controllers/ReportsController.php`, `resources/views/layouts/menu.blade.php`
 
 ---
 
