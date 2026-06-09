@@ -30,18 +30,6 @@
             width: clamp(12ch, 18vw, 32ch);
         }
 
-        /* Wider HSN column: use character-based sizing (ch) as a baseline and clamp to viewport
-           A small script below will measure the longest HSN text and set an explicit width
-           in px via the CSS variable --hsn-col-width so we avoid per-cell inline styles. */
-        .product-cart-table th.hsn-col,
-        .product-cart-table td.hsn-col {
-            min-width: 10ch; /* good baseline for short codes */
-            width: var(--hsn-col-width, clamp(10ch, 12vw, 22ch)); /* prefer JS-measured value when set */
-            white-space: normal;
-            word-break: normal;
-            overflow-wrap: normal;
-        }
-
         /* Numeric/short fields should not wrap */
         .product-cart-table td.numeric,
         .product-cart-table th.numeric {
@@ -197,7 +185,6 @@
             white-space: nowrap;
         }
     </style>
-    <input type="hidden" wire:model.live="customer_additional_discount" id="product-cart-additional-discount">
     <div>
         @if (session()->has('message') && empty($validation_message))
             <div class="alert alert-warning alert-dismissible fade show" role="alert">
@@ -238,7 +225,6 @@
                     <th class="align-middle col-product-name">Product Name</th>
                     <th class="align-middle text-center col-product-code">Product Code</th>
                     <th class="align-middle text-center">Category</th>
-                    <th class="align-middle text-center hsn-col">HSN</th>
                     <th class="align-middle text-center col-small">
                     @if(in_array($cart_instance, ['purchase_return', 'purchase_return_view']))
                         Purchased Qty
@@ -253,10 +239,6 @@
                     <th class="align-middle text-center col-percent">Tax %</th>
                     <th class="align-middle text-center col-amount">Rate before Discount</th>
                     <th class="align-middle text-center col-small">Quantity</th>
-                    <th class="align-middle text-center col-percent">Discount %</th>
-                    <th class="align-middle text-center col-percent">Additional Discount %</th>
-                    <th class="align-middle text-center col-cash">Cash Discount Amount</th>
-                    <th class="align-middle text-center col-amount">Net Rate</th>
                     <th class="align-middle text-center col-small">Unit</th>
                     <th class="align-middle text-center col-amount">@if(in_array($cart_instance, ['sale','sale_edit','sale_return','quotation','quotation_edit','sale_view','sale_return_view','quotation_view']) || $isPurchaseType4) Total @else Total (without GST) @endif</th>
                     <th class="align-middle text-center col-percent">GST %</th>
@@ -414,10 +396,6 @@
         })();
     </script>
 
-                                <td class="align-middle text-center hsn-col">
-                                    {{ $cart_item->options->hsn ?? '-' }}
-                                </td>
-
                                 <td class="align-middle text-center">
                                     <span class="badge badge-info">{{ $cart_item->options->stock }}</span>
                                 </td>
@@ -471,65 +449,6 @@
 
                                 <td class="align-middle text-center col-small">
                                     @include('livewire.includes.product-cart-quantity')
-                                </td>
-
-                                <td class="align-middle text-center small-field numeric col-percent">
-                                    <input type="number"
-                                        wire:model.lazy="item_discount.{{ $cart_item->id }}"
-                                        class="form-control form-control-sm autosize"
-                                        step="0.01"
-                                        min="0"
-                                        max="999"
-                                        maxlength="6"
-                                        value="{{ $item_discount[$cart_item->id] ?? $cart_item->options->discount ?? '' }}"
-                                        {{ $isReadOnly ? 'readonly' : '' }}>
-                                    @if($_item_discount_val > 0)
-                                        <small class="text-muted d-block mt-1" title="Rate after {{ $_item_discount_val }}% discount">
-                                            {{ format_currency($_rate_after_pct, true, false) }}
-                                        </small>
-                                    @endif
-                                </td>
-
-                                <td class="align-middle text-center small-field numeric cash-dis-field col-percent">
-                                    <input type="number" 
-                                        wire:model.lazy="cash_discount_percent.{{ $cart_item->id }}"
-                                        class="form-control form-control-sm autosize" 
-                                        max="999"
-                                        min="0"
-                                        step="1"
-                                        maxlength="3"
-                                        value="{{ $cash_discount_percent[$cart_item->id] ?? $cart_item->options->cash_discount_percent ?? '' }}"
-                                        {{ $isReadOnly ? 'readonly' : '' }}>
-                                    @if($_cash_disc_pct > 0 || $_cash_disc_amt > 0)
-                                        <small class="text-muted d-block mt-1" title="Rate after cash % discount">
-                                            {{ format_currency($_rate_after_cash_pct, true, false) }}
-                                        </small>
-                                    @endif
-                                </td>
-
-                                <td class="align-middle text-center small-field numeric cash-dis-field col-cash">
-                                     <x-currency-input
-                                         id="{{ 'cash_disc_amt_'.$cart_item->id }}"
-                                         wireModel="{{ 'cash_discount_amount.'.$cart_item->id }}"
-                                         class="form-control form-control-sm autosize"
-                                         display="{{ format_currency($cash_discount_amount[$cart_item->id] ?? $cart_item->options->cash_discount_amount ?? 0, true, false) }}"
-                                         :disabled="$isReadOnly"
-                                     />
-                                     @if($_cash_disc_pct > 0 || $_cash_disc_amt > 0)
-                                         <small class="text-muted d-block mt-1" title="Rate after cash discount">
-                                             {{ format_currency($_net_rate, true, false) }}
-                                         </small>
-                                     @endif
-                                </td>
-
-                                <td class="align-middle text-center col-amount">
-                                    {{-- Readonly display: Net Rate = Rate before Discount × (1 - Discount%/100) - Cash Discount --}}
-                                    <input type="text"
-                                           class="form-control form-control-sm autosize"
-                                           value="{{ format_currency($_net_rate, true, false) }}"
-                                           readonly
-                                           maxlength="15"
-                                           title="Net Rate = {{ $_rate_before_discount }} × (1 - {{ $_item_discount_val }}%){{ $_cash_discount_total > 0 ? ' - ' . round($_cash_discount_total, 2) : '' }} = {{ format_currency($_net_rate, true, false) }}">
                                 </td>
 
                                 <td class="align-middle text-center">
@@ -589,8 +508,8 @@
                                 if (in_array($cart_instance, ['purchase', 'purchase_edit', 'purchase_return', 'purchase_view', 'purchase_return_view'])) {
                                     $colspan = $isPurchaseType4 ? 17 : 18;
                                 } elseif (in_array($cart_instance, ['sale', 'sale_edit', 'sale_return', 'quotation', 'quotation_edit', 'sale_view', 'sale_return_view', 'quotation_view'])) {
-                                    // removed Amount(incl GST) column and renamed Total → fewer columns for sale-like
-                                    $colspan = 16;
+                                    // removed HSN, Discount%, Additional Discount%, Cash Discount, Net Rate (per-row) columns
+                                    $colspan = 11;
                                 } else {
                                     $colspan = 17;
                                 }
@@ -665,39 +584,9 @@
                 });
             }
 
-            // ========== HSN Column Width ==========
-            function adjustHsnColumn() {
-                const hsnCells = document.querySelectorAll('.product-cart-table td.hsn-col, .product-cart-table th.hsn-col');
-                const table = document.querySelector('.product-cart-table');
-                if (!hsnCells.length || !table) return;
-
-                const font = getFont(hsnCells[0] || document.body);
-                let maxPx = 0;
-
-                hsnCells.forEach(cell => {
-                    const text = (cell.textContent || '').trim();
-                    if (text) {
-                        const w = measureText(text, font);
-                        if (w > maxPx) maxPx = w;
-                    }
-                });
-
-                if (maxPx === 0) return;
-
-                const finalPx = Math.min(400, Math.max(120, maxPx + 28));
-                // Set a CSS variable on the table so CSS controls widths (avoids per-cell inline styles)
-                table.style.setProperty('--hsn-col-width', `${finalPx}px`);
-                // Clean up any legacy inline widths applied earlier
-                hsnCells.forEach(cell => {
-                    cell.style.removeProperty('width');
-                    cell.style.removeProperty('min-width');
-                });
-            }
-
             // ========== Initialization ==========
             function initAll() {
                 bindAutosize(document);
-                adjustHsnColumn();
                 if (window.updateHiddenFields) window.updateHiddenFields();
             }
 
@@ -841,6 +730,13 @@
     <!-- Overall Calculations Section -->
     <div class="border p-3 mb-3">
         <h5>Overall Calculations</h5>
+        {{-- Hidden fields so JS/controller still receives values for backward compatibility --}}
+        <input type="hidden" name="overall_cgst"        id="overall_cgst"        value="0">
+        <input type="hidden" name="overall_sgst"        id="overall_sgst"        value="0">
+        <input type="hidden" name="overall_igst"        id="overall_igst"        value="0">
+        <input type="hidden" name="overall_tcs_percent" id="overall_tcs_percent" value="0">
+        <input type="hidden" id="overall_other_raw" name="overall_other" value="0" wire:model.live="overall_other">
+        <input type="hidden" id="overall_adj_raw"   name="overall_adj"   value="0" wire:model.live="adjustment">
         <div class="form-row">
             <div class="col-md-2 pr-1">
                 <label for="overall_nos">Nos</label>
@@ -851,61 +747,25 @@
                 <input type="text" class="form-control" name="overall_quantity" id="overall_quantity" value="{{ $this->overall_calculations['overall_quantity'] }}" readonly>
             </div>
             <div class="col-md-2 pr-1">
-                <label for="overall_gross_amount">Gross(Amount)</label>
+                <label for="overall_gross_amount">Gross Amount</label>
                 <input type="text" class="form-control" name="overall_gross_amount" id="overall_gross_amount" value="{{ format_currency($this->overall_calculations['overall_gross_amount'], true, false) }}" readonly>
             </div>
             <div class="col-md-2 pr-1">
-                <label for="overall_taxable_amount">Taxable (Amount)</label>
+                <label for="overall_taxable_amount">Taxable Amount</label>
                 <input type="text" class="form-control" name="overall_taxable_amount" id="overall_taxable_amount" value="{{ format_currency($this->overall_calculations['overall_taxable_amount'], true, false) }}" readonly>
             </div>
             <div class="col-md-2 pr-1">
-                <label for="overall_cgst">CGST</label>
-                <input type="text" class="form-control" name="overall_cgst" id="overall_cgst" value="{{ format_currency($this->overall_calculations['overall_cgst'], true, false) }}" readonly>
-            </div>
-            <div class="col-md-2 pr-1">
-                <label for="overall_sgst">SGST</label>
-                <input type="text" class="form-control" name="overall_sgst" id="overall_sgst" value="{{ format_currency($this->overall_calculations['overall_sgst'], true, false) }}" readonly>
-            </div>
-        </div>
-        <div class="form-row mt-2">
-            <div class="col-md-2 pr-1">
-                <label for="overall_igst">IGST</label>
-                <input type="text" class="form-control" name="overall_igst" id="overall_igst" value="{{ format_currency($this->overall_calculations['overall_igst'], true, false) }}" readonly>
-            </div>
-            <div class="col-md-2 pr-1">
-                <label for="overall_tax_amount">Tax(Amount)</label>
+                <label for="overall_tax_amount">Tax Amount</label>
                 <input type="text" class="form-control" name="overall_tax_amount" id="overall_tax_amount" value="{{ format_currency($this->overall_calculations['overall_tax_amount'], true, false) }}" readonly>
-            </div>
-            <div class="col-md-2 pr-1">
-                <label for="overall_tcs_percent">TCS %</label>
-                <input type="text" class="form-control" name="overall_tcs_percent" id="overall_tcs_percent" maxlength="3" pattern="\d+" {{ $isReadOnly ? 'readonly' : '' }}>
             </div>
             <div class="col-md-2 pr-1">
                 <label for="overall_amount">Amount</label>
                 <input type="text" class="form-control" name="overall_amount" id="overall_amount" value="{{ format_currency($this->overall_calculations['overall_amount'], true, false) }}" readonly>
             </div>
-            <div class="col-md-2 pr-1">
-                <label for="overall_other">Other (+/-)</label>
-                <!-- wrap visible input with wire:ignore so Livewire doesn't replace it on re-render -->
-                <div wire:ignore>
-                    <input type="text" class="form-control currency-input" name="overall_other_display" id="overall_other" maxlength="50" pattern="^[+-]?\d+(\.\d{1,2})?$|^[+-]?\d+(,\d{1,2})?$" data-target="#overall_other_raw" aria-label="Other amount" {{ $isReadOnly ? 'readonly' : '' }}>
-                </div>
-                <!-- hidden input keeps Livewire model in sync with numeric value (in rupees); value attribute set for currency-input.js initialization -->
-                <input type="hidden" id="overall_other_raw" name="overall_other" value="{{ $overall_other ?? 0 }}" wire:model.live="overall_other">
-            </div>
-            <div class="col-md-2 pr-1">
-                <label for="overall_adj">Adj</label>
-                <!-- wrap visible input with wire:ignore so Livewire doesn't replace it on re-render -->
-                <div wire:ignore>
-                    <input type="text" class="form-control currency-input" name="overall_adj_display" id="overall_adj" maxlength="15" pattern="^[+-]?\d+(\.\d{1,2})?$|^[+-]?\d+(,\d{1,2})?$" data-target="#overall_adj_raw" aria-label="Adjustment amount" {{ $isReadOnly ? 'readonly' : '' }}>
-                </div>
-                <!-- hidden input keeps Livewire model in sync with numeric value (in rupees); value attribute set for currency-input.js initialization -->
-                <input type="hidden" id="overall_adj_raw" name="overall_adj" value="{{ $adjustment ?? 0 }}" wire:model.live="adjustment">
-            </div>
         </div>
         <div class="form-row mt-2">
             <div class="col-md-2 pr-1">
-                <label for="overall_net_rate">Net Rate</label>
+                <label for="overall_net_rate">Total Amount</label>
                 <input type="text" class="form-control" name="overall_net_rate" id="overall_net_rate" value="{{ format_currency(in_array($cart_instance, ['sale','sale_edit','sale_return','quotation','quotation_edit','sale_view','sale_return_view','quotation_view']) ? round($this->overall_calculations['overall_net_rate'] ?? 0, 0) : ($this->overall_calculations['overall_net_rate'] ?? 0), true, false) }}" readonly>
             </div>
         </div>

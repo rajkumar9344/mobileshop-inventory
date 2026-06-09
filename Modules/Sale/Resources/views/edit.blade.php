@@ -70,15 +70,8 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    <div class="col-md-2 pr-1">
-                                        <label for="days" class="mb-1">Due Days @if($sale->status !== 'Draft') <span class="text-danger">*</span> @endif</label>
-                                        <input type="text" class="form-control" name="days" id="days" maxlength="4" pattern="\d+" value="{{ old('days', $sale->days) }}" placeholder="0" {{ $isReadOnly ? 'disabled' : ($sale->status === 'Draft' ? '' : 'required') }}>
-                                    </div>
-                                    <div class="col-md-3 pr-1">
-                                        <label for="due_date_display" class="mb-1">Due Date</label>
-                                        <input type="text" class="form-control" id="due_date_display" readonly placeholder="dd-mm-yyyy" value="{{ $sale->due_date ? \Carbon\Carbon::parse($sale->due_date)->format('d-m-Y') : '' }}">
-                                        <input type="hidden" name="due_date" id="due_date" value="{{ $sale->due_date ? \Carbon\Carbon::parse($sale->due_date)->format('Y-m-d') : '' }}">
-                                    </div>
+                                    <input type="hidden" name="days" id="days" value="{{ old('days', $sale->days ?? 0) }}">
+                                    <input type="hidden" name="due_date" id="due_date" value="{{ $sale->due_date ? \Carbon\Carbon::parse($sale->due_date)->format('Y-m-d') : '' }}">
                                     <div class="col-md-2 pr-1">
                                         <label for="opening_balance" class="mb-1">Balance @if($sale->status !== 'Draft') <span class="text-danger">*</span> @endif</label>
                                             <input type="text" class="form-control" name="opening_balance" id="opening_balance" maxlength="15" pattern="^-?\d+(?:\.\d{1,2})?$|^-?\d+(?:,\d{1,2})?$" value="{{ number_format($sale->balance ?? 0, 2, '.', '') }}" placeholder="0.00" {{ $isReadOnly ? 'disabled' : ($sale->status === 'Draft' ? '' : 'required') }} readonly oninput="this.value = this.value.replace(/[^0-9.\-]/g,'').replace(/(?!^)-/g,'').slice(0,15)">
@@ -147,23 +140,7 @@
                                         <div id="paid_amount_error" class="text-danger small" style="display:none;">Amount Received cannot be more than Net Rate.</div>
                                     </div>
                                 </div>
-                                <div class="col-lg-3">
-                                    <div class="form-group">
-                                        <label for="discount_amount">Discount Amount</label>
-                                        <x-currency-input
-                                            id="discount_amount"
-                                            wireModel="global_discount_amount"
-                                            wireModifier="blur"
-                                            hiddenName="discount_amount"
-                                            hiddenId="discount_amount_hidden"
-                                            value="{{ $sale->discount_amount ?? 0 }}"
-                                            :disabled="$isReadOnly"
-                                            symbol="{{ settings()->currency->symbol }}"
-                                            position="{{ settings()->default_currency_position }}"
-                                        />
-                                        <div id="discount_amount_error" class="text-danger small" style="display:none;">Discount Amount cannot be more than Net Rate.</div>
-                                    </div>
-                                </div>
+                                <input type="hidden" name="discount_amount" id="discount_amount_hidden" value="0">
                                 <div class="col-lg-3">
                                     <div class="form-group">
                                         <label for="balance">Balance</label>
@@ -257,8 +234,7 @@
                 var netRateVal = document.getElementById('overall_net_rate')?.value || document.getElementById('hidden_overall_net_rate')?.value || '0';
                 var netRate = parseFloat(netRateVal.replace(/,/g, '')) || 0;
                 var paidAmount = parseFloat(document.getElementById('paid_amount_hidden')?.value || '0');
-                var discountAmount = parseFloat(document.getElementById('discount_amount_hidden')?.value || '0');
-                var balance = netRate - paidAmount - discountAmount;
+                var balance = netRate - paidAmount;
                 
                 // Format and update balance field
                 const balInput = $('#balance');
@@ -392,25 +368,6 @@
                 try { if (typeof validateAmounts === 'function') validateAmounts(); } catch(e) { }
             }
 
-            function updateDueDate(){
-                var billDate = $('#bill_date').val();
-                var days = parseInt($('#days').val(), 10);
-                if (billDate && !isNaN(days)) {
-                    var parts = billDate.split('-');
-                    var yyyy = parseInt(parts[0], 10);
-                    var mm = parseInt(parts[1], 10) - 1;
-                    var dd = parseInt(parts[2], 10);
-                    var dateObj = new Date(yyyy, mm, dd);
-                    dateObj.setDate(dateObj.getDate() + days);
-                    var yyyy2 = dateObj.getFullYear();
-                    var mm2 = String(dateObj.getMonth() + 1).padStart(2, '0');
-                    var dd2 = String(dateObj.getDate()).padStart(2, '0');
-                    // Display: dd-mm-yyyy; Backend (hidden): yyyy-mm-dd
-                    $('#due_date_display').val(dd2 + '-' + mm2 + '-' + yyyy2);
-                    $('#due_date').val(yyyy2 + '-' + mm2 + '-' + dd2);
-                }
-            }
-
             function generateReferenceNumberForDate(){
                 if ({{ !empty($readonly) ? 'true' : 'false' }}) {
                     return;
@@ -468,7 +425,6 @@
                     if (!id) {
                         $('#area,#opening_balance,#phone').val('');
                         $('#customer_discount_percent').val(0);
-                        updateDueDate();
                         return;
                     }
                     var url = '/customers/' + id + '/json';
@@ -476,20 +432,17 @@
                         if (res.area !== undefined) {
                             $('#area').val(res.area);
                         }
-                            if (res.opening_balance !== undefined) {
-                                $('#opening_balance').val(res.opening_balance);
-                                if (res.has_overdue_outstanding === true) {
-                                    $('#outstanding-warning').removeClass('d-none');
-                                } else {
-                                    $('#outstanding-warning').addClass('d-none');
-                                }
+                        if (res.opening_balance !== undefined) {
+                            $('#opening_balance').val(res.opening_balance);
+                            if (res.has_overdue_outstanding === true) {
+                                $('#outstanding-warning').removeClass('d-none');
+                            } else {
+                                $('#outstanding-warning').addClass('d-none');
                             }
-                            if (res.excess_amount !== undefined) {
-                                $('#excess_amount').val(res.excess_amount);
-                                $('#excess_amount_display').val(res.excess_amount);
-                            }
-                        if (res.terms_days !== undefined) {
-                            $('#days').val(res.terms_days || 0);
+                        }
+                        if (res.excess_amount !== undefined) {
+                            $('#excess_amount').val(res.excess_amount);
+                            $('#excess_amount_display').val(res.excess_amount);
                         }
                         if (res.customer_phone !== undefined) {
                             $('#phone').val(res.customer_phone);
@@ -498,12 +451,11 @@
                         if (res.cash_discount !== undefined) {
                             $('#customer_discount_percent').val(res.cash_discount);
                         }
-                        setTimeout(updateDueDate, 100);
+                        setTimeout(function(){ updateBalance(); }, 100);
                     }).fail(function(){
                         $('#area,#opening_balance,#phone').val('');
                         $('#customer_discount_percent').val(0);
                         $('#excess_amount,#excess_amount_display').val('0.00');
-                        updateDueDate();
                     });
                 });
             }
@@ -547,48 +499,34 @@
                 $('#paid_amount').on('blur', function() {
                     scheduleCreditLimitCheck();
                 });
-                $('#discount_amount').on('keyup input blur', function() {
-                    updateBalance();
-                    validateAmounts();
-                });
 
                 // --- Shared validation helpers ---
                 function getNetRate() {
-                    // Ensure hidden fields are up-to-date (Livewire may update display elements)
                     if (typeof updateHiddenFields === 'function') {
                         updateHiddenFields();
                     }
-
-                    // Prefer the hidden field which should contain the canonical numeric value
                     var hiddenVal = $('#hidden_overall_net_rate').val();
                     if (hiddenVal && String(hiddenVal).trim() !== '') {
                         return parseFloat(String(hiddenVal).replace(/[^0-9.\-]/g, '')) || 0;
                     }
-
-                    // Fallback: check dataset.raw on the display element (currency-input writes this)
                     var el = document.getElementById('overall_net_rate');
                     if (el && el.dataset && el.dataset.raw) {
                         return parseFloat(String(el.dataset.raw).replace(/[^0-9.\-]/g, '')) || 0;
                     }
-
-                    // Final fallback: use visible text/value and strip non-numeric chars
                     var visible = $('#overall_net_rate').val() || $('#overall_net_rate').text() || '0';
                     return parseFloat(String(visible).replace(/[^0-9.\-]/g, '')) || 0;
                 }
 
                 function getPaidNumeric() {
-                    // Access hidden field from x-currency-input
                     return parseFloat($('#paid_amount_hidden').val()) || 0;
                 }
 
                 function validateAmounts() {
                     var paidVal = getPaidNumeric();
-                    var discountVal = parseFloat($('#discount_amount_hidden').val()) || 0;
                     var netRate = getNetRate();
                     var $submitBtns = $('#sale-form').find('button[type=submit]');
                     var hasIssue = false;
 
-                    // Validate paid amount
                     if (paidVal > netRate + 0.01) {
                         $('#paid_amount').addClass('is-invalid');
                         $('#paid_amount_error').text('Amount Received cannot be more than Net Rate.').show();
@@ -598,29 +536,10 @@
                         $('#paid_amount_error').hide();
                     }
 
-                    // Validate discount amount
-                    if (discountVal > netRate + 0.01) {
-                        $('#discount_amount').addClass('is-invalid');
-                        $('#discount_amount_error').text('Discount Amount cannot be more than Net Rate.').show();
-                        hasIssue = true;
-                    } else {
-                        $('#discount_amount').removeClass('is-invalid');
-                        $('#discount_amount_error').hide();
-                    }
-
-                    // Combined check
-                    if (!hasIssue && (paidVal + discountVal) > netRate + 0.01) {
-                        $('#discount_amount').addClass('is-invalid');
-                        $('#discount_amount_error').text('Amount Received and Discount combined cannot exceed Net Rate.').show();
-                        hasIssue = true;
-                    }
-
                     $submitBtns.prop('disabled', hasIssue);
                     return !hasIssue;
                 }
 
-                // Real-time validation on keyup for both fields
-                $('#discount_amount').on('keyup input blur', validateAmounts);
                 $('#paid_amount').on('keyup input blur', function () {
                     var paidVal = getPaidNumeric();
                     var pm = $('#payment_method').val();
@@ -695,7 +614,6 @@
                     });
                 }
 
-                $('#bill_date, #days').on('change keyup', updateDueDate);
                 $('#bill_date').on('change', generateReferenceNumberForDate);
                 bindCustomerLookup();
 
@@ -707,13 +625,10 @@
                     var $submitButtons = $form.find('button[type=submit], input[type=submit]');
                     $submitButtons.prop('disabled', true);
 
-                    // Values are in hidden inputs automatically updated by x-currency-input
                     var paidNumeric = parseFloat($('#paid_amount_hidden').val()) || 0;
-                    var discountVal = parseFloat($('#discount_amount_hidden').val()) || 0;
-                    
+
                     updateHiddenFields();
 
-                    // Validate paid amount, discount amount, and payment method together
                     var hasError = false;
                     var netRate = getNetRate();
                     if (paidNumeric > netRate) {
@@ -723,22 +638,6 @@
                     } else {
                         $('#paid_amount').removeClass('is-invalid');
                         $('#paid_amount_error').hide();
-                    }
-
-                    if (discountVal > netRate) {
-                        $('#discount_amount').addClass('is-invalid');
-                        $('#discount_amount_error').text('Discount Amount cannot be more than Net Rate.').show();
-                        hasError = true;
-                    } else {
-                        $('#discount_amount').removeClass('is-invalid');
-                        $('#discount_amount_error').hide();
-                    }
-
-                    // Combined check: paid + discount cannot exceed net rate
-                    if (!hasError && (paidNumeric + discountVal) > netRate) {
-                        $('#discount_amount').addClass('is-invalid');
-                        $('#discount_amount_error').text('Amount Received and Discount combined cannot exceed Net Rate.').show();
-                        hasError = true;
                     }
 
                     var pm = $('#payment_method').val();
@@ -754,8 +653,6 @@
                     if (hasError) {
                         if ($('#paid_amount').hasClass('is-invalid')) {
                             $('#paid_amount').focus();
-                        } else if ($('#discount_amount').hasClass('is-invalid')) {
-                            $('#discount_amount').focus();
                         } else {
                             $('#payment_method').focus();
                         }
@@ -848,7 +745,6 @@
                     $('#bill_type').trigger('change');
                 }
 
-                updateDueDate();
                 updateHiddenFields();
             });
 
@@ -987,9 +883,6 @@
             // Phone: digits only
             sanitize('#phone', /[^0-9]/g);
 
-            // Days: digits only
-            sanitize('#days', /[^0-9]/g);
-
             // Discount type removed; no input to sanitize
 
             // Opening balance: allow digits and dot only
@@ -1004,7 +897,6 @@
             // Ensure required attributes are set for complete update
             $('#customer_id').prop('required', true);
             $('#bill_type').prop('required', true);
-            $('#days').prop('required', true);
             $('#opening_balance').prop('required', true);
             
             // Handle paid_amount requirement based on bill_type

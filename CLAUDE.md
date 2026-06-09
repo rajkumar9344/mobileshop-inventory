@@ -73,12 +73,19 @@ Migration: `database/migrations/2026_06_09_155808_add_vat_id_to_customers_table.
 Removed: country, gst_no, bank_name, account_no, ifsc, branch, style (Type dropdown), less_discount_percent (additional discount%)
 Files changed: `create.blade.php`, `edit.blade.php`, `StoreSupplierRequest.php`, `UpdateSupplierRequest.php`, `Supplier.php`
 
+#### Sale (`Modules/Sale`)
+Removed: due_date, due_days, HSN column, Discount %, Additional Discount %, Cash Discount Amount, Net Rate (row-level), CGST, SGST, IGST, TCS%, Other (+/-), Adj (overall section); "Discount Amount" payment field removed
+Renamed: "Net Rate" → "Total Amount" in Overall Calculations section
+Balance formula: `balance = total_amount - paid_amount` (no discount subtraction)
+`days` validation: always nullable (was required for non-draft)
+Files changed: `resources/views/livewire/product-cart.blade.php`, `Modules/Sale/Resources/views/create.blade.php`, `Modules/Sale/Resources/views/edit.blade.php`, `Modules/Sale/Http/Requests/StoreSaleRequest.php`
+
 ---
 
 ## Pending Work
 
 ### Phase 3 — Remaining
-- [ ] Sales: remove due date, due days, HSN, all discount%, CGST, IGST, TCS%, other, adj, Net Rate
+- [x] Sales: remove due date, due days, HSN, all discount%, CGST, IGST, TCS%, other, adj; renamed "Net Rate" → "Total Amount"
 - [ ] Purchase: same as Sales
 - [ ] Purchase Return: same field removals
 - [ ] Sales Return: same field removals
