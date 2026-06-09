@@ -161,8 +161,6 @@
                             <input type="hidden" name="discount_percentage" id="hidden_discount_percentage" value="0">
                             <input type="hidden" name="shipping_amount" id="hidden_shipping_amount" value="0">
                             <input type="hidden" name="total_amount" id="hidden_total_amount" value="0">
-                            <input type="hidden" name="overall_other" id="hidden_overall_other" value="0">
-                            <input type="hidden" name="overall_adj" id="hidden_overall_adj" value="0">
                             <input type="hidden" name="status" value="Pending">
                             <input type="hidden" name="draft_id" id="draft_id" value="">
 

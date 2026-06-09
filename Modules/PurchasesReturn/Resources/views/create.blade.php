@@ -101,15 +101,8 @@
                             <input type="hidden" name="overall_quantity" id="hidden_overall_quantity">
                             <input type="hidden" name="overall_gross_amount" id="hidden_overall_gross_amount">
                             <input type="hidden" name="overall_taxable_amount" id="hidden_overall_taxable_amount">
-                            <input type="hidden" name="overall_cgst" id="hidden_overall_cgst">
-                            <input type="hidden" name="overall_sgst" id="hidden_overall_sgst">
-                            <input type="hidden" name="overall_igst" id="hidden_overall_igst">
                             <input type="hidden" name="overall_tax_amount" id="hidden_overall_tax_amount">
-                            <input type="hidden" name="overall_tcs_percent" id="hidden_overall_tcs_percent">
                             <input type="hidden" name="overall_amount" id="hidden_overall_amount">
-                            <input type="hidden" name="overall_other" id="hidden_overall_other">
-                            <input type="hidden" name="overall_adj" id="hidden_overall_adj">
-                            <input type="hidden" name="overall_net_rate" id="hidden_overall_net_rate">
 
 
 

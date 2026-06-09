@@ -88,15 +88,8 @@ class SalesReturnController extends Controller
                 'overall_quantity' => $request->overall_quantity ?? null,
                 'overall_gross_amount' => $request->overall_gross_amount ?? null,
                 'overall_taxable_amount' => $request->overall_taxable_amount ?? null,
-                'overall_cgst' => $request->overall_cgst ?? null,
-                'overall_sgst' => $request->overall_sgst ?? null,
-                'overall_igst' => $request->overall_igst ?? null,
                 'overall_tax_amount' => $request->overall_tax_amount ?? null,
-                'overall_tcs_percent' => $request->overall_tcs_percent ?? null,
                 'overall_amount' => $request->overall_amount ?? null,
-                'overall_other' => $request->overall_other ?? null,
-                'overall_adj' => $request->overall_adj ?? null,
-                'overall_net_rate' => round(floatval(str_replace([',', settings()->currency->symbol], '', (string)($request->overall_net_rate ?? $total_amount))), 0),
                 'create_receipt' => $request->boolean('create_receipt'),
                 'paid_amount' => ($paid_amount),
                 'total_amount' => ($total_amount),
@@ -114,16 +107,6 @@ class SalesReturnController extends Controller
                 $options  = $cart_item->options;
                 $vals     = CartItemCalculator::compute($cart_item, $product);
 
-                // Derive discount_percent for SaleReturnDetail
-                $discount_percent = null;
-                if (isset($options->product_discount_type) && ($options->product_discount_type == 'percentage')) {
-                    $discount_percent = isset($options->product_discount_percent) ? (float)$options->product_discount_percent : null;
-                } else {
-                    if (!empty($vals['discount_amount']) && !empty($vals['mrp'])) {
-                        $discount_percent = round(($vals['discount_amount'] / $vals['mrp']) * 100, 4);
-                    }
-                }
-
                 $pcId = $resolver->resolve($cart_item->id, $options->code ?? null);
 
                 SaleReturnDetail::create([
@@ -133,18 +116,14 @@ class SalesReturnController extends Controller
                     'product_code'             => $options->code ?? null,
                     'product_code_id'          => $pcId,
                     'category'                 => $options->category ?? null,
-                    'hsn'                      => $options->hsn ?? null,
                     'unit'                     => $options->unit ?? null,
                     'mrp'                      => $vals['mrp'],
                     'rate'                     => $vals['rate'],
                     'tax_percent'              => is_numeric($vals['tax_percent']) ? intval($vals['tax_percent']) : null,
                     'product_tax_amount'       => $vals['tax_amount'],
                     'tax_amount'               => $vals['tax_amount'],
-                    'cash_discount_percent'    => is_numeric($vals['cash_discount_percent']) ? intval($vals['cash_discount_percent']) : null,
-                    'cash_discount_amount'     => $vals['cash_discount_amount'],
                     'product_discount_amount'  => $vals['discount_amount'],
                     'product_discount_type'    => $options->product_discount_type ?? null,
-                    'discount_percent'         => $discount_percent,
                     'quantity'                 => $cart_item->qty,
                     'price'                    => $cart_item->price,
                     'unit_price'               => $vals['unit_price'],
@@ -173,7 +152,7 @@ class SalesReturnController extends Controller
 
             if ($request->boolean('create_receipt')) {
                 // Auto-create or sync a single lineless SalesReceipt using overall net rate
-                $receiptAmount = floatval($sale_return->overall_net_rate ?? 0); // rupees
+                $receiptAmount = floatval($sale_return->overall_amount ?? $sale_return->total_amount ?? 0); // rupees
                 if ($receiptAmount > 0) {
                     // try to find an existing receipt linked to this sale_return
                     $existing = SalesReceipt::where('sale_return_id', $sale_return->id)->first();
@@ -287,12 +266,9 @@ class SalesReturnController extends Controller
                     'rate'                     => $sale_return_detail->rate !== null ? $sale_return_detail->rate : null,
                     'tax_percent'              => $sale_return_detail->tax_percent,
                     'category'                 => $sale_return_detail->category ?? '-',
-                    'hsn'                      => $sale_return_detail->hsn ?? '',
                     'unit'                     => $sale_return_detail->unit ?? 'Nos',
                     'tax_amount'               => $sale_return_detail->tax_amount ?? $sale_return_detail->product_tax_amount,
                     'amount'                   => $sale_return_detail->amount ?? $sale_return_detail->sub_total,
-                    'cash_discount_percent'    => $sale_return_detail->cash_discount_percent,
-                    'cash_discount_amount'     => $sale_return_detail->cash_discount_amount ?? 0,
                 ]
             ]);
         }
@@ -364,15 +340,8 @@ class SalesReturnController extends Controller
                 'overall_quantity' => $request->overall_quantity ?? null,
                 'overall_gross_amount' => $request->overall_gross_amount ?? null,
                 'overall_taxable_amount' => $request->overall_taxable_amount ?? null,
-                'overall_cgst' => $request->overall_cgst ?? null,
-                'overall_sgst' => $request->overall_sgst ?? null,
-                'overall_igst' => $request->overall_igst ?? null,
                 'overall_tax_amount' => $request->overall_tax_amount ?? null,
-                'overall_tcs_percent' => $request->overall_tcs_percent ?? null,
                 'overall_amount' => $request->overall_amount ?? null,
-                'overall_other' => $request->overall_other ?? null,
-                'overall_adj' => $request->overall_adj ?? null,
-                'overall_net_rate' => $request->overall_net_rate ?? null,
                 'create_receipt' => $request->boolean('create_receipt'),
                 'paid_amount' => ($paid_amount),
                 'total_amount' => ($total_amount),
@@ -390,16 +359,6 @@ class SalesReturnController extends Controller
                 $options  = $cart_item->options;
                 $vals     = CartItemCalculator::compute($cart_item, $product);
 
-                // Derive discount_percent for SaleReturnDetail
-                $discount_percent = null;
-                if (isset($options->product_discount_type) && ($options->product_discount_type == 'percentage')) {
-                    $discount_percent = isset($options->product_discount_percent) ? (float)$options->product_discount_percent : null;
-                } else {
-                    if (!empty($vals['discount_amount']) && !empty($vals['mrp'])) {
-                        $discount_percent = round(($vals['discount_amount'] / $vals['mrp']) * 100, 4);
-                    }
-                }
-
                 $pcId = $resolver->resolve($cart_item->id, $options->code ?? null);
 
                 SaleReturnDetail::create([
@@ -409,18 +368,14 @@ class SalesReturnController extends Controller
                     'product_code'             => $options->code ?? null,
                     'product_code_id'          => $pcId,
                     'category'                 => $options->category ?? null,
-                    'hsn'                      => $options->hsn ?? null,
                     'unit'                     => $options->unit ?? null,
                     'mrp'                      => $vals['mrp'],
                     'rate'                     => $vals['rate'],
                     'tax_percent'              => is_numeric($vals['tax_percent']) ? intval($vals['tax_percent']) : null,
                     'product_tax_amount'       => $vals['tax_amount'],
                     'tax_amount'               => $vals['tax_amount'],
-                    'cash_discount_percent'    => is_numeric($vals['cash_discount_percent']) ? intval($vals['cash_discount_percent']) : null,
-                    'cash_discount_amount'     => $vals['cash_discount_amount'],
                     'product_discount_amount'  => $vals['discount_amount'],
                     'product_discount_type'    => $options->product_discount_type ?? null,
-                    'discount_percent'         => $discount_percent,
                     'quantity'                 => $cart_item->qty,
                     'price'                    => $cart_item->price,
                     'unit_price'               => $vals['unit_price'],
@@ -438,7 +393,7 @@ class SalesReturnController extends Controller
             // receipt handling for update is performed via helper below
             // on update: either create/sync or delete/restore based on checkbox
             if ($request->boolean('create_receipt')) {
-                $this->createOrSyncReceipt($sale_return, floatval($sale_return->overall_net_rate ?? 0));
+                $this->createOrSyncReceipt($sale_return, floatval($sale_return->overall_amount ?? $sale_return->total_amount ?? 0));
             } else {
                 $this->deleteReceiptAndRestore($sale_return);
             }

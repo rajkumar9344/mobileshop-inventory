@@ -34,8 +34,8 @@ return new class extends Migration
                 $table->bigInteger('due_amount_temp')->nullable()->after('paid_amount_temp');
             }
 
-            // Overall calculation columns (overall_tcs_percent is still integer)
-            if (!Schema::hasColumn('sale_returns', 'overall_tcs_percent_temp')) {
+            // Overall calculation columns (overall_tcs_percent may not exist if removed during cleanup)
+            if (!Schema::hasColumn('sale_returns', 'overall_tcs_percent_temp') && Schema::hasColumn('sale_returns', 'overall_tcs_percent')) {
                 $table->bigInteger('overall_tcs_percent_temp')->nullable()->after('overall_tax_amount');
             }
         });
@@ -47,7 +47,9 @@ return new class extends Migration
         DB::statement("UPDATE sale_returns SET total_amount_temp = total_amount WHERE total_amount IS NOT NULL");
         DB::statement("UPDATE sale_returns SET paid_amount_temp = paid_amount WHERE paid_amount IS NOT NULL");
         DB::statement("UPDATE sale_returns SET due_amount_temp = due_amount WHERE due_amount IS NOT NULL");
-        DB::statement("UPDATE sale_returns SET overall_tcs_percent_temp = overall_tcs_percent WHERE overall_tcs_percent IS NOT NULL");
+        if (Schema::hasColumn('sale_returns', 'overall_tcs_percent')) {
+            DB::statement("UPDATE sale_returns SET overall_tcs_percent_temp = overall_tcs_percent WHERE overall_tcs_percent IS NOT NULL");
+        }
 
         // Drop old INTEGER columns
         Schema::table('sale_returns', function (Blueprint $table) {
@@ -128,7 +130,7 @@ return new class extends Migration
             }
 
             // Overall calculation columns
-            if (!Schema::hasColumn('sale_returns', 'overall_tcs_percent_temp')) {
+            if (!Schema::hasColumn('sale_returns', 'overall_tcs_percent_temp') && Schema::hasColumn('sale_returns', 'overall_tcs_percent')) {
                 $table->integer('overall_tcs_percent_temp')->nullable()->after('overall_tax_amount');
             }
         });
@@ -140,7 +142,9 @@ return new class extends Migration
         DB::statement("UPDATE sale_returns SET total_amount_temp = LEAST(total_amount, 2147483647) WHERE total_amount IS NOT NULL");
         DB::statement("UPDATE sale_returns SET paid_amount_temp = LEAST(paid_amount, 2147483647) WHERE paid_amount IS NOT NULL");
         DB::statement("UPDATE sale_returns SET due_amount_temp = LEAST(due_amount, 2147483647) WHERE due_amount IS NOT NULL");
-        DB::statement("UPDATE sale_returns SET overall_tcs_percent_temp = LEAST(overall_tcs_percent, 2147483647) WHERE overall_tcs_percent IS NOT NULL");
+        if (Schema::hasColumn('sale_returns', 'overall_tcs_percent')) {
+            DB::statement("UPDATE sale_returns SET overall_tcs_percent_temp = LEAST(overall_tcs_percent, 2147483647) WHERE overall_tcs_percent IS NOT NULL");
+        }
 
         // Drop BIGINT columns
         Schema::table('sale_returns', function (Blueprint $table) {

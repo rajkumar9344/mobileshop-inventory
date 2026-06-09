@@ -14,7 +14,7 @@ class AddCreateReceiptToSaleReturns extends Migration
     public function up()
     {
         Schema::table('sale_returns', function (Blueprint $table) {
-            $table->boolean('create_receipt')->default(false)->nullable()->after('overall_net_rate');
+            $table->boolean('create_receipt')->default(false)->nullable()->after('overall_amount');
         });
     }
 

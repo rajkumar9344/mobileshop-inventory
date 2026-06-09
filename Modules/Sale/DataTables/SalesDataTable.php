@@ -14,12 +14,6 @@ class SalesDataTable extends DataTable
     public function dataTable($query) {
         $dt = datatables()
             ->eloquent($query)
-            ->addColumn('overall_cgst', function ($data) {
-                return format_currency($data->overall_cgst ?? 0);
-            })
-            ->addColumn('overall_sgst', function ($data) {
-                return format_currency($data->overall_sgst ?? 0);
-            })
             ->addColumn('payment_method', function ($data) {
                 return $data->payment_method ?? ($data->payment_mode ?? '');
             })
@@ -27,9 +21,7 @@ class SalesDataTable extends DataTable
                 return format_currency($data->overall_tax_amount ?? $data->tax_amount ?? 0);
             })
             ->addColumn('overall_amount', function ($data) {
-                // Display the final payable (overall_net_rate) when available so the
-                // list matches the actual amount customers are charged after adjustments.
-                return format_currency($data->overall_net_rate ?: $data->overall_amount ?: $data->total_amount ?: 0);
+                return format_currency($data->overall_amount ?: $data->total_amount ?: 0);
             })
             ->addColumn('paid_amount', function ($data) {
                 return format_currency($data->paid_amount ?? 0);
@@ -212,13 +204,6 @@ class SalesDataTable extends DataTable
                 ->title('Area')
                 ->className('text-center align-middle'),
 
-            Column::computed('overall_cgst')
-                ->title('CGST')
-                ->className('text-end align-middle'),
-
-            Column::computed('overall_sgst')
-                ->title('SGST')
-                ->className('text-end align-middle'),
 
             Column::computed('overall_tax_amount')
                 ->title('TAX Amount')

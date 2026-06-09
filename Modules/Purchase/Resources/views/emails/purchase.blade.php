@@ -78,7 +78,7 @@
                 <p style="margin:0">Attached is your purchase bill. You can download the PDF attachment for your records.</p>
             </div>
 
-            <div class="total">Total Amount: {{ format_currency($purchase->overall_net_rate ?: $purchase->overall_amount ?: $purchase->total_amount ?: 0) }}</div>
+            <div class="total">Total Amount: {{ format_currency($purchase->overall_amount ?: $purchase->total_amount ?: 0) }}</div>
         </div>
 
         <div class="footer">

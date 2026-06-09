@@ -67,7 +67,7 @@ Removed: country, gst_no, pan_no, aadhar_no, terms_days, cash_discount, addition
 Added: `vat_id` field (varchar 20)
 Files changed: `create.blade.php`, `edit.blade.php`, `StoreCustomerRequest.php`, `UpdateCustomerRequest.php`, `Customer.php`, `CustomersController.php`
 Migration: `database/migrations/2026_06_09_155808_add_vat_id_to_customers_table.php`
-**DB action required:** Create `mobileshop_inventory` DB and run `php artisan migrate`
+**DB status:** `php artisan migrate:fresh --seed` completed successfully on 2026-06-09
 
 #### Supplier (`Modules/People` — suppliers)
 Removed: country, gst_no, bank_name, account_no, ifsc, branch, style (Type dropdown), less_discount_percent (additional discount%)
@@ -108,6 +108,21 @@ All People module migration files were edited directly (DB not yet initialised �
 **Show views cleaned:**
 - `customers/show.blade.php` — removed Country, GST, PAN, Aadhaar, discounts, salesman, Del.Mode; added VAT ID
 - `suppliers/show.blade.php` — removed Country, GST, bank details, style, discount%
+
+### Bigint Conversion Migration Fixes (COMPLETE ✓)
+
+The bigint conversion migrations (added before the India-field cleanup) referenced removed columns in `->after()` and `DB::statement()` calls. Fixed during `migrate:fresh` on 2026-06-09:
+
+**Files fixed:**
+- `2026_01_23_132000_convert_sales_details_decimals_to_bigint_final.php` — removed `->after('hsn')` (hsn removed from sales_details); prevented `cash_discount_amount` re-creation in step 5
+- `2026_01_27_000002_add_create_receipt_to_sale_returns.php` — changed `->after('overall_net_rate')` → `->after('overall_amount')`
+- `2026_02_12_171205_convert_purchase_details_amounts_to_bigint.php` — guarded `cash_discount_amount_temp` creation; removed `->after('discount_percent')` / `->after('cash_discount_percent')`
+- `2026_02_12_171537_convert_purchase_return_details_amounts_to_bigint.php` — same pattern as purchase_details
+- `2026_02_12_174808_convert_sale_return_details_remaining_amounts_to_bigint.php` — guarded `cash_discount_amount_temp`; removed bad `->after()` refs
+- `2026_02_12_173413_convert_purchase_returns_amounts_to_bigint.php` — comprehensive fix: guarded all `overall_cgst/sgst/igst/other/adj/net_rate` temp columns and their UPDATEs; fixed `overall_amount_temp ->after('overall_tcs_percent')` → `->after('overall_tax_amount_temp')`
+- `2026_02_12_174326_convert_sale_returns_amounts_to_bigint.php` — guarded `overall_tcs_percent_temp` creation and its UPDATE
+
+**Pattern:** For each removed column X: `&& Schema::hasColumn(table, 'X')` guard on temp column creation; `if (Schema::hasColumn(table, 'X'))` guard on UPDATE statement; `->after('removed_col')` changed to valid existing column or removed.
 
 ---
 

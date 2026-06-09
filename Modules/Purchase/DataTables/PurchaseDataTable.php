@@ -33,7 +33,7 @@ class PurchaseDataTable extends DataTable
                 return format_currency($data->overall_tax_amount ?? $data->tax_amount ?? 0);
             })
             ->addColumn('overall_bill_amount', function ($data) {
-                return format_currency($data->overall_net_rate ?? $data->total_amount ?? 0);
+                return format_currency($data->overall_amount ?? $data->total_amount ?? 0);
             })
             ->addColumn('paid_amount', function ($data) {
                 return format_currency($data->paid_amount ?? 0);

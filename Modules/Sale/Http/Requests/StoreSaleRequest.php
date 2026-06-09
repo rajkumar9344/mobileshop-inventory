@@ -23,10 +23,9 @@ class StoreSaleRequest extends FormRequest
             'vehicle_no' => 'nullable|string|max:30',
             // allow negative balances (leading minus) as customers can have credits
             'opening_balance' => $isDraft ? 'nullable|regex:/^-?[0-9.,]+$/' : 'required|regex:/^-?[0-9.,]+$/',
-            'days' => 'nullable|integer|min:0|max:9999',
             'phone' => ['nullable','string','max:10','regex:/^[0-9]+$/'],
             'discount_type' => 'nullable|alpha|size:1',
-            'discount_amount' => 'nullable|numeric|lte:overall_net_rate',
+            'discount_amount' => 'nullable|numeric|lte:overall_amount',
             // 'reference' => 'required|string|max:255', // Auto-generated in model
             'tax_percentage' => $isDraft ? 'nullable|integer|min:0|max:100' : 'required|integer|min:0|max:100',
             'discount_percentage' => $isDraft ? 'nullable|integer|min:0|max:100' : 'required|integer|min:0|max:100',
@@ -42,7 +41,7 @@ class StoreSaleRequest extends FormRequest
             $rules['customer_id'] = 'required|numeric';
             $rules['bill_type'] = 'required|string|in:Cash,Credit';
             // Ensure paid amount is numeric and not greater than the computed net rate
-            $rules['paid_amount'] = 'required_if:bill_type,Cash|nullable|numeric|lte:overall_net_rate';
+            $rules['paid_amount'] = 'required_if:bill_type,Cash|nullable|numeric|lte:overall_amount';
         } else {
             $rules['customer_id'] = 'nullable|numeric';
             $rules['bill_type'] = 'nullable|string|in:Cash,Credit';
@@ -58,7 +57,7 @@ class StoreSaleRequest extends FormRequest
     protected function prepareForValidation()
     {
         $this->merge($this->normalizeNumericFields([
-            'overall_net_rate',
+            'overall_amount',
             'paid_amount',
             'discount_amount',
             'opening_balance',

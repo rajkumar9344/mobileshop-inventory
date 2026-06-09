@@ -333,21 +333,6 @@ class Sale extends Model
         $this->attributes['overall_taxable_amount'] = $this->toMinor($value);
     }
 
-    public function setOverallCgstAttribute($value)
-    {
-        $this->attributes['overall_cgst'] = $this->toMinor($value);
-    }
-
-    public function setOverallSgstAttribute($value)
-    {
-        $this->attributes['overall_sgst'] = $this->toMinor($value);
-    }
-
-    public function setOverallIgstAttribute($value)
-    {
-        $this->attributes['overall_igst'] = $this->toMinor($value);
-    }
-
     public function setOverallTaxAmountAttribute($value)
     {
         $this->attributes['overall_tax_amount'] = $this->toMinor($value);
@@ -358,28 +343,11 @@ class Sale extends Model
         $this->attributes['overall_amount'] = $this->toMinor($value);
     }
 
-    public function setOverallOtherAttribute($value)
-    {
-        $this->attributes['overall_other'] = $this->toMinor($value);
-    }
-
-    public function setOverallAdjAttribute($value)
-    {
-        $this->attributes['overall_adj'] = $this->toMinor($value);
-    }
-
-    public function setOverallNetRateAttribute($value)
-    {
-        $this->attributes['overall_net_rate'] = $this->toMinor($value);
-    }
-
     /**
      * Get the total amount to use for status calculation (Sales use overall_amount)
      */
     protected function getTotalAmountForStatus()
     {
-        // Prefer overall_net_rate (the final payable amount after adjustments/other)
-        // Fallback to overall_amount and then to total_amount for backward compatibility.
-        return $this->overall_net_rate ?? $this->overall_amount ?? $this->total_amount ?? 0;
+        return $this->overall_amount ?? $this->total_amount ?? 0;
     }
 }

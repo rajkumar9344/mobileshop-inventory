@@ -93,15 +93,8 @@
                             <input type="hidden" name="overall_quantity" id="hidden_overall_quantity" value="{{ old('overall_quantity', $sale_return->overall_quantity ?? 0) }}">
                             <input type="hidden" name="overall_gross_amount" id="hidden_overall_gross_amount" value="{{ old('overall_gross_amount', $sale_return->overall_gross_amount ?? 0) }}">
                             <input type="hidden" name="overall_taxable_amount" id="hidden_overall_taxable_amount" value="{{ old('overall_taxable_amount', $sale_return->overall_taxable_amount ?? 0) }}">
-                            <input type="hidden" name="overall_cgst" id="hidden_overall_cgst" value="{{ old('overall_cgst', $sale_return->overall_cgst ?? 0) }}">
-                            <input type="hidden" name="overall_sgst" id="hidden_overall_sgst" value="{{ old('overall_sgst', $sale_return->overall_sgst ?? 0) }}">
-                            <input type="hidden" name="overall_igst" id="hidden_overall_igst" value="{{ old('overall_igst', $sale_return->overall_igst ?? 0) }}">
                             <input type="hidden" name="overall_tax_amount" id="hidden_overall_tax_amount" value="{{ old('overall_tax_amount', $sale_return->overall_tax_amount ?? 0) }}">
-                            <input type="hidden" name="overall_tcs_percent" id="hidden_overall_tcs_percent" value="{{ old('overall_tcs_percent', $sale_return->overall_tcs_percent ?? 0) }}">
                             <input type="hidden" name="overall_amount" id="hidden_overall_amount" value="{{ old('overall_amount', $sale_return->overall_amount ?? 0) }}">
-                            <input type="hidden" name="overall_other" id="hidden_overall_other" value="{{ old('overall_other', $sale_return->overall_other ?? 0) }}">
-                            <input type="hidden" name="overall_adj" id="hidden_overall_adj" value="{{ old('overall_adj', $sale_return->overall_adj ?? 0) }}">
-                            <input type="hidden" name="overall_net_rate" id="hidden_overall_net_rate" value="{{ old('overall_net_rate', $sale_return->overall_net_rate ?? 0) }}">
 
                             <div class="form-group">
                                 <label for="note">Note (If Needed)</label>

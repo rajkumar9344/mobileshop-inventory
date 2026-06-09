@@ -157,8 +157,6 @@
                             <input type="hidden" name="discount_percentage" id="hidden_discount_percentage" value="0">
                             <input type="hidden" name="shipping_amount" id="hidden_shipping_amount" value="0">
                             <input type="hidden" name="total_amount" id="hidden_total_amount" value="0">
-                            <input type="hidden" name="overall_other" id="hidden_overall_other" value="{{ $purchase->overall_other ?? 0 }}">
-                            <input type="hidden" name="overall_adj" id="hidden_overall_adj" value="{{ $purchase->overall_adj ?? 0 }}">
                             <input type="hidden" name="status" value="Pending">
 
                             <div class="mt-3 d-flex justify-content-end">

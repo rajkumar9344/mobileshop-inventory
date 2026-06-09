@@ -26,16 +26,12 @@ class SaleDetails extends Model
         'quantity',
         'price',
         'category',
-        'hsn',
         'mrp',
         'rate',
         'tax_percentage',
         'tax_amount',
-        'cash_discount_percentage',
-        'cash_discount_amount',
         'discount_amount',
         'discount_type',
-        'discount_percent',
         'unit_price',
         'sub_total',
         'product_discount_amount',
@@ -61,7 +57,6 @@ class SaleDetails extends Model
             'product_name' => '',
             'product_code' => '',
             'category' => null,
-            'hsn' => null,
             'product_price' => 0
         ]);
     }
@@ -110,10 +105,6 @@ class SaleDetails extends Model
         return $value / 100;
     }
 
-    public function getCashDiscountAmountAttribute($value) {
-        return $value / 100;
-    }
-
     public function getDiscountAmountAttribute($value) {
         return $value / 100;
     }
@@ -127,6 +118,5 @@ class SaleDetails extends Model
     public function setMrpAttribute($value) { $this->attributes['mrp'] = $this->toMinor($value); }
     public function setRateAttribute($value) { $this->attributes['rate'] = $this->toMinor($value); }
     public function setTaxAmountAttribute($value) { $this->attributes['tax_amount'] = $this->toMinor($value); }
-    public function setCashDiscountAmountAttribute($value) { $this->attributes['cash_discount_amount'] = $this->toMinor($value); }
     public function setDiscountAmountAttribute($value) { $this->attributes['discount_amount'] = $this->toMinor($value); }
 }

@@ -105,15 +105,8 @@
                             <input type="hidden" name="overall_quantity" id="hidden_overall_quantity" value="{{ $purchase_return->overall_quantity ?? 0 }}">
                             <input type="hidden" name="overall_gross_amount" id="hidden_overall_gross_amount" value="{{ $purchase_return->overall_gross_amount ?? 0 }}">
                             <input type="hidden" name="overall_taxable_amount" id="hidden_overall_taxable_amount" value="{{ $purchase_return->overall_taxable_amount ?? 0 }}">
-                            <input type="hidden" name="overall_cgst" id="hidden_overall_cgst" value="{{ $purchase_return->overall_cgst ?? 0 }}">
-                            <input type="hidden" name="overall_sgst" id="hidden_overall_sgst" value="{{ $purchase_return->overall_sgst ?? 0 }}">
-                            <input type="hidden" name="overall_igst" id="hidden_overall_igst" value="{{ $purchase_return->overall_igst ?? 0 }}">
                             <input type="hidden" name="overall_tax_amount" id="hidden_overall_tax_amount" value="{{ $purchase_return->overall_tax_amount ?? 0 }}">
-                            <input type="hidden" name="overall_tcs_percent" id="hidden_overall_tcs_percent" value="{{ $purchase_return->overall_tcs_percent ?? 0 }}">
                             <input type="hidden" name="overall_amount" id="hidden_overall_amount" value="{{ $purchase_return->overall_amount ?? 0 }}">
-                            <input type="hidden" name="overall_other" id="hidden_overall_other" value="{{ $purchase_return->overall_other ?? 0 }}">
-                            <input type="hidden" name="overall_adj" id="hidden_overall_adj" value="{{ $purchase_return->overall_adj ?? 0 }}">
-                            <input type="hidden" name="overall_net_rate" id="hidden_overall_net_rate" value="{{ $purchase_return->overall_net_rate ?? 0 }}">
 
 
 

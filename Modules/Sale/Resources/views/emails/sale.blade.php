@@ -78,7 +78,7 @@
                 <p style="margin:0">Attached is your invoice. You can download the PDF attachment for your records.</p>
             </div>
 
-            <div class="total">Total Amount: {{ format_currency($sale->overall_net_rate ?: $sale->overall_amount ?: $sale->total_amount ?: 0) }}</div>
+            <div class="total">Total Amount: {{ format_currency($sale->overall_amount ?: $sale->total_amount ?: 0) }}</div>
         </div>
 
         <div class="footer">

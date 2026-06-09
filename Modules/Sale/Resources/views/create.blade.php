@@ -73,8 +73,6 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <input type="hidden" name="days" id="days" value="0">
-                                <input type="hidden" name="due_date" id="due_date">
                                
                                 <div class="col-md-2 pr-1">
                                     <label for="opening_balance" class="mb-1">Balance <span class="text-danger">*</span></label>
@@ -84,15 +82,6 @@
                                     <label for="excess_amount_display" class="mb-1">Excess Amount</label>
                                     <input type="text" class="form-control" id="excess_amount_display" readonly value="0.00">
                                     <input type="hidden" name="excess_amount" id="excess_amount" value="0.00">
-                                </div>
-                                <!-- Discount Type removed per request -->
-                                <div class="col-md-3 pr-1">
-                                    <label for="vehicle_name" class="mb-1">Vehicle Name</label>
-                                    <input type="text" class="form-control" name="vehicle_name" id="vehicle_name" maxlength="60" value="{{ old('vehicle_name') }}" placeholder="Vehicle Name">
-                                </div>
-                                <div class="col-md-3 pr-1">
-                                    <label for="vehicle_no" class="mb-1">Vehicle No</label>
-                                    <input type="text" class="form-control" name="vehicle_no" id="vehicle_no" maxlength="30" value="{{ old('vehicle_no') }}" placeholder="Vehicle No">
                                 </div>
                             </div>
                             </div>
@@ -191,15 +180,8 @@
                             <input type="hidden" id="hidden_overall_quantity" name="overall_quantity">
                             <input type="hidden" id="hidden_overall_gross_amount" name="overall_gross_amount">
                             <input type="hidden" id="hidden_overall_taxable_amount" name="overall_taxable_amount">
-                            <input type="hidden" id="hidden_overall_cgst" name="overall_cgst">
-                            <input type="hidden" id="hidden_overall_sgst" name="overall_sgst">
-                            <input type="hidden" id="hidden_overall_igst" name="overall_igst">
                             <input type="hidden" id="hidden_overall_tax_amount" name="overall_tax_amount">
-                            <input type="hidden" id="hidden_overall_tcs_percent" name="overall_tcs_percent">
                             <input type="hidden" id="hidden_overall_amount" name="overall_amount">
-                            <input type="hidden" id="hidden_overall_other" name="overall_other">
-                            <input type="hidden" id="hidden_overall_adj" name="overall_adj">
-                            <input type="hidden" id="hidden_overall_net_rate" name="overall_net_rate">
                             <input type="hidden" name="is_draft" id="is_draft" value="0">
                             <input type="hidden" name="draft_id" id="draft_id" value="">
 
@@ -258,19 +240,11 @@
 
             // --- Shared validation helpers ---
             function getNetRate() {
-                // Ensure hidden fields are fresh (Livewire may update display elements)
                 if (typeof updateHiddenFields === 'function') updateHiddenFields();
-
-                var hiddenVal = $('#hidden_overall_net_rate').val();
-                if (hiddenVal && String(hiddenVal).trim() !== '') {
-                    return parseFloat(String(hiddenVal).replace(/[^0-9.\-]/g, '')) || 0;
-                }
-
                 var overallEl = document.getElementById('overall_net_rate');
                 if (overallEl && overallEl.dataset && overallEl.dataset.raw) {
                     return parseFloat(String(overallEl.dataset.raw).replace(/[^0-9.\-]/g, '')) || 0;
                 }
-
                 var visible = $('#overall_net_rate').val() || $('#overall_net_rate').text() || '0';
                 return parseFloat(String(visible).replace(/[^0-9.\-]/g, '')) || 0;
             }
@@ -345,7 +319,6 @@
                 
                 // Get total from cart display or hidden field
                 var totalAmount = parseFloat($('#hidden_total_amount').val()) || 0;
-                // If still 0, try to get from livewire overall_net_rate
                 if (totalAmount === 0) {
                     var netRateVal = $('#overall_net_rate').val() || '';
                     var amountVal = $('#overall_amount').val() || '';
@@ -614,9 +587,6 @@
                     var val = overallEl.value || '';
                     cartTotal = parseFloat(String(val).replace(/[^0-9.\-]/g, '')) || 0;
                 }
-            } else if (document.getElementById('hidden_overall_net_rate')) {
-                var raw = document.getElementById('hidden_overall_net_rate').value || document.getElementById('hidden_total_amount').value || '0';
-                cartTotal = parseFloat(String(raw).replace(/[^0-9.\-]/g, '')) || 0;
             } else {
                 var cartTotalElement = document.querySelector('.table-responsive .table .table-striped tr:last-child th:last-child');
                 var text = cartTotalElement ? cartTotalElement.textContent : '';
@@ -629,29 +599,15 @@
             const overallQuantity = document.getElementById('overall_quantity')?.value || '0';
             const overallGrossAmount = document.getElementById('overall_gross_amount')?.value || '0';
             const overallTaxableAmount = document.getElementById('overall_taxable_amount')?.value || '0';
-            const overallCgst = document.getElementById('overall_cgst')?.value || '0';
-            const overallSgst = document.getElementById('overall_sgst')?.value || '0';
-            const overallIgst = document.getElementById('overall_igst')?.value || '0';
             const overallTaxAmount = document.getElementById('overall_tax_amount')?.value || '0';
-            const overallTcsPercent = document.getElementById('overall_tcs_percent')?.value || '0';
             const overallAmount = document.getElementById('overall_amount')?.value || '0';
-            const overallOther = document.getElementById('overall_other')?.value || '0';
-            const overallAdj = document.getElementById('overall_adj')?.value || '0';
-            const overallNetRate = document.getElementById('overall_net_rate')?.value || '0';
 
             document.getElementById('hidden_overall_nos').value = overallNos;
             document.getElementById('hidden_overall_quantity').value = overallQuantity;
             document.getElementById('hidden_overall_gross_amount').value = overallGrossAmount;
             document.getElementById('hidden_overall_taxable_amount').value = overallTaxableAmount;
-            document.getElementById('hidden_overall_cgst').value = overallCgst;
-            document.getElementById('hidden_overall_sgst').value = overallSgst;
-            document.getElementById('hidden_overall_igst').value = overallIgst;
             document.getElementById('hidden_overall_tax_amount').value = overallTaxAmount;
-            document.getElementById('hidden_overall_tcs_percent').value = overallTcsPercent;
             document.getElementById('hidden_overall_amount').value = overallAmount;
-            document.getElementById('hidden_overall_other').value = overallOther;
-            document.getElementById('hidden_overall_adj').value = overallAdj;
-            document.getElementById('hidden_overall_net_rate').value = overallNetRate;
 
             // Calculate and update balance
             updateBalance();
@@ -661,7 +617,7 @@
 
         // Function to calculate and update balance
         function updateBalance() {
-            var netRateVal = document.getElementById('overall_net_rate')?.value || document.getElementById('hidden_overall_net_rate')?.value || '0';
+            var netRateVal = document.getElementById('overall_net_rate')?.value || '0';
             const netRate = parseFloat(netRateVal.replace(/,/g, '')) || 0;
             const paidAmount = parseFloat(document.getElementById('paid_amount_hidden')?.value || '0');
             const balance = netRate - paidAmount;
@@ -1028,30 +984,16 @@
                 }
 
                 // Explicitly collect Overall Calculations from Livewire component inputs
-                // These may not be included in the form if they're outside the form element
                 var overallFields = [
-                    'overall_nos', 'overall_quantity', 'overall_gross_amount', 
-                    'overall_taxable_amount', 'overall_cgst', 'overall_sgst', 
-                    'overall_igst', 'overall_tax_amount', 'overall_tcs_percent',
-                    'overall_amount', 'overall_net_rate'
+                    'overall_nos', 'overall_quantity', 'overall_gross_amount',
+                    'overall_taxable_amount', 'overall_tax_amount', 'overall_amount'
                 ];
-                
                 overallFields.forEach(function(fieldName) {
                     var element = document.getElementById(fieldName);
                     if (element) {
                         formData.set(fieldName, element.value || '0');
                     }
                 });
-                
-                // Also get overall_other and overall_adj from hidden inputs
-                var overallOtherRaw = document.getElementById('overall_other_raw');
-                if (overallOtherRaw) {
-                    formData.set('overall_other', overallOtherRaw.value || '0');
-                }
-                var overallAdjRaw = document.getElementById('overall_adj_raw');
-                if (overallAdjRaw) {
-                    formData.set('overall_adj', overallAdjRaw.value || '0');
-                }
 
                 // Add draft_id if we have one saved
                 var draftId = $('#draft_id').val();

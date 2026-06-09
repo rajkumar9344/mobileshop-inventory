@@ -138,36 +138,12 @@ class PurchaseReturn extends Model
         $this->attributes['overall_taxable_amount'] = $this->toMinor($value);
     }
 
-    public function setOverallCgstAttribute($value) {
-        $this->attributes['overall_cgst'] = $this->toMinor($value);
-    }
-
-    public function setOverallSgstAttribute($value) {
-        $this->attributes['overall_sgst'] = $this->toMinor($value);
-    }
-
-    public function setOverallIgstAttribute($value) {
-        $this->attributes['overall_igst'] = $this->toMinor($value);
-    }
-
     public function setOverallTaxAmountAttribute($value) {
         $this->attributes['overall_tax_amount'] = $this->toMinor($value);
     }
 
     public function setOverallAmountAttribute($value) {
         $this->attributes['overall_amount'] = $this->toMinor($value);
-    }
-
-    public function setOverallOtherAttribute($value) {
-        $this->attributes['overall_other'] = $this->toMinor($value);
-    }
-
-    public function setOverallAdjAttribute($value) {
-        $this->attributes['overall_adj'] = $this->toMinor($value);
-    }
-
-    public function setOverallNetRateAttribute($value) {
-        $this->attributes['overall_net_rate'] = $this->toMinor($value);
     }
 
     /**

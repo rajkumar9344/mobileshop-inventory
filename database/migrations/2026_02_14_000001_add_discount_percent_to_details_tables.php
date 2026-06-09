@@ -13,13 +13,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Add to sales_details
-        if (Schema::hasTable('sales_details') && !Schema::hasColumn('sales_details', 'discount_percent')) {
-            Schema::table('sales_details', function (Blueprint $table) {
-                $table->decimal('discount_percent', 5, 2)->default(0)->after('discount_type');
-            });
-        }
-
         // Add to purchase_details
         if (Schema::hasTable('purchase_details') && !Schema::hasColumn('purchase_details', 'discount_percent')) {
             Schema::table('purchase_details', function (Blueprint $table) {
@@ -54,12 +47,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if (Schema::hasColumn('sales_details', 'discount_percent')) {
-            Schema::table('sales_details', function (Blueprint $table) {
-                $table->dropColumn('discount_percent');
-            });
-        }
-
         if (Schema::hasColumn('purchase_details', 'discount_percent')) {
             Schema::table('purchase_details', function (Blueprint $table) {
                 $table->dropColumn('discount_percent');

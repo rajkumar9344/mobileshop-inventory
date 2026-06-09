@@ -737,13 +737,6 @@
     <!-- Overall Calculations Section -->
     <div class="border p-3 mb-3">
         <h5>Overall Calculations</h5>
-        {{-- Hidden fields so JS/controller still receives values for backward compatibility --}}
-        <input type="hidden" name="overall_cgst"        id="overall_cgst"        value="0">
-        <input type="hidden" name="overall_sgst"        id="overall_sgst"        value="0">
-        <input type="hidden" name="overall_igst"        id="overall_igst"        value="0">
-        <input type="hidden" name="overall_tcs_percent" id="overall_tcs_percent" value="0">
-        <input type="hidden" id="overall_other_raw" name="overall_other" value="0" wire:model.live="overall_other">
-        <input type="hidden" id="overall_adj_raw"   name="overall_adj"   value="0" wire:model.live="adjustment">
         <div class="form-row">
             <div class="col-md-2 pr-1">
                 <label for="overall_nos">Nos</label>
@@ -766,14 +759,8 @@
                 <input type="text" class="form-control" name="overall_tax_amount" id="overall_tax_amount" value="{{ format_currency($this->overall_calculations['overall_tax_amount'], true, false) }}" readonly>
             </div>
             <div class="col-md-2 pr-1">
-                <label for="overall_amount">Amount</label>
-                <input type="text" class="form-control" name="overall_amount" id="overall_amount" value="{{ format_currency($this->overall_calculations['overall_amount'], true, false) }}" readonly>
-            </div>
-        </div>
-        <div class="form-row mt-2">
-            <div class="col-md-2 pr-1">
-                <label for="overall_net_rate">Total Amount</label>
-                <input type="text" class="form-control" name="overall_net_rate" id="overall_net_rate" value="{{ format_currency(in_array($cart_instance, ['sale','sale_edit','sale_return','quotation','quotation_edit','sale_view','sale_return_view','quotation_view']) ? round($this->overall_calculations['overall_net_rate'] ?? 0, 0) : ($this->overall_calculations['overall_net_rate'] ?? 0), true, false) }}" readonly>
+                <label for="overall_amount">Total Amount</label>
+                <input type="text" class="form-control" name="overall_amount" id="overall_net_rate" value="{{ format_currency(in_array($cart_instance, ['sale','sale_edit','sale_return','quotation','quotation_edit','sale_view','sale_return_view','quotation_view']) ? round($this->overall_calculations['overall_amount'] ?? 0, 0) : ($this->overall_calculations['overall_amount'] ?? 0), true, false) }}" readonly>
             </div>
         </div>
     </div>

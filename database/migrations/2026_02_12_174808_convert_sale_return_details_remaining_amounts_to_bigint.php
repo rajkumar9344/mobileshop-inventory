@@ -18,11 +18,11 @@ return new class extends Migration
             if (!Schema::hasColumn('sale_return_details', 'mrp_temp')) {
                 $table->bigInteger('mrp_temp')->nullable()->after('unit');
             }
-            if (!Schema::hasColumn('sale_return_details', 'cash_discount_amount_temp')) {
-                $table->bigInteger('cash_discount_amount_temp')->nullable()->after('cash_discount_percent');
+            if (!Schema::hasColumn('sale_return_details', 'cash_discount_amount_temp') && Schema::hasColumn('sale_return_details', 'cash_discount_amount')) {
+                $table->bigInteger('cash_discount_amount_temp')->nullable();
             }
             if (!Schema::hasColumn('sale_return_details', 'rate_temp')) {
-                $table->bigInteger('rate_temp')->nullable()->after('cash_discount_amount_temp');
+                $table->bigInteger('rate_temp')->nullable();
             }
             if (!Schema::hasColumn('sale_return_details', 'amount_temp')) {
                 $table->bigInteger('amount_temp')->nullable()->after('tax_percent');
@@ -31,7 +31,9 @@ return new class extends Migration
 
         // Copy data from old INTEGER columns to new BIGINT temp columns
         DB::statement("UPDATE sale_return_details SET mrp_temp = mrp WHERE mrp IS NOT NULL");
-        DB::statement("UPDATE sale_return_details SET cash_discount_amount_temp = cash_discount_amount WHERE cash_discount_amount IS NOT NULL");
+        if (Schema::hasColumn('sale_return_details', 'cash_discount_amount')) {
+            DB::statement("UPDATE sale_return_details SET cash_discount_amount_temp = cash_discount_amount WHERE cash_discount_amount IS NOT NULL");
+        }
         DB::statement("UPDATE sale_return_details SET rate_temp = rate WHERE rate IS NOT NULL");
         DB::statement("UPDATE sale_return_details SET amount_temp = amount WHERE amount IS NOT NULL");
 
@@ -79,11 +81,11 @@ return new class extends Migration
             if (!Schema::hasColumn('sale_return_details', 'mrp_temp')) {
                 $table->integer('mrp_temp')->nullable()->after('unit');
             }
-            if (!Schema::hasColumn('sale_return_details', 'cash_discount_amount_temp')) {
-                $table->integer('cash_discount_amount_temp')->nullable()->after('cash_discount_percent');
+            if (!Schema::hasColumn('sale_return_details', 'cash_discount_amount_temp') && Schema::hasColumn('sale_return_details', 'cash_discount_amount')) {
+                $table->integer('cash_discount_amount_temp')->nullable();
             }
             if (!Schema::hasColumn('sale_return_details', 'rate_temp')) {
-                $table->integer('rate_temp')->nullable()->after('cash_discount_amount_temp');
+                $table->integer('rate_temp')->nullable();
             }
             if (!Schema::hasColumn('sale_return_details', 'amount_temp')) {
                 $table->integer('amount_temp')->nullable()->after('tax_percent');
@@ -92,7 +94,9 @@ return new class extends Migration
 
         // Copy data back from BIGINT columns to INTEGER temp columns (with clamping for safety)
         DB::statement("UPDATE sale_return_details SET mrp_temp = LEAST(mrp, 2147483647) WHERE mrp IS NOT NULL");
-        DB::statement("UPDATE sale_return_details SET cash_discount_amount_temp = LEAST(cash_discount_amount, 2147483647) WHERE cash_discount_amount IS NOT NULL");
+        if (Schema::hasColumn('sale_return_details', 'cash_discount_amount')) {
+            DB::statement("UPDATE sale_return_details SET cash_discount_amount_temp = LEAST(cash_discount_amount, 2147483647) WHERE cash_discount_amount IS NOT NULL");
+        }
         DB::statement("UPDATE sale_return_details SET rate_temp = LEAST(rate, 2147483647) WHERE rate IS NOT NULL");
         DB::statement("UPDATE sale_return_details SET amount_temp = LEAST(amount, 2147483647) WHERE amount IS NOT NULL");
 

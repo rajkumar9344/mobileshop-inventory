@@ -18,17 +18,13 @@ class UpdateSaleRequest extends FormRequest
 
         $rules = [
             'date' => 'required|date',
-            'due_date' => 'nullable|date',
             'reference' => 'required|string|max:255',
             'area' => 'nullable|string|max:30',
-            'vehicle_name' => 'nullable|string|max:60',
-            'vehicle_no' => 'nullable|string|max:30',
             // allow negative balances (leading minus) as customers can have credits
             'opening_balance' => $isDraft ? 'nullable|regex:/^-?[0-9.,]+$/' : 'required|regex:/^-?[0-9.,]+$/',
-            'days' => 'nullable|integer|min:0|max:9999',
             'phone' => ['nullable','string','max:10','regex:/^[0-9]+$/'],
             'discount_type' => 'nullable|alpha|size:1',
-            'discount_amount' => 'nullable|numeric|lte:overall_net_rate',
+            'discount_amount' => 'nullable|numeric|lte:overall_amount',
             'tax_percentage' => $isDraft ? 'nullable|integer|min:0|max:100' : 'required|integer|min:0|max:100',
             'discount_percentage' => $isDraft ? 'nullable|integer|min:0|max:100' : 'required|integer|min:0|max:100',
             'shipping_amount' => $isDraft ? 'nullable|numeric' : 'required|numeric',
@@ -43,7 +39,7 @@ class UpdateSaleRequest extends FormRequest
             $rules['customer_id'] = 'required|numeric';
             $rules['bill_type'] = 'required|string|in:Cash,Credit';
             // Prevent paid amount exceeding the computed net rate on update
-            $rules['paid_amount'] = 'required_if:bill_type,Cash|nullable|numeric|lte:overall_net_rate';
+            $rules['paid_amount'] = 'required_if:bill_type,Cash|nullable|numeric|lte:overall_amount';
         } else {
             $rules['customer_id'] = 'nullable|numeric';
             $rules['bill_type'] = 'nullable|string|in:Cash,Credit';
@@ -59,7 +55,7 @@ class UpdateSaleRequest extends FormRequest
     protected function prepareForValidation()
     {
         $this->merge($this->normalizeNumericFields([
-            'overall_net_rate',
+            'overall_amount',
             'paid_amount',
             'discount_amount',
             'opening_balance',

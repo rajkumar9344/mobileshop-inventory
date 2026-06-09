@@ -13,30 +13,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('sales', function (Blueprint $table) {
-            if (! Schema::hasColumn('sales', 'vehicle_name')) {
-                $table->string('vehicle_name')->nullable()->after('note');
-            }
-            if (! Schema::hasColumn('sales', 'vehicle_no')) {
-                $table->string('vehicle_no')->nullable()->after('vehicle_name');
-            }
-        });
+        // vehicle_name and vehicle_no removed — not used in mobile shop
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
     public function down()
     {
-        Schema::table('sales', function (Blueprint $table) {
-            if (Schema::hasColumn('sales', 'vehicle_no')) {
-                $table->dropColumn('vehicle_no');
-            }
-            if (Schema::hasColumn('sales', 'vehicle_name')) {
-                $table->dropColumn('vehicle_name');
-            }
-        });
+        // no-op
     }
 };

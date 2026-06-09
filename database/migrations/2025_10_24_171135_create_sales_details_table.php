@@ -19,13 +19,10 @@ return new class extends Migration
             $table->string('product_code');
             $table->integer('quantity');
             $table->string('category')->nullable();
-            $table->string('hsn')->nullable();
             $table->decimal('mrp', 15, 2)->default(0);
             $table->decimal('rate', 15, 2)->default(0);
             $table->decimal('tax_percentage', 5, 2)->default(0);
             $table->decimal('tax_amount', 15, 2)->default(0);
-            $table->decimal('cash_discount_percentage', 5, 2)->default(0);
-            $table->decimal('cash_discount_amount', 15, 2)->default(0);
             $table->decimal('discount_amount', 15, 2)->default(0);
             $table->string('discount_type')->default('fixed');
             $table->decimal('unit_price', 15, 2)->default(0);

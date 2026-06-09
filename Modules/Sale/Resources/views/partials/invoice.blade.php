@@ -137,7 +137,7 @@
 
         @php
             $finalDiscount = $sale->discount_amount ?? 0;
-            $displayTotal  = ($sale->overall_net_rate ?? $sale->total_amount ?? 0) - $finalDiscount;
+            $displayTotal  = ($sale->overall_amount ?? $sale->total_amount ?? 0) - $finalDiscount;
         @endphp
 
         <table style="width:100%; border-collapse:collapse; margin-top:4px; font-size:10px;">

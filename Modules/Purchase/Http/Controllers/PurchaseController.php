@@ -92,8 +92,7 @@ class PurchaseController extends Controller
         $totals = [];
         $totals['overall_count'] = $base->count();
 
-        // Use COALESCE to sum overall_net_rate with fallback to total_amount
-        $totals['overall_total_amount'] = $base->sum(DB::raw('COALESCE(overall_net_rate, total_amount)')) / 100;
+        $totals['overall_total_amount'] = $base->sum(DB::raw('COALESCE(overall_amount, total_amount)')) / 100;
 
         // Outstanding (sum of positive due_amounts)
         $totals['overall_outstanding'] = $base->sum(DB::raw('CASE WHEN due_amount > 0 THEN due_amount ELSE 0 END')) / 100;
@@ -105,9 +104,6 @@ class PurchaseController extends Controller
         $totals['overall_balance'] = $base->sum(DB::raw('COALESCE(due_amount,0)')) / 100;
 
         $totals['overall_paid_amount'] = $base->sum(DB::raw('COALESCE(paid_amount,0)')) / 100;
-        $totals['overall_cgst'] = $base->sum(DB::raw('COALESCE(overall_cgst,0)')) / 100;
-        $totals['overall_sgst'] = $base->sum(DB::raw('COALESCE(overall_sgst,0)')) / 100;
-        $totals['overall_igst'] = $base->sum(DB::raw('COALESCE(overall_igst,0)')) / 100;
         $totals['overall_tax_amount'] = $base->sum(DB::raw('COALESCE(overall_tax_amount, tax_amount,0)')) / 100;
         // Count distinct suppliers in the filtered set
         $totals['overall_supplier_count'] = $base->distinct()->count('supplier_id');
@@ -200,15 +196,8 @@ class PurchaseController extends Controller
                     'overall_quantity' => $request->overall_quantity ?? 0,
                     'overall_gross_amount' => $request->overall_gross_amount ?? 0,
                     'overall_taxable_amount' => $request->overall_taxable_amount ?? 0,
-                    'overall_cgst' => $request->overall_cgst ?? 0,
-                    'overall_sgst' => $request->overall_sgst ?? 0,
-                    'overall_igst' => $request->overall_igst ?? 0,
                     'overall_tax_amount' => $request->overall_tax_amount ?? 0,
-                    'overall_tcs_percent' => $request->overall_tcs_percent ?? 0,
                     'overall_amount' => $request->overall_amount ?? 0,
-                    'overall_other' => $request->overall_other ?? 0,
-                    'overall_adj' => $request->overall_adj ?? 0,
-                    'overall_net_rate' => $request->overall_net_rate ?? 0,
                     'purchase_type' => $request->purchase_type ?? 1,
                 ]);
                 $purchase = $existingDraft;
@@ -245,15 +234,8 @@ class PurchaseController extends Controller
                     'overall_quantity' => $request->overall_quantity ?? 0,
                     'overall_gross_amount' => $request->overall_gross_amount ?? 0,
                     'overall_taxable_amount' => $request->overall_taxable_amount ?? 0,
-                    'overall_cgst' => $request->overall_cgst ?? 0,
-                    'overall_sgst' => $request->overall_sgst ?? 0,
-                    'overall_igst' => $request->overall_igst ?? 0,
                     'overall_tax_amount' => $request->overall_tax_amount ?? 0,
-                    'overall_tcs_percent' => $request->overall_tcs_percent ?? 0,
                     'overall_amount' => $request->overall_amount ?? 0,
-                    'overall_other' => $request->overall_other ?? 0,
-                    'overall_adj' => $request->overall_adj ?? 0,
-                    'overall_net_rate' => $request->overall_net_rate ?? 0,
                     'purchase_type' => $request->purchase_type ?? 1,
                 ]);
             }
@@ -306,15 +288,10 @@ class PurchaseController extends Controller
                     'product_code' => $cart_item->options->code,
                     'product_code_id' => $pcId,
                     'category' => $cart_item->options->category ?? '-',
-                    'hsn' => $cart_item->options->hsn ?? '',
                     'unit' => $cart_item->options->unit ?? 'Nos',
                     'quantity' => $cart_item->qty,
-                    'discount_percent' => (float) ($cart_item->options->product_discount_percent ?? 0),
                     'mrp' => $_effectiveMrp,
-                    // Save the user-entered Rate before Discount (from DOM-submitted value, not stale session cart)
                     'rate_before_discount' => $_rateBeforeDiscount,
-                    'cash_discount_percent' => $cart_item->options->cash_discount_percent ?? 0,
-                    'cash_discount_amount' => $cart_item->options->cash_discount_amount ?? 0,
                     // Persist computed values (so DB matches UI calculations)
                     'rate' => $computedRate,
                     'rate_type' => $cart_item->options->rate_type ?? 'N',
@@ -501,7 +478,7 @@ class PurchaseController extends Controller
             DB::transaction(function () use ($request, &$purchase, $resolver) {
                 $cart = Cart::instance('purchase');
                 // Coerce posted strings (may contain commas/currency) to numeric floats
-                $base_total = floatval(str_replace([',', settings()->currency->symbol], '', (string) ($request->overall_net_rate ?? $request->total_amount ?? 0)));
+                $base_total = floatval(str_replace([',', settings()->currency->symbol], '', (string) ($request->overall_amount ?? $request->total_amount ?? 0)));
                 $days = max(0, (int) ($request->days ?? 0));
                 $dueDate = null;
                 try {
@@ -563,15 +540,8 @@ class PurchaseController extends Controller
                     'overall_quantity' => $request->overall_quantity ?? 0,
                     'overall_gross_amount' => $request->overall_gross_amount ?? 0,
                     'overall_taxable_amount' => $request->overall_taxable_amount ?? 0,
-                    'overall_cgst' => $request->overall_cgst ?? 0,
-                    'overall_sgst' => $request->overall_sgst ?? 0,
-                    'overall_igst' => $request->overall_igst ?? 0,
                     'overall_tax_amount' => $request->overall_tax_amount ?? 0,
-                    'overall_tcs_percent' => $request->overall_tcs_percent ?? 0,
                     'overall_amount' => $request->overall_amount ?? 0,
-                    'overall_other' => $request->overall_other ?? 0,
-                    'overall_adj' => $request->overall_adj ?? 0,
-                    'overall_net_rate' => $request->overall_net_rate ?? 0,
                     'purchase_type' => $request->purchase_type ?? 1,
                 ];
 
@@ -624,14 +594,10 @@ class PurchaseController extends Controller
                         'product_code' => $cart_item->options->code,
                         'product_code_id' => $pcId,
                         'category' => $cart_item->options->category ?? '-',
-                        'hsn' => $cart_item->options->hsn ?? '',
                         'unit' => $cart_item->options->unit ?? 'Nos',
                         'quantity' => $cart_item->qty,
-                        'discount_percent' => (float) ($cart_item->options->product_discount_percent ?? 0),
                         'mrp' => $cart_item->options->mrp,
                         'rate_before_discount' => $_rateBeforeDiscount,
-                        'cash_discount_percent' => $cart_item->options->cash_discount_percent ?? 0,
-                        'cash_discount_amount' => $cart_item->options->cash_discount_amount ?? 0,
                         'rate' => $computedRate,
                         'rate_type' => $cart_item->options->rate_type ?? 'N',
                         'tax_percent' => $cart_item->options->tax_percent ?? 0,
@@ -736,11 +702,8 @@ class PurchaseController extends Controller
                 'unit_price'  => $purchase_detail->unit_price,
                 // Additional product information for cart display
                 'category' => $purchase_detail->category ?? ($product && $product->category ? $product->category->category_name : '-'),
-                'hsn' => $purchase_detail->hsn ?? ($product->hsn ?? '-'),
                 'unit' => $purchase_detail->unit ?? ($product->product_unit ?? ''),
                 'mrp' => $mrp,
-                'cash_discount_percent' => $purchase_detail->cash_discount_percent ?? 0,
-                'cash_discount_amount' => $purchase_detail->cash_discount_amount ?? 0,
                 'rate' => $purchase_detail->rate ?? $purchase_detail->unit_price,
                 'rate_before_discount' => (
                     $purchase_detail->rate_before_discount !== null
@@ -968,14 +931,10 @@ class PurchaseController extends Controller
                     'product_code' => $cart_item->options->code,
                     'product_code_id' => $pcId,
                     'category' => $cart_item->options->category ?? '-',
-                    'hsn' => $cart_item->options->hsn ?? '',
                     'unit' => $cart_item->options->unit ?? 'Nos',
                     'quantity' => $cart_item->qty,
-                    'discount_percent' => (float) ($cart_item->options->product_discount_percent ?? 0),
                     'mrp' => $_effectiveMrp,
                     'rate_before_discount' => $_rateBeforeDiscount,
-                    'cash_discount_percent' => $cart_item->options->cash_discount_percent ?? 0,
-                    'cash_discount_amount' => $cart_item->options->cash_discount_amount ?? 0,
                     'rate' => $computedRate,
                     'rate_type' => $cart_item->options->rate_type ?? 'N',
                     'tax_percent' => $cart_item->options->tax_percent ?? 0,

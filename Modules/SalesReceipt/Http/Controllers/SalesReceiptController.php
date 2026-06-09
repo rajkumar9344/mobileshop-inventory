@@ -872,8 +872,7 @@ class SalesReceiptController extends Controller
 
         $results = $query->limit(20)->get()->map(function($s) use ($receiptLinesMap) {
             // compute amounts adjusted for an editing receipt (if present)
-            // Authoritative bill amount (customer-payable) — prefer overall_net_rate
-            $bill = floatval($s->overall_net_rate ?? $s->total_amount ?? 0);
+            $bill = floatval($s->overall_amount ?? $s->total_amount ?? 0);
             $total = floatval($s->total_amount ?? 0);
             $paid = floatval($s->paid_amount ?? 0);
             $saleDiscount = floatval($s->discount_amount ?? 0);
@@ -1018,7 +1017,7 @@ class SalesReceiptController extends Controller
         $sale = Sale::lockForUpdate()->findOrFail($line['sale_id']);
 
         // Use overall_net_rate (customer-payable) as authoritative bill amount
-        $billAmount = $sale->overall_net_rate ?? $sale->total_amount;
+        $billAmount = $sale->overall_amount ?? $sale->total_amount;
         $receivedBefore = floatval($sale->paid_amount ?? 0);
         $saleLevelDiscount = floatval($sale->discount_amount ?? 0);
 
@@ -1132,7 +1131,7 @@ class SalesReceiptController extends Controller
             }
 
             // Recompute due using the authoritative bill_amount on the line (or sale fields)
-            $bill = floatval($line->bill_amount ?? ($sale->overall_net_rate ?? $sale->total_amount ?? 0));
+            $bill = floatval($line->bill_amount ?? ($sale->overall_amount ?? $sale->total_amount ?? 0));
             $saleLevelDiscount = floatval($sale->discount_amount ?? 0);
             $postDiscountBase = ($bill - $saleLevelDiscount);
             $sale->due_amount = $postDiscountBase - floatval($sale->paid_amount ?? 0);
@@ -1176,7 +1175,7 @@ class SalesReceiptController extends Controller
             try {
                 $sale->payment_method = null;
                 // Determine correct payment_status based on recomputed due amount
-                $bill = floatval($line->bill_amount ?? ($sale->overall_net_rate ?? $sale->total_amount ?? 0));
+                $bill = floatval($line->bill_amount ?? ($sale->overall_amount ?? $sale->total_amount ?? 0));
                 $saleLevelDiscount = floatval($sale->discount_amount ?? 0);
                 $postDiscountBase = $bill;
                 if ($sale->due_amount == $postDiscountBase) {

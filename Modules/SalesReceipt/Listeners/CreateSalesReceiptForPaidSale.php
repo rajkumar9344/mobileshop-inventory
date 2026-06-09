@@ -61,7 +61,7 @@ class CreateSalesReceiptForPaidSale
             // Use overall_net_rate (customer-payable) as the bill amount when available,
             // otherwise fall back to stored total_amount. Persist sale discount on the line,
             // but compute balances using post-discount base: (bill - sale_discount).
-            $billAmt = $sale->overall_net_rate ?? ($sale->total_amount ?? 0);
+            $billAmt = $sale->overall_amount ?? ($sale->total_amount ?? 0);
             $saleLevelDiscount = floatval($sale->discount_amount ?? 0);
             $receivedBefore = 0; // treat all paid as part of this generated receipt
             $paymentAmt = floatval($sale->paid_amount ?? 0);
@@ -148,7 +148,7 @@ class CreateSalesReceiptForPaidSale
             $receipt->save();
 
             $paidBefore = max(0, ($sale->paid_amount ?? 0) - ($salePayment->amount ?? 0));
-            $billAmt = $sale->overall_net_rate ?? ($sale->total_amount ?? 0);
+            $billAmt = $sale->overall_amount ?? ($sale->total_amount ?? 0);
             $saleLevelDiscount = floatval($sale->discount_amount ?? 0);
             // $balanceBefore = ($billAmt - $saleLevelDiscount) - $paidBefore;
             $balanceBefore = $billAmt - $paidBefore;

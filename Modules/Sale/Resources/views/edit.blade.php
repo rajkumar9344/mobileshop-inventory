@@ -70,8 +70,6 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    <input type="hidden" name="days" id="days" value="{{ old('days', $sale->days ?? 0) }}">
-                                    <input type="hidden" name="due_date" id="due_date" value="{{ $sale->due_date ? \Carbon\Carbon::parse($sale->due_date)->format('Y-m-d') : '' }}">
                                     <div class="col-md-2 pr-1">
                                         <label for="opening_balance" class="mb-1">Balance @if($sale->status !== 'Draft') <span class="text-danger">*</span> @endif</label>
                                             <input type="text" class="form-control" name="opening_balance" id="opening_balance" maxlength="15" pattern="^-?\d+(?:\.\d{1,2})?$|^-?\d+(?:,\d{1,2})?$" value="{{ number_format($sale->balance ?? 0, 2, '.', '') }}" placeholder="0.00" {{ $isReadOnly ? 'disabled' : ($sale->status === 'Draft' ? '' : 'required') }} readonly oninput="this.value = this.value.replace(/[^0-9.\-]/g,'').replace(/(?!^)-/g,'').slice(0,15)">
@@ -82,14 +80,6 @@
                                             <input type="hidden" name="excess_amount" id="excess_amount" value="{{ $sale->customer_id ? $sale->customer->excess_amount ?? 0 : 0 }}">
                                         </div>
                                         <!-- Discount Type removed per request -->
-                                    <div class="col-md-3 pr-1">
-                                        <label for="vehicle_name" class="mb-1">Vehicle Name</label>
-                                        <input type="text" class="form-control" name="vehicle_name" id="vehicle_name" maxlength="60" value="{{ old('vehicle_name', $sale->vehicle_name) }}" placeholder="Vehicle Name" {{ $isReadOnly ? 'disabled' : '' }}>
-                                    </div>
-                                    <div class="col-md-3 pr-1">
-                                        <label for="vehicle_no" class="mb-1">Vehicle No</label>
-                                        <input type="text" class="form-control" name="vehicle_no" id="vehicle_no" maxlength="30" value="{{ old('vehicle_no', $sale->vehicle_no) }}" placeholder="Vehicle No" {{ $isReadOnly ? 'disabled' : '' }}>
-                                    </div>
                                 </div>
                             </div>
                                 <livewire:search-product/>
@@ -171,15 +161,8 @@
                             <input type="hidden" id="hidden_overall_quantity" name="overall_quantity" value="{{ old('overall_quantity', $sale->overall_quantity ?? 0) }}">
                             <input type="hidden" id="hidden_overall_gross_amount" name="overall_gross_amount" value="{{ old('overall_gross_amount', $sale->overall_gross_amount ?? 0) }}">
                             <input type="hidden" id="hidden_overall_taxable_amount" name="overall_taxable_amount" value="{{ old('overall_taxable_amount', $sale->overall_taxable_amount ?? 0) }}">
-                            <input type="hidden" id="hidden_overall_cgst" name="overall_cgst" value="{{ old('overall_cgst', $sale->overall_cgst ?? 0) }}">
-                            <input type="hidden" id="hidden_overall_sgst" name="overall_sgst" value="{{ old('overall_sgst', $sale->overall_sgst ?? 0) }}">
-                            <input type="hidden" id="hidden_overall_igst" name="overall_igst" value="{{ old('overall_igst', $sale->overall_igst ?? 0) }}">
                             <input type="hidden" id="hidden_overall_tax_amount" name="overall_tax_amount" value="{{ old('overall_tax_amount', $sale->overall_tax_amount ?? 0) }}">
-                            <input type="hidden" id="hidden_overall_tcs_percent" name="overall_tcs_percent" value="{{ old('overall_tcs_percent', $sale->overall_tcs_percent ?? 0) }}">
                             <input type="hidden" id="hidden_overall_amount" name="overall_amount" value="{{ old('overall_amount', $sale->overall_amount ?? 0) }}">
-                            <input type="hidden" id="hidden_overall_other" name="overall_other" value="{{ old('overall_other', $sale->overall_other ?? 0) }}">
-                            <input type="hidden" id="hidden_overall_adj" name="overall_adj" value="{{ old('overall_adj', $sale->overall_adj ?? 0) }}">
-                            <input type="hidden" id="hidden_overall_net_rate" name="overall_net_rate" value="{{ old('overall_net_rate', $sale->overall_net_rate ?? 0) }}">
                             <input type="hidden" name="is_draft" id="is_draft" value="0">
 
                             <div class="form-group">
@@ -231,7 +214,7 @@
             }
 
             function updateBalance(){
-                var netRateVal = document.getElementById('overall_net_rate')?.value || document.getElementById('hidden_overall_net_rate')?.value || '0';
+                var netRateVal = document.getElementById('overall_net_rate')?.value || '0';
                 var netRate = parseFloat(netRateVal.replace(/,/g, '')) || 0;
                 var paidAmount = parseFloat(document.getElementById('paid_amount_hidden')?.value || '0');
                 var balance = netRate - paidAmount;
@@ -323,9 +306,6 @@
                         var el = $overall.get(0);
                         if (el && el.dataset && el.dataset.raw) {
                             cartTotal = parseFloat(String(el.dataset.raw).replace(/[^0-9.\-]/g, '')) || 0;
-                        } else if (document.getElementById('hidden_overall_net_rate')) {
-                            var raw = document.getElementById('hidden_overall_net_rate').value || document.getElementById('hidden_total_amount').value || '0';
-                            cartTotal = parseFloat(String(raw).replace(/[^0-9.\-]/g, '')) || 0;
                         } else {
                             var cartTotalElement = document.querySelector('.table-responsive .table .table-striped tr:last-child th:last-child');
                             var text = cartTotalElement ? cartTotalElement.textContent : '';
@@ -339,29 +319,15 @@
                 var overallQuantity = document.getElementById('overall_quantity')?.value || document.getElementById('hidden_overall_quantity').value || '0';
                 var overallGrossAmount = document.getElementById('overall_gross_amount')?.value || document.getElementById('hidden_overall_gross_amount').value || '0';
                 var overallTaxableAmount = document.getElementById('overall_taxable_amount')?.value || document.getElementById('hidden_overall_taxable_amount').value || '0';
-                var overallCgst = document.getElementById('overall_cgst')?.value || document.getElementById('hidden_overall_cgst').value || '0';
-                var overallSgst = document.getElementById('overall_sgst')?.value || document.getElementById('hidden_overall_sgst').value || '0';
-                var overallIgst = document.getElementById('overall_igst')?.value || document.getElementById('hidden_overall_igst').value || '0';
                 var overallTaxAmount = document.getElementById('overall_tax_amount')?.value || document.getElementById('hidden_overall_tax_amount').value || '0';
-                var overallTcsPercent = document.getElementById('overall_tcs_percent')?.value || document.getElementById('hidden_overall_tcs_percent').value || '0';
                 var overallAmount = document.getElementById('overall_amount')?.value || document.getElementById('hidden_overall_amount').value || '0';
-                var overallOther = document.getElementById('overall_other')?.value || document.getElementById('hidden_overall_other').value || '0';
-                var overallAdj = document.getElementById('overall_adj')?.value || document.getElementById('hidden_overall_adj').value || '0';
-                var overallNetRate = document.getElementById('overall_net_rate')?.value || document.getElementById('hidden_overall_net_rate').value || '0';
 
                 document.getElementById('hidden_overall_nos').value = overallNos;
                 document.getElementById('hidden_overall_quantity').value = overallQuantity;
                 document.getElementById('hidden_overall_gross_amount').value = overallGrossAmount;
                 document.getElementById('hidden_overall_taxable_amount').value = overallTaxableAmount;
-                document.getElementById('hidden_overall_cgst').value = overallCgst;
-                document.getElementById('hidden_overall_sgst').value = overallSgst;
-                document.getElementById('hidden_overall_igst').value = overallIgst;
                 document.getElementById('hidden_overall_tax_amount').value = overallTaxAmount;
-                document.getElementById('hidden_overall_tcs_percent').value = overallTcsPercent;
                 document.getElementById('hidden_overall_amount').value = overallAmount;
-                document.getElementById('hidden_overall_other').value = overallOther;
-                document.getElementById('hidden_overall_adj').value = overallAdj;
-                document.getElementById('hidden_overall_net_rate').value = overallNetRate;
 
                 updateBalance();
                 // Re-validate amounts whenever hidden overall values change
@@ -504,10 +470,6 @@
                 function getNetRate() {
                     if (typeof updateHiddenFields === 'function') {
                         updateHiddenFields();
-                    }
-                    var hiddenVal = $('#hidden_overall_net_rate').val();
-                    if (hiddenVal && String(hiddenVal).trim() !== '') {
-                        return parseFloat(String(hiddenVal).replace(/[^0-9.\-]/g, '')) || 0;
                     }
                     var el = document.getElementById('overall_net_rate');
                     if (el && el.dataset && el.dataset.raw) {

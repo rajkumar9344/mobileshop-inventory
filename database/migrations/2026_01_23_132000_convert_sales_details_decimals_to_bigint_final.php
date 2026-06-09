@@ -12,7 +12,7 @@ return new class extends Migration
         // 1) Add temporary paise columns (if missing)
         Schema::table('sales_details', function (Blueprint $table) {
             if (! Schema::hasColumn('sales_details', 'mrp_pa_tmp')) {
-                $table->bigInteger('mrp_pa_tmp')->default(0)->after('hsn');
+                $table->bigInteger('mrp_pa_tmp')->default(0);
             }
             if (! Schema::hasColumn('sales_details', 'rate_pa_tmp')) {
                 $table->bigInteger('rate_pa_tmp')->default(0)->after('mrp_pa_tmp');
@@ -72,11 +72,10 @@ return new class extends Migration
 
         // 5) Create final bigint columns with original names (if missing)
         Schema::table('sales_details', function (Blueprint $table) {
-            if (! Schema::hasColumn('sales_details', 'mrp')) $table->bigInteger('mrp')->default(0)->after('hsn');
+            if (! Schema::hasColumn('sales_details', 'mrp')) $table->bigInteger('mrp')->default(0);
             if (! Schema::hasColumn('sales_details', 'rate')) $table->bigInteger('rate')->default(0)->after('mrp');
             if (! Schema::hasColumn('sales_details', 'tax_amount')) $table->bigInteger('tax_amount')->default(0)->after('rate');
-            if (! Schema::hasColumn('sales_details', 'cash_discount_amount')) $table->bigInteger('cash_discount_amount')->default(0)->after('tax_amount');
-            if (! Schema::hasColumn('sales_details', 'discount_amount')) $table->bigInteger('discount_amount')->default(0)->after('cash_discount_amount');
+            if (! Schema::hasColumn('sales_details', 'discount_amount')) $table->bigInteger('discount_amount')->default(0)->after('tax_amount');
             if (! Schema::hasColumn('sales_details', 'unit_price')) $table->bigInteger('unit_price')->default(0)->after('discount_type');
             if (! Schema::hasColumn('sales_details', 'sub_total')) $table->bigInteger('sub_total')->default(0)->after('unit_price');
         });
@@ -104,7 +103,7 @@ return new class extends Migration
     {
         // Down: convert bigint paise back to decimals (rupees)
         Schema::table('sales_details', function (Blueprint $table) {
-            if (! Schema::hasColumn('sales_details', 'mrp_old')) $table->decimal('mrp_old', 15, 2)->default(0)->after('hsn');
+            if (! Schema::hasColumn('sales_details', 'mrp_old')) $table->decimal('mrp_old', 15, 2)->default(0);
             if (! Schema::hasColumn('sales_details', 'rate_old')) $table->decimal('rate_old', 15, 2)->default(0)->after('mrp_old');
             if (! Schema::hasColumn('sales_details', 'tax_amount_old')) $table->decimal('tax_amount_old', 15, 2)->default(0)->after('rate_old');
             if (! Schema::hasColumn('sales_details', 'cash_discount_amount_old')) $table->decimal('cash_discount_amount_old', 15, 2)->default(0)->after('tax_amount_old');

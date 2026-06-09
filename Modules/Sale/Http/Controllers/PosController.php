@@ -90,15 +90,8 @@ class PosController extends Controller
                 'overall_quantity' => 0,
                 'overall_gross_amount' => 0,
                 'overall_taxable_amount' => 0,
-                'overall_cgst' => 0,
-                'overall_sgst' => 0,
-                'overall_igst' => 0,
                 'overall_tax_amount' => 0,
-                'overall_tcs_percent' => 0,
                 'overall_amount' => 0,
-                'overall_other' => 0,
-                'overall_adj' => 0,
-                'overall_net_rate' => 0,
             ]);            foreach (Cart::instance('sale')->content() as $cart_item) {
                 SaleDetails::create([
                     'sale_id' => $sale->id,

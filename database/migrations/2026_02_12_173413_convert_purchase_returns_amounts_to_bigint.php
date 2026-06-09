@@ -44,29 +44,29 @@ return new class extends Migration
             if (!Schema::hasColumn('purchase_returns', 'overall_taxable_amount_temp')) {
                 $table->bigInteger('overall_taxable_amount_temp')->nullable()->after('overall_gross_amount_temp');
             }
-            if (!Schema::hasColumn('purchase_returns', 'overall_cgst_temp')) {
+            if (!Schema::hasColumn('purchase_returns', 'overall_cgst_temp') && Schema::hasColumn('purchase_returns', 'overall_cgst')) {
                 $table->bigInteger('overall_cgst_temp')->nullable()->after('overall_taxable_amount_temp');
             }
-            if (!Schema::hasColumn('purchase_returns', 'overall_sgst_temp')) {
-                $table->bigInteger('overall_sgst_temp')->nullable()->after('overall_cgst_temp');
+            if (!Schema::hasColumn('purchase_returns', 'overall_sgst_temp') && Schema::hasColumn('purchase_returns', 'overall_sgst')) {
+                $table->bigInteger('overall_sgst_temp')->nullable();
             }
-            if (!Schema::hasColumn('purchase_returns', 'overall_igst_temp')) {
-                $table->bigInteger('overall_igst_temp')->nullable()->after('overall_sgst_temp');
+            if (!Schema::hasColumn('purchase_returns', 'overall_igst_temp') && Schema::hasColumn('purchase_returns', 'overall_igst')) {
+                $table->bigInteger('overall_igst_temp')->nullable();
             }
             if (!Schema::hasColumn('purchase_returns', 'overall_tax_amount_temp')) {
-                $table->bigInteger('overall_tax_amount_temp')->nullable()->after('overall_igst_temp');
+                $table->bigInteger('overall_tax_amount_temp')->nullable()->after('overall_taxable_amount_temp');
             }
             if (!Schema::hasColumn('purchase_returns', 'overall_amount_temp')) {
-                $table->bigInteger('overall_amount_temp')->nullable()->after('overall_tcs_percent');
+                $table->bigInteger('overall_amount_temp')->nullable()->after('overall_tax_amount_temp');
             }
-            if (!Schema::hasColumn('purchase_returns', 'overall_other_temp')) {
+            if (!Schema::hasColumn('purchase_returns', 'overall_other_temp') && Schema::hasColumn('purchase_returns', 'overall_other')) {
                 $table->bigInteger('overall_other_temp')->nullable()->after('overall_amount_temp');
             }
-            if (!Schema::hasColumn('purchase_returns', 'overall_adj_temp')) {
-                $table->bigInteger('overall_adj_temp')->nullable()->after('overall_other_temp');
+            if (!Schema::hasColumn('purchase_returns', 'overall_adj_temp') && Schema::hasColumn('purchase_returns', 'overall_adj')) {
+                $table->bigInteger('overall_adj_temp')->nullable();
             }
-            if (!Schema::hasColumn('purchase_returns', 'overall_net_rate_temp')) {
-                $table->bigInteger('overall_net_rate_temp')->nullable()->after('overall_adj_temp');
+            if (!Schema::hasColumn('purchase_returns', 'overall_net_rate_temp') && Schema::hasColumn('purchase_returns', 'overall_net_rate')) {
+                $table->bigInteger('overall_net_rate_temp')->nullable();
             }
         });
 
@@ -80,14 +80,14 @@ return new class extends Migration
         DB::statement("UPDATE purchase_returns SET overall_quantity_temp = overall_quantity WHERE overall_quantity IS NOT NULL");
         DB::statement("UPDATE purchase_returns SET overall_gross_amount_temp = overall_gross_amount WHERE overall_gross_amount IS NOT NULL");
         DB::statement("UPDATE purchase_returns SET overall_taxable_amount_temp = overall_taxable_amount WHERE overall_taxable_amount IS NOT NULL");
-        DB::statement("UPDATE purchase_returns SET overall_cgst_temp = overall_cgst WHERE overall_cgst IS NOT NULL");
-        DB::statement("UPDATE purchase_returns SET overall_sgst_temp = overall_sgst WHERE overall_sgst IS NOT NULL");
-        DB::statement("UPDATE purchase_returns SET overall_igst_temp = overall_igst WHERE overall_igst IS NOT NULL");
+        if (Schema::hasColumn('purchase_returns', 'overall_cgst')) DB::statement("UPDATE purchase_returns SET overall_cgst_temp = overall_cgst WHERE overall_cgst IS NOT NULL");
+        if (Schema::hasColumn('purchase_returns', 'overall_sgst')) DB::statement("UPDATE purchase_returns SET overall_sgst_temp = overall_sgst WHERE overall_sgst IS NOT NULL");
+        if (Schema::hasColumn('purchase_returns', 'overall_igst')) DB::statement("UPDATE purchase_returns SET overall_igst_temp = overall_igst WHERE overall_igst IS NOT NULL");
         DB::statement("UPDATE purchase_returns SET overall_tax_amount_temp = overall_tax_amount WHERE overall_tax_amount IS NOT NULL");
         DB::statement("UPDATE purchase_returns SET overall_amount_temp = overall_amount WHERE overall_amount IS NOT NULL");
-        DB::statement("UPDATE purchase_returns SET overall_other_temp = overall_other WHERE overall_other IS NOT NULL");
-        DB::statement("UPDATE purchase_returns SET overall_adj_temp = overall_adj WHERE overall_adj IS NOT NULL");
-        DB::statement("UPDATE purchase_returns SET overall_net_rate_temp = overall_net_rate WHERE overall_net_rate IS NOT NULL");
+        if (Schema::hasColumn('purchase_returns', 'overall_other')) DB::statement("UPDATE purchase_returns SET overall_other_temp = overall_other WHERE overall_other IS NOT NULL");
+        if (Schema::hasColumn('purchase_returns', 'overall_adj')) DB::statement("UPDATE purchase_returns SET overall_adj_temp = overall_adj WHERE overall_adj IS NOT NULL");
+        if (Schema::hasColumn('purchase_returns', 'overall_net_rate')) DB::statement("UPDATE purchase_returns SET overall_net_rate_temp = overall_net_rate WHERE overall_net_rate IS NOT NULL");
 
         // Drop old INTEGER columns
         Schema::table('purchase_returns', function (Blueprint $table) {
@@ -237,29 +237,29 @@ return new class extends Migration
             if (!Schema::hasColumn('purchase_returns', 'overall_taxable_amount_temp')) {
                 $table->integer('overall_taxable_amount_temp')->nullable()->after('overall_gross_amount_temp');
             }
-            if (!Schema::hasColumn('purchase_returns', 'overall_cgst_temp')) {
+            if (!Schema::hasColumn('purchase_returns', 'overall_cgst_temp') && Schema::hasColumn('purchase_returns', 'overall_cgst')) {
                 $table->integer('overall_cgst_temp')->nullable()->after('overall_taxable_amount_temp');
             }
-            if (!Schema::hasColumn('purchase_returns', 'overall_sgst_temp')) {
-                $table->integer('overall_sgst_temp')->nullable()->after('overall_cgst_temp');
+            if (!Schema::hasColumn('purchase_returns', 'overall_sgst_temp') && Schema::hasColumn('purchase_returns', 'overall_sgst')) {
+                $table->integer('overall_sgst_temp')->nullable();
             }
-            if (!Schema::hasColumn('purchase_returns', 'overall_igst_temp')) {
-                $table->integer('overall_igst_temp')->nullable()->after('overall_sgst_temp');
+            if (!Schema::hasColumn('purchase_returns', 'overall_igst_temp') && Schema::hasColumn('purchase_returns', 'overall_igst')) {
+                $table->integer('overall_igst_temp')->nullable();
             }
             if (!Schema::hasColumn('purchase_returns', 'overall_tax_amount_temp')) {
-                $table->integer('overall_tax_amount_temp')->nullable()->after('overall_igst_temp');
+                $table->integer('overall_tax_amount_temp')->nullable()->after('overall_taxable_amount_temp');
             }
             if (!Schema::hasColumn('purchase_returns', 'overall_amount_temp')) {
-                $table->integer('overall_amount_temp')->nullable()->after('overall_tcs_percent');
+                $table->integer('overall_amount_temp')->nullable()->after('overall_tax_amount_temp');
             }
-            if (!Schema::hasColumn('purchase_returns', 'overall_other_temp')) {
+            if (!Schema::hasColumn('purchase_returns', 'overall_other_temp') && Schema::hasColumn('purchase_returns', 'overall_other')) {
                 $table->integer('overall_other_temp')->nullable()->after('overall_amount_temp');
             }
-            if (!Schema::hasColumn('purchase_returns', 'overall_adj_temp')) {
-                $table->integer('overall_adj_temp')->nullable()->after('overall_other_temp');
+            if (!Schema::hasColumn('purchase_returns', 'overall_adj_temp') && Schema::hasColumn('purchase_returns', 'overall_adj')) {
+                $table->integer('overall_adj_temp')->nullable();
             }
-            if (!Schema::hasColumn('purchase_returns', 'overall_net_rate_temp')) {
-                $table->integer('overall_net_rate_temp')->nullable()->after('overall_adj_temp');
+            if (!Schema::hasColumn('purchase_returns', 'overall_net_rate_temp') && Schema::hasColumn('purchase_returns', 'overall_net_rate')) {
+                $table->integer('overall_net_rate_temp')->nullable();
             }
         });
 
@@ -273,14 +273,14 @@ return new class extends Migration
         DB::statement("UPDATE purchase_returns SET overall_quantity_temp = LEAST(overall_quantity, 2147483647) WHERE overall_quantity IS NOT NULL");
         DB::statement("UPDATE purchase_returns SET overall_gross_amount_temp = LEAST(overall_gross_amount, 2147483647) WHERE overall_gross_amount IS NOT NULL");
         DB::statement("UPDATE purchase_returns SET overall_taxable_amount_temp = LEAST(overall_taxable_amount, 2147483647) WHERE overall_taxable_amount IS NOT NULL");
-        DB::statement("UPDATE purchase_returns SET overall_cgst_temp = LEAST(overall_cgst, 2147483647) WHERE overall_cgst IS NOT NULL");
-        DB::statement("UPDATE purchase_returns SET overall_sgst_temp = LEAST(overall_sgst, 2147483647) WHERE overall_sgst IS NOT NULL");
-        DB::statement("UPDATE purchase_returns SET overall_igst_temp = LEAST(overall_igst, 2147483647) WHERE overall_igst IS NOT NULL");
+        if (Schema::hasColumn('purchase_returns', 'overall_cgst')) DB::statement("UPDATE purchase_returns SET overall_cgst_temp = LEAST(overall_cgst, 2147483647) WHERE overall_cgst IS NOT NULL");
+        if (Schema::hasColumn('purchase_returns', 'overall_sgst')) DB::statement("UPDATE purchase_returns SET overall_sgst_temp = LEAST(overall_sgst, 2147483647) WHERE overall_sgst IS NOT NULL");
+        if (Schema::hasColumn('purchase_returns', 'overall_igst')) DB::statement("UPDATE purchase_returns SET overall_igst_temp = LEAST(overall_igst, 2147483647) WHERE overall_igst IS NOT NULL");
         DB::statement("UPDATE purchase_returns SET overall_tax_amount_temp = LEAST(overall_tax_amount, 2147483647) WHERE overall_tax_amount IS NOT NULL");
         DB::statement("UPDATE purchase_returns SET overall_amount_temp = LEAST(overall_amount, 2147483647) WHERE overall_amount IS NOT NULL");
-        DB::statement("UPDATE purchase_returns SET overall_other_temp = LEAST(overall_other, 2147483647) WHERE overall_other IS NOT NULL");
-        DB::statement("UPDATE purchase_returns SET overall_adj_temp = LEAST(overall_adj, 2147483647) WHERE overall_adj IS NOT NULL");
-        DB::statement("UPDATE purchase_returns SET overall_net_rate_temp = LEAST(overall_net_rate, 2147483647) WHERE overall_net_rate IS NOT NULL");
+        if (Schema::hasColumn('purchase_returns', 'overall_other')) DB::statement("UPDATE purchase_returns SET overall_other_temp = LEAST(overall_other, 2147483647) WHERE overall_other IS NOT NULL");
+        if (Schema::hasColumn('purchase_returns', 'overall_adj')) DB::statement("UPDATE purchase_returns SET overall_adj_temp = LEAST(overall_adj, 2147483647) WHERE overall_adj IS NOT NULL");
+        if (Schema::hasColumn('purchase_returns', 'overall_net_rate')) DB::statement("UPDATE purchase_returns SET overall_net_rate_temp = LEAST(overall_net_rate, 2147483647) WHERE overall_net_rate IS NOT NULL");
 
         // Drop BIGINT columns
         Schema::table('purchase_returns', function (Blueprint $table) {

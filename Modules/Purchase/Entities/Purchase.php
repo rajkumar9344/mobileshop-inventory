@@ -197,18 +197,6 @@ class Purchase extends Model
         $this->attributes['overall_taxable_amount'] = $this->toMinor($value);
     }
 
-    public function setOverallCgstAttribute($value) {
-        $this->attributes['overall_cgst'] = $this->toMinor($value);
-    }
-
-    public function setOverallSgstAttribute($value) {
-        $this->attributes['overall_sgst'] = $this->toMinor($value);
-    }
-
-    public function setOverallIgstAttribute($value) {
-        $this->attributes['overall_igst'] = $this->toMinor($value);
-    }
-
     public function setOverallTaxAmountAttribute($value) {
         $this->attributes['overall_tax_amount'] = $this->toMinor($value);
     }
@@ -217,22 +205,7 @@ class Purchase extends Model
         $this->attributes['overall_amount'] = $this->toMinor($value);
     }
 
-    public function setOverallOtherAttribute($value) {
-        $this->attributes['overall_other'] = $this->toMinor($value);
-    }
-
-    public function setOverallAdjAttribute($value) {
-        $this->attributes['overall_adj'] = $this->toMinor($value);
-    }
-
-    public function setOverallNetRateAttribute($value) {
-        $this->attributes['overall_net_rate'] = $this->toMinor($value);
-    }
-
-    /**
-     * Get the total amount to use for status calculation (Purchases use overall_net_rate)
-     */
     protected function getTotalAmountForStatus() {
-        return $this->overall_net_rate ?? $this->total_amount ?? 0;
+        return $this->overall_amount ?? $this->total_amount ?? 0;
     }
 }

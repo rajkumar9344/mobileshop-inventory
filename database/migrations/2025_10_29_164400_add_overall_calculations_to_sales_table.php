@@ -16,15 +16,8 @@ return new class extends Migration
             $table->bigInteger('overall_quantity')->default(0)->after('overall_nos');
             $table->bigInteger('overall_gross_amount')->default(0)->after('overall_quantity');
             $table->bigInteger('overall_taxable_amount')->default(0)->after('overall_gross_amount');
-            $table->bigInteger('overall_cgst')->default(0)->after('overall_taxable_amount');
-            $table->bigInteger('overall_sgst')->default(0)->after('overall_cgst');
-            $table->bigInteger('overall_igst')->default(0)->after('overall_sgst');
-            $table->bigInteger('overall_tax_amount')->default(0)->after('overall_igst');
-            $table->bigInteger('overall_tcs_percent')->default(0)->after('overall_tax_amount');
-            $table->bigInteger('overall_amount')->default(0)->after('overall_tcs_percent');
-            $table->bigInteger('overall_other')->default(0)->after('overall_amount');
-            $table->bigInteger('overall_adj')->default(0)->after('overall_other');
-            $table->bigInteger('overall_net_rate')->default(0)->after('overall_adj');
+            $table->bigInteger('overall_tax_amount')->default(0)->after('overall_taxable_amount');
+            $table->bigInteger('overall_amount')->default(0)->after('overall_tax_amount');
         });
     }
 
@@ -35,19 +28,8 @@ return new class extends Migration
     {
         Schema::table('sales', function (Blueprint $table) {
             $table->dropColumn([
-                'overall_nos',
-                'overall_quantity',
-                'overall_gross_amount',
-                'overall_taxable_amount',
-                'overall_cgst',
-                'overall_sgst',
-                'overall_igst',
-                'overall_tax_amount',
-                'overall_tcs_percent',
-                'overall_amount',
-                'overall_other',
-                'overall_adj',
-                'overall_net_rate',
+                'overall_nos', 'overall_quantity', 'overall_gross_amount',
+                'overall_taxable_amount', 'overall_tax_amount', 'overall_amount',
             ]);
         });
     }

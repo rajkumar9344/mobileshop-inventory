@@ -33,13 +33,13 @@ return new class extends Migration
 
             // Added columns from migrations
             if (!Schema::hasColumn('purchase_details', 'mrp_temp')) {
-                $table->bigInteger('mrp_temp')->nullable()->after('discount_percent');
+                $table->bigInteger('mrp_temp')->nullable();
             }
-            if (!Schema::hasColumn('purchase_details', 'cash_discount_amount_temp')) {
-                $table->bigInteger('cash_discount_amount_temp')->nullable()->after('cash_discount_percent');
+            if (!Schema::hasColumn('purchase_details', 'cash_discount_amount_temp') && Schema::hasColumn('purchase_details', 'cash_discount_amount')) {
+                $table->bigInteger('cash_discount_amount_temp')->nullable();
             }
             if (!Schema::hasColumn('purchase_details', 'rate_temp')) {
-                $table->bigInteger('rate_temp')->nullable()->after('cash_discount_amount_temp');
+                $table->bigInteger('rate_temp')->nullable();
             }
             if (!Schema::hasColumn('purchase_details', 'tax_amount_temp')) {
                 $table->bigInteger('tax_amount_temp')->nullable()->after('tax_percent');
@@ -56,7 +56,9 @@ return new class extends Migration
         DB::statement("UPDATE purchase_details SET product_discount_amount_temp = product_discount_amount WHERE product_discount_amount IS NOT NULL");
         DB::statement("UPDATE purchase_details SET product_tax_amount_temp = product_tax_amount WHERE product_tax_amount IS NOT NULL");
         DB::statement("UPDATE purchase_details SET mrp_temp = mrp WHERE mrp IS NOT NULL");
-        DB::statement("UPDATE purchase_details SET cash_discount_amount_temp = cash_discount_amount WHERE cash_discount_amount IS NOT NULL");
+        if (Schema::hasColumn('purchase_details', 'cash_discount_amount')) {
+            DB::statement("UPDATE purchase_details SET cash_discount_amount_temp = cash_discount_amount WHERE cash_discount_amount IS NOT NULL");
+        }
         DB::statement("UPDATE purchase_details SET rate_temp = rate WHERE rate IS NOT NULL");
         DB::statement("UPDATE purchase_details SET tax_amount_temp = tax_amount WHERE tax_amount IS NOT NULL");
         DB::statement("UPDATE purchase_details SET amount_temp = amount WHERE amount IS NOT NULL");
@@ -156,13 +158,13 @@ return new class extends Migration
 
             // Added columns from migrations
             if (!Schema::hasColumn('purchase_details', 'mrp_temp')) {
-                $table->integer('mrp_temp')->nullable()->after('discount_percent');
+                $table->integer('mrp_temp')->nullable();
             }
-            if (!Schema::hasColumn('purchase_details', 'cash_discount_amount_temp')) {
-                $table->integer('cash_discount_amount_temp')->nullable()->after('cash_discount_percent');
+            if (!Schema::hasColumn('purchase_details', 'cash_discount_amount_temp') && Schema::hasColumn('purchase_details', 'cash_discount_amount')) {
+                $table->integer('cash_discount_amount_temp')->nullable();
             }
             if (!Schema::hasColumn('purchase_details', 'rate_temp')) {
-                $table->integer('rate_temp')->nullable()->after('cash_discount_amount_temp');
+                $table->integer('rate_temp')->nullable();
             }
             if (!Schema::hasColumn('purchase_details', 'tax_amount_temp')) {
                 $table->integer('tax_amount_temp')->nullable()->after('tax_percent');
@@ -179,7 +181,9 @@ return new class extends Migration
         DB::statement("UPDATE purchase_details SET product_discount_amount_temp = LEAST(product_discount_amount, 2147483647) WHERE product_discount_amount IS NOT NULL");
         DB::statement("UPDATE purchase_details SET product_tax_amount_temp = LEAST(product_tax_amount, 2147483647) WHERE product_tax_amount IS NOT NULL");
         DB::statement("UPDATE purchase_details SET mrp_temp = LEAST(mrp, 2147483647) WHERE mrp IS NOT NULL");
-        DB::statement("UPDATE purchase_details SET cash_discount_amount_temp = LEAST(cash_discount_amount, 2147483647) WHERE cash_discount_amount IS NOT NULL");
+        if (Schema::hasColumn('purchase_details', 'cash_discount_amount')) {
+            DB::statement("UPDATE purchase_details SET cash_discount_amount_temp = LEAST(cash_discount_amount, 2147483647) WHERE cash_discount_amount IS NOT NULL");
+        }
         DB::statement("UPDATE purchase_details SET rate_temp = LEAST(rate, 2147483647) WHERE rate IS NOT NULL");
         DB::statement("UPDATE purchase_details SET tax_amount_temp = LEAST(tax_amount, 2147483647) WHERE tax_amount IS NOT NULL");
         DB::statement("UPDATE purchase_details SET amount_temp = LEAST(amount, 2147483647) WHERE amount IS NOT NULL");

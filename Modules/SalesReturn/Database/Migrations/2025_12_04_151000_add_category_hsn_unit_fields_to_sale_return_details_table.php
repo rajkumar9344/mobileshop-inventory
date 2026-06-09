@@ -13,8 +13,7 @@ return new class extends Migration
     {
         Schema::table('sale_return_details', function (Blueprint $table) {
             $table->string('category')->nullable()->after('product_code');
-            $table->string('hsn')->nullable()->after('category');
-            $table->string('unit')->nullable()->after('hsn');
+            $table->string('unit')->nullable()->after('category');
         });
     }
 
@@ -24,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('sale_return_details', function (Blueprint $table) {
-            $table->dropColumn(['category', 'hsn', 'unit']);
+            $table->dropColumn(['category', 'unit']);
         });
     }
 };

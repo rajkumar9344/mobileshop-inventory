@@ -11,6 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('rack_master')) {
+            return;
+        }
         Schema::table('rack_master', function (Blueprint $table) {
             $table->dropColumn(['bin_id', 'bin_name', 'capacity', 'status']);
             $table->string('barcode')->nullable()->after('rack_name');
@@ -22,6 +25,9 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (!Schema::hasTable('rack_master')) {
+            return;
+        }
         Schema::table('rack_master', function (Blueprint $table) {
             $table->dropColumn('barcode');
             $table->string('bin_id');

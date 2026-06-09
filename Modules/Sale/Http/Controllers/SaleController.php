@@ -109,9 +109,6 @@ class SaleController extends Controller
         $totals['overall_balance'] = $base->sum(DB::raw('COALESCE(due_amount,0)')) / 100;
 
         $totals['overall_received_amount'] = $base->sum(DB::raw('COALESCE(paid_amount,0)')) / 100;
-        $totals['overall_cgst'] = $base->sum(DB::raw('COALESCE(overall_cgst,0)')) / 100;
-        $totals['overall_sgst'] = $base->sum(DB::raw('COALESCE(overall_sgst,0)')) / 100;
-        $totals['overall_igst'] = $base->sum(DB::raw('COALESCE(overall_igst,0)')) / 100;
         $totals['overall_tax_amount'] = $base->sum(DB::raw('COALESCE(overall_tax_amount, tax_amount,0)')) / 100;
 
         return response()->json($totals);
@@ -178,20 +175,10 @@ class SaleController extends Controller
                     $overall_tax_amount    += $_rowTax;
                 }
                 $overall_taxable_amount = round($overall_taxable_amount, 2);
-                $overall_cgst = $overall_tax_amount / 2;
-                $overall_sgst = $overall_tax_amount / 2;
-                $overall_igst = 0;
-                // Match the Livewire front-end: for sale modules, "Amount" = taxable base (pre-tax net total).
-                // Tax is shown separately; overall_net_rate is the customer-payable amount (= Amount + adj + other).
                 $overall_amount = $overall_taxable_amount;
-                $overall_other = (float) ($request->overall_other ?? 0);
-                $overall_adj = (float) ($request->overall_adj ?? 0);
-                $overall_net_rate = $overall_amount + $overall_adj + $overall_other;
-                // Round customer-payable overall net rate to nearest whole rupee
-                $overall_net_rate = round($overall_net_rate, 0);
-                
+
                 // Use calculated values, fallback to request values only if calculated is 0
-                $base_total = $overall_net_rate > 0 ? $overall_net_rate : ($request->overall_net_rate ?? $request->total_amount ?? 0);
+                $base_total = $overall_amount > 0 ? $overall_amount : ($request->overall_amount ?? $request->total_amount ?? 0);
                 $submitted_discount = 0;
                 if (isset($request->discount_amount) && is_numeric($request->discount_amount) && (float)$request->discount_amount > 0) {
                     $submitted_discount = (float) $request->discount_amount;
@@ -205,16 +192,12 @@ class SaleController extends Controller
 
                 $saleData = [
                     'date' => $request->date ?? now()->format('Y-m-d'),
-                    'due_date' => $request->due_date,
                     'customer_id' => $request->customer_id,
                     'customer_name' => $request->customer_id ? (Customer::find($request->customer_id)->customer_name ?? 'Draft Customer') : 'Draft Customer',
                     'area' => $request->area,
                     'balance' => $request->opening_balance ?? 0,
                     'bill_type' => $request->bill_type ?? 'Cash',
-                    'days' => $request->days ?? 0,
                     'phone_no' => $request->phone,
-                    'vehicle_name' => $request->vehicle_name ?? null,
-                    'vehicle_no' => $request->vehicle_no ?? null,
                     'discount_type' => $request->discount_type,
                     'tax_percentage' => $request->tax_percentage ?? 0,
                     'discount_percentage' => $request->discount_percentage ?? 0,
@@ -232,15 +215,8 @@ class SaleController extends Controller
                     'overall_quantity' => $overall_quantity,
                     'overall_gross_amount' => $overall_gross_amount,
                     'overall_taxable_amount' => $overall_taxable_amount,
-                    'overall_cgst' => $overall_cgst,
-                    'overall_sgst' => $overall_sgst,
-                    'overall_igst' => $overall_igst,
                     'overall_tax_amount' => $overall_tax_amount,
-                    'overall_tcs_percent' => $request->overall_tcs_percent ?? 0,
                     'overall_amount' => $overall_amount,
-                    'overall_other' => $overall_other,
-                    'overall_adj' => $overall_adj,
-                    'overall_net_rate' => $overall_net_rate,
                 ];
 
                 if ($existingDraftId) {
@@ -271,8 +247,6 @@ class SaleController extends Controller
                     $categoryName = $options->category
                         ?? optional($product->category)->category_name
                         ?? optional($product->category)->name;
-                    $hsn = $options->hsn ?? $product->hsn;
-
                     $pcId = $resolver->resolve($cart_item->id, $options->code ?? null);
 
                     SaleDetails::create([
@@ -285,13 +259,9 @@ class SaleController extends Controller
                         'rate'                     => $vals['rate'],
                         'tax_percentage'           => $vals['tax_percent'],
                         'tax_amount'               => $vals['tax_amount'],
-                        'cash_discount_percentage' => $vals['cash_discount_percent'],
-                        'cash_discount_amount'     => $vals['cash_discount_amount'],
                         'discount_amount'          => $vals['discount_amount'],
                         'discount_type'            => $options->product_discount_type,
-                        'discount_percent'         => (float) ($options->product_discount_percent ?? 0),
                         'category'                 => $categoryName,
-                        'hsn'                      => $hsn,
                         'quantity'                 => $cart_item->qty,
                         'price'                    => (float) $cart_item->price,
                         'unit_price'               => $vals['unit_price'],
@@ -366,9 +336,9 @@ class SaleController extends Controller
         DB::transaction(function () use ($request, &$shouldDispatch, &$dispatchSaleId, $isDraft, $resolver) {
             $cart = Cart::instance('sale');
 
-            // Determine the base total from overall_net_rate or hidden total_amount.
+            // Determine the base total from overall_amount or hidden total_amount.
             // Coerce posted strings (may contain commas/currency) to numeric floats.
-            $rawOverallNet = $request->overall_net_rate ?? $request->total_amount ?? 0;
+            $rawOverallNet = $request->overall_amount ?? $request->total_amount ?? 0;
             $base_total = floatval(str_replace([',', settings()->currency->symbol], '', (string) $rawOverallNet));
 
             // Prefer an explicit discount_amount submitted via the form (global discount).
@@ -433,16 +403,12 @@ class SaleController extends Controller
 
             $saleData = [
                 'date' => $request->date,
-                'due_date' => $request->due_date,
                 'customer_id' => $request->customer_id,
                 'customer_name' => $request->customer_id ? Customer::findOrFail($request->customer_id)->customer_name : 'Draft Customer',
                 'area' => $request->area,
                 'balance' => $request->opening_balance ?? 0,
                 'bill_type' => $request->bill_type ?? 'Cash',
-                'days' => $request->days ?? 0,
                 'phone_no' => $request->phone,
-                'vehicle_name' => $request->vehicle_name ?? null,
-                'vehicle_no' => $request->vehicle_no ?? null,
                 'discount_type' => $request->discount_type,
                 'tax_percentage' => $request->tax_percentage ?? 0,
                 'discount_percentage' => $request->discount_percentage ?? 0,
@@ -462,16 +428,8 @@ class SaleController extends Controller
                 'overall_quantity'  => $request->overall_quantity  ?? $cart->content()->sum('qty'),
                 'overall_gross_amount' => ($request->overall_gross_amount ?? $cart->total()),
                 'overall_taxable_amount' => ($request->overall_taxable_amount ?? ($cart->total() - $cart->tax())),
-                'overall_cgst' => ($request->overall_cgst ?? ($cart->tax() / 2)),
-                'overall_sgst' => ($request->overall_sgst ?? ($cart->tax() / 2)),
-                'overall_igst' => ($request->overall_igst ?? 0),
                 'overall_tax_amount' => ($request->overall_tax_amount ?? $cart->tax()),
-                'overall_tcs_percent' => $request->overall_tcs_percent ?? 0,
                 'overall_amount' => ($request->overall_amount ?? $total_amount),
-                'overall_other' => ($request->overall_other ?? 0),
-                'overall_adj' => ($request->overall_adj ?? 0),
-                // Persist rounded customer-payable overall net rate
-                'overall_net_rate' => round(str_replace(',', '', $request->overall_net_rate ?? $total_amount), 0),
             ];
             
             // Check if we're updating an existing draft (from auto-save)
@@ -512,8 +470,6 @@ class SaleController extends Controller
                 $categoryName = $options->category
                     ?? optional($product->category)->category_name
                     ?? optional($product->category)->name;
-                $hsn = $options->hsn ?? $product->hsn;
-
                 $pcId = $resolver->resolve($cart_item->id, $options->code ?? null);
 
                 SaleDetails::create([
@@ -526,13 +482,9 @@ class SaleController extends Controller
                     'rate'                     => $vals['rate'],
                     'tax_percentage'           => $vals['tax_percent'],
                     'tax_amount'               => $vals['tax_amount'],
-                    'cash_discount_percentage' => $vals['cash_discount_percent'],
-                    'cash_discount_amount'     => $vals['cash_discount_amount'],
                     'discount_amount'          => $vals['discount_amount'],
                     'discount_type'            => $options->product_discount_type,
-                    'discount_percent'         => (float) ($options->product_discount_percent ?? 0),
                     'category'                 => $categoryName,
-                    'hsn'                      => $hsn,
                     'quantity'                 => $cart_item->qty,
                     'price'                    => (float) $cart_item->price,
                     'unit_price'               => $vals['unit_price'],
@@ -776,9 +728,9 @@ class SaleController extends Controller
         DB::transaction(function () use ($request, $sale, &$shouldDispatch, &$dispatchSaleId, $isDraft, $resolver) {
             $cart = Cart::instance('sale_edit');
 
-            // Determine the base total from overall_net_rate or hidden total_amount.
+            // Determine the base total from overall_amount or hidden total_amount.
             // Coerce posted strings (may contain commas/currency) to numeric floats.
-            $rawOverallNet = $request->overall_net_rate ?? $request->total_amount ?? 0;
+            $rawOverallNet = $request->overall_amount ?? $request->total_amount ?? 0;
             $base_total = floatval(str_replace([',', settings()->currency->symbol], '', (string) $rawOverallNet));
 
             // Prefer an explicit discount_amount submitted via the form (global discount).
@@ -862,17 +814,13 @@ class SaleController extends Controller
 
             $sale->update([
                 'date' => $request->date,
-                'due_date' => $request->due_date,
                 'reference' => $reference,
                 'customer_id' => $request->customer_id,
                 'customer_name' => $request->customer_id ? Customer::findOrFail($request->customer_id)->customer_name : 'Draft Customer',
                 'area' => $request->area,
                 'balance' => ($request->opening_balance ?? 0),
                 'bill_type' => $request->bill_type,
-                'days' => $request->days,
                 'phone_no' => $request->phone,
-                'vehicle_name' => $request->vehicle_name ?? null,
-                'vehicle_no' => $request->vehicle_no ?? null,
                 'discount_type' => $request->discount_type,
                 'tax_percentage' => $request->tax_percentage,
                 'discount_percentage' => $request->discount_percentage,
@@ -890,16 +838,8 @@ class SaleController extends Controller
                 'overall_quantity' => ($request->overall_quantity ?? 0),
                 'overall_gross_amount' => ($request->overall_gross_amount ?? 0),
                 'overall_taxable_amount' => ($request->overall_taxable_amount ?? 0),
-                'overall_cgst' => ($request->overall_cgst ?? 0),
-                'overall_sgst' => ($request->overall_sgst ?? 0),
-                'overall_igst' => ($request->overall_igst ?? 0),
                 'overall_tax_amount' => ($request->overall_tax_amount ?? 0),
-                'overall_tcs_percent' => $request->overall_tcs_percent ?? 0,
                 'overall_amount' => ($request->overall_amount ?? 0),
-                'overall_other' => ($request->overall_other ?? 0),
-                'overall_adj' => ($request->overall_adj ?? 0),
-                // Persist rounded customer-payable overall net rate
-                'overall_net_rate' => round(str_replace(',', '', $request->overall_net_rate ?? $total_amount), 0),
             ]);
 
             // Reconcile customer opening_balance for change in outstanding due.
@@ -1026,8 +966,6 @@ class SaleController extends Controller
                 $categoryName = $options->category
                     ?? optional($product->category)->category_name
                     ?? optional($product->category)->name;
-                $hsn = $options->hsn ?? $product->hsn;
-
                 $pcId = $resolver->resolve($cart_item->id, $options->code ?? null);
 
                 SaleDetails::create([
@@ -1040,13 +978,9 @@ class SaleController extends Controller
                     'rate'                     => $vals['rate'],
                     'tax_percentage'           => $vals['tax_percent'],
                     'tax_amount'               => $vals['tax_amount'],
-                    'cash_discount_percentage' => $vals['cash_discount_percent'],
-                    'cash_discount_amount'     => $vals['cash_discount_amount'],
                     'discount_amount'          => $vals['discount_amount'],
                     'discount_type'            => $options->product_discount_type,
-                    'discount_percent'         => (float) ($options->product_discount_percent ?? 0),
                     'category'                 => $categoryName,
-                    'hsn'                      => $hsn,
                     'quantity'                 => $cart_item->qty,
                     'price'                    => (float) $cart_item->price,
                     'unit_price'               => $vals['unit_price'],
@@ -1128,12 +1062,9 @@ class SaleController extends Controller
                     'product_tax'            => $sale_detail->product_tax_amount,
                     'unit_price'             => $sale_detail->unit_price,
                     'category'               => $sale_detail->category ?: optional($product->category)->category_name,
-                    'hsn'                    => $sale_detail->hsn ?: ($product->hsn ?? null),
                     'tax_percent'            => $taxPercent,
                     'mrp'                    => $mrp,
                     'rate'                   => round($rate, 2),
-                    'cash_discount_percent'  => $sale_detail->cash_discount_percentage ?? 0,
-                    'cash_discount_amount'   => $sale_detail->cash_discount_amount ?? 0,
                 ]
             ]);
         }

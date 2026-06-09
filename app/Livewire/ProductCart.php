@@ -1429,30 +1429,13 @@ class ProductCart extends Component
             $overall_taxable_amount = $overall_total_without_gst;
         }
 
-        // CGST / SGST = equal 50/50 split of total GST
-        $overall_cgst = $overall_tax_amount / 2;
-        $overall_sgst = $overall_tax_amount / 2;
-        $overall_igst = 0.00;
-
-        // Net Rate = Amount + Adj + Other
-        $overall_net_rate = $overall_amount
-            + (float) ($this->adjustment    ?? 0)
-            + (float) ($this->overall_other ?? 0);
-
         return [
             'overall_nos'           => $overall_nos,
             'overall_quantity'      => $overall_quantity,
             'overall_gross_amount'  => (float)$overall_gross_amount,
             'overall_taxable_amount'=> (float)max(0, $overall_taxable_amount),
-            'overall_cgst'          => (float)$overall_cgst,
-            'overall_sgst'          => (float)$overall_sgst,
-            'overall_igst'          => (float)$overall_igst,
             'overall_tax_amount'    => (float)$overall_tax_amount,
-            'overall_tcs_percent'   => '0',
             'overall_amount'        => (float)$overall_amount,
-            'overall_other'         => (float) ($this->overall_other ?? 0),
-            'overall_adj'           => (float) ($this->adjustment ?? 0),
-            'overall_net_rate'      => (float)$overall_net_rate,
         ];
     }
 
