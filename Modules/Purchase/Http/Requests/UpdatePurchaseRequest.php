@@ -22,7 +22,7 @@ class UpdatePurchaseRequest extends FormRequest
             'balance' => 'nullable|numeric',
             'invoice_no' => 'required|string|max:20',
             'invoice_date' => 'required|date',
-            'days' => 'required|integer|min:0|max:999',
+            'days' => 'nullable|integer|min:0|max:999',
             'due_date' => 'nullable|date',
             'tax_percentage' => 'required|integer|min:0|max:100',
             'discount_percentage' => 'required|integer|min:0|max:100',

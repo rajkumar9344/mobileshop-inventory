@@ -64,14 +64,8 @@
                                     <label for="invoice_date" class="mb-1">Invoice Date <span class="text-danger">*</span></label>
                                     <input type="date" class="form-control" name="invoice_date" id="invoice_date" required value="{{ now()->format('Y-m-d') }}">
                                 </div>
-                                <div class="col-md-2 pr-1">
-                                    <label for="days" class="mb-1">Due Days <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="days" id="days" maxlength="3" pattern="[0-9]*" inputmode="numeric" value="0" placeholder="0" required oninput="this.value = this.value.replace(/[^0-9]/g,'').slice(0,3)">
-                                </div>
-                                <div class="col-md-2 pr-1">
-                                    <label for="due_date" class="mb-1">Due Date</label>
-                                    <input type="date" class="form-control" name="due_date" id="due_date" readonly>
-                                </div>
+                                <input type="hidden" name="days" id="days" value="0">
+                                <input type="hidden" name="due_date" id="due_date" value="">
                                 <div class="col-md-2 pr-1">
                                     <label for="excess_amount" class="mb-1">Excess</label>
                                     <input type="text" class="form-control" name="excess_amount" id="excess_amount" maxlength="15" readonly placeholder="0.00" value="0.00">
@@ -217,30 +211,6 @@
     </style>
     <script>
         $(document).ready(function () {
-            function updateDueDate() {
-                var refDate = $('#ref_date').val();
-                var days = parseInt($('#days').val() || '0', 10);
-
-                if (!refDate || isNaN(days)) {
-                    $('#due_date').val('');
-                    return;
-                }
-
-                var parts = refDate.split('-');
-                if (parts.length !== 3) {
-                    $('#due_date').val('');
-                    return;
-                }
-
-                var d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-                d.setDate(d.getDate() + days);
-
-                var yyyy = d.getFullYear();
-                var mm = String(d.getMonth() + 1).padStart(2, '0');
-                var dd = String(d.getDate()).padStart(2, '0');
-                $('#due_date').val(yyyy + '-' + mm + '-' + dd);
-            }
-
             // Generate reference number on page load
             generateReferenceNumber();
 
@@ -261,76 +231,19 @@
                         var supplierType = selectedOption.data('type') || 1;
 
                     $('#area').val(area);
-                    // show plain numeric values (same as Balance)
                     $('#balance').val(parseFloat(balance).toFixed(2));
                     $('#excess_amount').val(parseFloat(excess).toFixed(2));
-                    $('#days').val((dueDays !== undefined && dueDays !== null && dueDays !== '') ? dueDays : 0);
-                    updateDueDate();
                     // Populate purchase Type from supplier (editable by user)
                     if ($('#purchase_type').length) {
                         $('#purchase_type').val(supplierType).trigger('change');
-                        // Also dispatch the Livewire event so Livewire components react
                         if (window.Livewire && typeof Livewire.dispatch === 'function') {
                             Livewire.dispatch('purchaseTypeChanged', { type: supplierType });
                         }
                     }
-
-                    // Fetch supplier JSON to get discount fields and apply them to the Livewire cart
-                    var id = $(this).val();
-                    if (!id) {
-                        $('#days').val('0');
-                        updateDueDate();
-                        // Clear any supplier-applied discount
-                        if (window.Livewire && typeof Livewire.emit === 'function') {
-                            Livewire.emit('applyCustomerAdditionalDiscount', { discount: 0 });
-                        }
-                        return;
-                    }
-
-                    $.get('/api/suppliers/' + id).done(function(res) {
-                        var lessDisc = parseFloat(res.less_discount_percent || 0) || 0;
-                        $('#days').val((res.due_days !== undefined && res.due_days !== null) ? res.due_days : 0);
-                        updateDueDate();
-                        // Treat supplier's less_discount_percent like the "additional discount" used for customers
-                        if (window.Livewire && typeof Livewire.emit === 'function') {
-                            Livewire.emit('applyCustomerAdditionalDiscount', { discount: lessDisc });
-                        }
-
-                        // Also set the hidden input inside product-cart (if present) so wire:model updates reliably
-                        var hiddenInput = document.getElementById('product-cart-additional-discount');
-                        if (hiddenInput) {
-                            hiddenInput.value = lessDisc;
-                            hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                    }).fail(function() {
-                        $('#days').val('0');
-                        updateDueDate();
-                        // On failure, clear any supplier-applied discount
-                        if (window.Livewire && typeof Livewire.emit === 'function') {
-                            Livewire.emit('applyCustomerAdditionalDiscount', { discount: 0 });
-                        }
-                        var hiddenInput = document.getElementById('product-cart-additional-discount');
-                        if (hiddenInput) {
-                            hiddenInput.value = 0;
-                            hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                    });
                 });
-
-            $('#ref_date, #days').on('change keyup input', updateDueDate);
-            updateDueDate();
 
             if ($('#paid_amount').length) {
                 $('#paid_amount').maskMoney({
-                    prefix:'{{ settings()->currency->symbol }}',
-                    thousands:'{{ settings()->currency->thousand_separator }}',
-                    decimal:'{{ settings()->currency->decimal_separator }}',
-                    allowZero: true,
-                });
-            }
-
-            if ($('#discount_amount').length) {
-                $('#discount_amount').maskMoney({
                     prefix:'{{ settings()->currency->symbol }}',
                     thousands:'{{ settings()->currency->thousand_separator }}',
                     decimal:'{{ settings()->currency->decimal_separator }}',
@@ -349,21 +262,21 @@
             }
 
             // Update balance on keyup (real-time updates)
-            if ($('#paid_amount').length || $('#discount_amount').length) {
-                $('#paid_amount, #discount_amount').on('keyup', function() {
+            if ($('#paid_amount').length) {
+                $('#paid_amount').on('keyup', function() {
                     if (typeof calculateBalance === 'function') calculateBalance();
                 });
             }
 
             // Update balance when cart total changes
-            if ($('#overall_net_rate').length && ( $('#paid_amount').length || $('#discount_amount').length || $('#balance_amount').length )) {
+            if ($('#overall_net_rate').length && ($('#paid_amount').length || $('#balance_amount').length)) {
                 $('#overall_net_rate').on('change input', function() {
                     if (typeof calculateBalance === 'function') calculateBalance();
                 });
             }
 
-            // Initialize balance on page load (only if relevant fields present)
-            if ($('#paid_amount').length || $('#discount_amount').length || $('#balance_amount').length) {
+            // Initialize balance on page load
+            if ($('#paid_amount').length || $('#balance_amount').length) {
                 if (typeof calculateBalance === 'function') calculateBalance();
             }
 
@@ -392,10 +305,7 @@
                     var paid_amount = $('#paid_amount').maskMoney('unmasked')[0];
                     $('#paid_amount').val(paid_amount);
                 }
-                if ($('#discount_amount').length) {
-                    var discount_amount = $('#discount_amount').maskMoney('unmasked')[0];
-                    $('#discount_amount').val(discount_amount);
-                }
+
 
                 // Update hidden fields before submission
                 updateHiddenFields();
@@ -498,9 +408,8 @@
 
             function calculateBalance() {
                 var totalAmount = parseFloat($('#overall_net_rate').val()) || 0;
-                var paidAmount = $('#paid_amount').maskMoney('unmasked')[0] || 0;
-                var discountAmount = $('#discount_amount').maskMoney('unmasked')[0] || 0;
-                var balance = totalAmount - paidAmount - discountAmount;
+                var paidAmount = $('#paid_amount').length && $('#paid_amount').data('maskMoney') ? ($('#paid_amount').maskMoney('unmasked')[0] || 0) : (parseFloat($('#paid_amount').val()) || 0);
+                var balance = totalAmount - paidAmount;
                 $('#balance_amount').val('{{ settings()->currency->symbol }}' + balance.toFixed(2));
             }
 
@@ -516,27 +425,6 @@
                     cartTotal = parseFloat(raw) || 0;
                 }
                 document.getElementById('hidden_total_amount').value = cartTotal;
-
-                // Copy overall fields into hidden inputs so controller receives them
-                if ($('#overall_other').length) {
-                    var otherVal = 0;
-                    if ($('#overall_other').data('maskMoney')) {
-                        otherVal = $('#overall_other').maskMoney('unmasked')[0] || 0;
-                    } else {
-                        otherVal = parseFloat($('#overall_other').val() || 0);
-                    }
-                    $('#hidden_overall_other').val(otherVal);
-                }
-
-                if ($('#overall_adj').length) {
-                    var adjVal = 0;
-                    if ($('#overall_adj').data('maskMoney')) {
-                        adjVal = $('#overall_adj').maskMoney('unmasked')[0] || 0;
-                    } else {
-                        adjVal = parseFloat($('#overall_adj').val() || 0);
-                    }
-                    $('#hidden_overall_adj').val(adjVal);
-                }
 
                 // Set other required form fields with default values
                 document.getElementById('hidden_tax_percentage').value = '0';

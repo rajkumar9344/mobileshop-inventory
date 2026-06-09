@@ -80,15 +80,23 @@ Balance formula: `balance = total_amount - paid_amount` (no discount subtraction
 `days` validation: always nullable (was required for non-draft)
 Files changed: `resources/views/livewire/product-cart.blade.php`, `Modules/Sale/Resources/views/create.blade.php`, `Modules/Sale/Resources/views/edit.blade.php`, `Modules/Sale/Http/Requests/StoreSaleRequest.php`
 
+#### Purchase (`Modules/Purchase`)
+Removed: due_date, due_days visible fields (kept as hidden inputs); removed updateDueDate() JS; removed supplier discount auto-apply from supplier change handler; discount_amount was already in commented-out block so not visible
+Balance formula: `balance = total_amount - paid_amount` (no discount)
+`days` validation: always nullable in both Store and Update requests
+Files changed: `Modules/Purchase/Resources/views/create.blade.php`, `Modules/Purchase/Resources/views/edit.blade.php`, `Modules/Purchase/Http/Requests/StorePurchaseRequest.php`, `Modules/Purchase/Http/Requests/UpdatePurchaseRequest.php`
+
+Note: SalesReturn and PurchasesReturn had no visible due_date/days/discount UI — their related fields were already hidden-only.
+
 ---
 
 ## Pending Work
 
 ### Phase 3 — Remaining
 - [x] Sales: remove due date, due days, HSN, all discount%, CGST, IGST, TCS%, other, adj; renamed "Net Rate" → "Total Amount"
-- [ ] Purchase: same as Sales
-- [ ] Purchase Return: same field removals
-- [ ] Sales Return: same field removals
+- [x] Purchase: remove due date, due days from UI (kept as hidden); removed updateDueDate JS; removed supplier discount auto-apply; days always nullable
+- [ ] Purchase Return: fields already hidden-only — no UI changes needed
+- [ ] Sales Return: fields already hidden-only — no UI changes needed
 
 ### Phase 5 — New Features
 - [ ] Purchase: reorder/repurchase option, save as draft, payment status
