@@ -25,7 +25,7 @@ class UpdateSaleRequest extends FormRequest
             'vehicle_no' => 'nullable|string|max:30',
             // allow negative balances (leading minus) as customers can have credits
             'opening_balance' => $isDraft ? 'nullable|regex:/^-?[0-9.,]+$/' : 'required|regex:/^-?[0-9.,]+$/',
-            'days' => $isDraft ? 'nullable|integer|min:0|max:9999' : 'required|integer|min:0|max:9999',
+            'days' => 'nullable|integer|min:0|max:9999',
             'phone' => ['nullable','string','max:10','regex:/^[0-9]+$/'],
             'discount_type' => 'nullable|alpha|size:1',
             'discount_amount' => 'nullable|numeric|lte:overall_net_rate',
@@ -82,21 +82,6 @@ class UpdateSaleRequest extends FormRequest
             }
         }
         return $normalized;
-    }
-
-    public function withValidator($validator)
-    {
-        $validator->after(function ($validator) {
-            if ($this->input('is_draft', 0) == 1) {
-                return; // skip combined check for drafts
-            }
-            $netRate = floatval($this->input('overall_net_rate', 0));
-            $paid = floatval($this->input('paid_amount', 0));
-            $discount = floatval($this->input('discount_amount', 0));
-            if (($paid + $discount) > $netRate) {
-                $validator->errors()->add('discount_amount', 'Amount Received and Discount combined cannot exceed Net Rate.');
-            }
-        });
     }
 
     /**

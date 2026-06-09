@@ -92,11 +92,11 @@ Note: SalesReturn and PurchasesReturn had no visible due_date/days/discount UI �
 
 ## Pending Work
 
-### Phase 3 — Remaining
-- [x] Sales: remove due date, due days, HSN, all discount%, CGST, IGST, TCS%, other, adj; renamed "Net Rate" → "Total Amount"
-- [x] Purchase: remove due date, due days from UI (kept as hidden); removed updateDueDate JS; removed supplier discount auto-apply; days always nullable
-- [ ] Purchase Return: fields already hidden-only — no UI changes needed
-- [ ] Sales Return: fields already hidden-only — no UI changes needed
+### Phase 3 — COMPLETE ✓
+- [x] Sales: remove due date, due days, HSN, all discount%, CGST, IGST, TCS%, other, adj; renamed "Net Rate" → "Total Amount"; UpdateSaleRequest days always nullable
+- [x] Purchase: remove due date, due days from UI (kept as hidden); removed updateDueDate JS; removed supplier discount auto-apply; days always nullable in Store+Update requests
+- [x] Purchase Return: fields already hidden-only — no UI changes needed
+- [x] Sales Return: fields already hidden-only — no UI changes needed
 
 ### Phase 5 — New Features
 - [ ] Purchase: reorder/repurchase option, save as draft, payment status
