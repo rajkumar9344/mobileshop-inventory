@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('suppliers', function (Blueprint $table) {
             if (!Schema::hasColumn('suppliers', 'due_days')) {
-                $table->unsignedSmallInteger('due_days')->default(0)->after('less_discount_percent');
+                $table->unsignedSmallInteger('due_days')->default(0)->after('tax_percent');
             }
         });
     }

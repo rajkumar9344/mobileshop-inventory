@@ -90,6 +90,27 @@ Note: SalesReturn and PurchasesReturn had no visible due_date/days/discount UI �
 
 ---
 
+## Migration Cleanup (COMPLETE ✓)
+
+All People module migration files were edited directly (DB not yet initialised — no DROP migrations needed).
+
+**Customer migrations cleaned:**
+- `create_customers_table` — removed `country`
+- `add_more_fields_to_customers_table` — removed `gst_no`, `pan_no`, `aadhar_no`, `lr_through`, `cash_discount`, `less_discount`, `discount_percent`, `terms_days`, `salesman`
+- `update_customers_table` — removed `less_discount→additional_discount` rename block, `discount_percent` MODIFY block, `salesman` MODIFY block
+
+**Supplier migrations cleaned:**
+- `create_suppliers_table` — removed `country`
+- `add_new_fields_to_suppliers_table` — removed `gst_no`, `bank_name`, `account_no`, `branch`, `ifsc`, `less_discount_percent`; fixed `after()` refs (`open_balance` → `after('address')`, `status` → `after('tax_percent')`)
+- `make_supplier_email_nullable` — removed `style` column addition
+- `add_due_days_to_suppliers_table` (app-level) — fixed `after('less_discount_percent')` → `after('tax_percent')`
+
+**Show views cleaned:**
+- `customers/show.blade.php` — removed Country, GST, PAN, Aadhaar, discounts, salesman, Del.Mode; added VAT ID
+- `suppliers/show.blade.php` — removed Country, GST, bank details, style, discount%
+
+---
+
 ## Pending Work
 
 ### Phase 3 — COMPLETE ✓
