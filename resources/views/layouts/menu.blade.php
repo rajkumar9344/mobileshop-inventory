@@ -20,13 +20,6 @@
             </a>
         </li>
         @endcan
-        @can('access_product_subcategories')
-        <li class="c-sidebar-nav-item">
-            <a class="c-sidebar-nav-link {{ request()->routeIs('product-subcategories.*') ? 'c-active' : '' }}" href="{{ route('product-subcategories.index') }}">
-                <i class="c-sidebar-nav-icon bi bi-list" style="line-height: 1;"></i> Sub-category
-            </a>
-        </li>
-        @endcan
         @can('create_products')
         <li class="c-sidebar-nav-item">
             <a class="c-sidebar-nav-link {{ request()->routeIs('products.create') ? 'c-active' : '' }}" href="{{ route('products.create') }}">
@@ -39,13 +32,6 @@
                 <i class="c-sidebar-nav-icon bi bi-journals" style="line-height: 1;"></i> All Products
             </a>
         </li>
-        @can('print_product_barcodes')
-           <li class="c-sidebar-nav-item">
-               <a class="c-sidebar-nav-link {{ request()->routeIs('barcode.print') ? 'c-active' : '' }}" href="{{ route('barcode.print') }}">
-                   <i class="c-sidebar-nav-icon bi bi-printer" style="line-height: 1;"></i> Print Barcode
-               </a>
-           </li>
-        @endcan
     </ul>
 </li>
 @endcan
