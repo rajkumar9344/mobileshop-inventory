@@ -6,66 +6,6 @@
     </a>
 </li>
 
-<!-- Rack Management -->
-@can('access_racks')
-<li class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs('rack-master.*') ? 'c-show' : '' }}">
-    <a class="c-sidebar-nav-link c-sidebar-nav-dropdown-toggle" href="#">
-        <i class="c-sidebar-nav-icon bi bi-box" style="line-height: 1;"></i> Rack Management
-    </a>
-    <ul class="c-sidebar-nav-dropdown-items">
-        @can('create_racks')
-        <li class="c-sidebar-nav-item">
-            <a class="c-sidebar-nav-link {{ request()->routeIs('rack.create') ? 'c-active' : '' }}" href="{{ route('rack.create') }}">
-                <i class="c-sidebar-nav-icon bi bi-plus-square" style="line-height: 1;"></i> Create Rack
-            </a>
-        </li>
-        @endcan
-        <li class="c-sidebar-nav-item">
-            <a class="c-sidebar-nav-link {{ request()->routeIs('rack.index') ? 'c-active' : '' }}" href="{{ route('rack.index') }}">
-                <i class="c-sidebar-nav-icon bi bi-list-ul" style="line-height: 1;"></i> All Racks
-            </a>
-        </li>
-        @can('print_rack_barcodes')
-        <li class="c-sidebar-nav-item">
-            <a class="c-sidebar-nav-link {{ request()->routeIs('rack.barcode.print') ? 'c-active' : '' }}" href="{{ route('rack.barcode.print') }}">
-                <i class="c-sidebar-nav-icon bi bi-printer" style="line-height: 1;"></i> Print Barcode
-            </a>
-        </li>
-        @endcan
-    </ul>
-</li>
-@endcan
-
-<!-- Bin Management -->
-@can('access_bins')
-<li class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs('bin.*') ? 'c-show' : '' }}">
-    <a class="c-sidebar-nav-link c-sidebar-nav-dropdown-toggle" href="#">
-        <i class="c-sidebar-nav-icon bi bi-archive" style="line-height: 1;"></i> Bin Management
-    </a>
-    <ul class="c-sidebar-nav-dropdown-items">
-        @can('create_bins')
-        <li class="c-sidebar-nav-item">
-            <a class="c-sidebar-nav-link {{ request()->routeIs('bin.create') ? 'c-active' : '' }}" href="{{ route('bin.create') }}">
-                <i class="c-sidebar-nav-icon bi bi-plus-square" style="line-height: 1;"></i> Create Bin
-            </a>
-        </li>
-        @endcan
-        <li class="c-sidebar-nav-item">
-            <a class="c-sidebar-nav-link {{ request()->routeIs('bin.index') ? 'c-active' : '' }}" href="{{ route('bin.index') }}">
-                <i class="c-sidebar-nav-icon bi bi-list-ul" style="line-height: 1;"></i> All Bins
-            </a>
-        </li>
-        @can('print_bin_barcodes')
-        <li class="c-sidebar-nav-item">
-            <a class="c-sidebar-nav-link {{ request()->routeIs('bin.barcode.print') ? 'c-active' : '' }}" href="{{ route('bin.barcode.print') }}">
-                <i class="c-sidebar-nav-icon bi bi-printer" style="line-height: 1;"></i> Print Barcode
-            </a>
-        </li>
-        @endcan
-    </ul>
-</li>
-@endcan
-
 <!-- Products -->
 @can('access_products')
 <li class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs('products.*') || request()->routeIs('product-categories.*') || request()->routeIs('product-subcategories.*') ? 'c-show' : '' }}">

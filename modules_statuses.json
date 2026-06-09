@@ -15,7 +15,5 @@
     "PurchasesReturn": true,
     "PurchasesReceipt": true,
     "Quotation": true,
-    "Reports": true,
-    "Rack": true,
-    "Bin": true
+    "Reports": true
 }

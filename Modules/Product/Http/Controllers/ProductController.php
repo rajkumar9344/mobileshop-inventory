@@ -14,7 +14,6 @@ use Modules\Product\Entities\ProductCode;
 use Modules\Product\Http\Requests\StoreProductRequest;
 use Modules\Product\Http\Requests\UpdateProductRequest;
 use Modules\Upload\Entities\Upload;
-use Modules\Rack\Entities\Rack;
 use Illuminate\Database\QueryException;
 
 class ProductController extends Controller
@@ -37,11 +36,9 @@ class ProductController extends Controller
 
     public function create() {
         abort_if(Gate::denies('create_products'), 403);
-        $racks = Rack::where('status', 'Active')->distinct()->orderBy('rack_id')->pluck('rack_id');
-        $bins = \Modules\Bin\Entities\Bin::where('status', 'active')->distinct()->orderBy('bin_id')->pluck('bin_id');
         $suppliers = \Modules\People\Entities\Supplier::where('status', 'active')->orderBy('supplier_name')->pluck('supplier_name', 'id');
 
-        return view('product::products.create', compact('racks', 'bins', 'suppliers'));
+        return view('product::products.create', compact('suppliers'));
     }
 
     /**
@@ -269,12 +266,10 @@ class ProductController extends Controller
 
     public function edit(Product $product) {
     abort_if(Gate::denies('edit_products'), 403);
-    $racks = Rack::where('status', 'Active')->distinct()->orderBy('rack_id')->pluck('rack_id');
-    $bins = \Modules\Bin\Entities\Bin::where('status', 'active')->distinct()->orderBy('bin_id')->pluck('bin_id');
     $suppliers = \Modules\People\Entities\Supplier::where('status', 'active')->orderBy('supplier_name')->pluck('supplier_name', 'id');
-    $productCodes = $product->productCodes()->orderByDesc('is_primary')->get(); 
+    $productCodes = $product->productCodes()->orderByDesc('is_primary')->get();
 
-    return view('product::products.edit', compact('product', 'racks', 'bins', 'suppliers', 'productCodes'));
+    return view('product::products.edit', compact('product', 'suppliers', 'productCodes'));
     }
 
 

@@ -5,8 +5,6 @@ use Illuminate\Support\Facades\Auth;
 use Modules\Product\Http\Controllers\BarcodeController;
 use App\Http\Controllers\HomeController;
 
-use Modules\Rack\Http\Controllers\RackController;
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -99,7 +97,5 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('reports/daily-operations-monthwise-excel', [\App\Http\Controllers\ReportsController::class, 'dailyOperationsMonthwiseExcel'])
         ->name('reports.daily-operations-monthwise-excel');
 
-    // Rack routes
-    Route::resource('rack', \Modules\Rack\Http\Controllers\RackController::class)->names('rack');
 });
 
