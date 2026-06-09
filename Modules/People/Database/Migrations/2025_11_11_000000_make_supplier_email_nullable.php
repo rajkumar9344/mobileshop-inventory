@@ -18,10 +18,6 @@ return new class extends Migration
             // make address and city nullable as per BRD
             $table->text('address')->nullable()->change();
             $table->string('city')->nullable()->change();
-            // new optional 'style' field (Text Box, numbers only, max length 1)
-            if (! Schema::hasColumn('suppliers', 'style')) {
-                $table->string('style', 1)->nullable()->after('remarks');
-            }
         });
     }
 
@@ -34,10 +30,6 @@ return new class extends Migration
             $table->string('supplier_email')->nullable(false)->change();
             $table->text('address')->nullable(false)->change();
             $table->string('city')->nullable(false)->change();
-            // drop style column when rolling back
-            if (Schema::hasColumn('suppliers', 'style')) {
-                $table->dropColumn('style');
-            }
         });
     }
 };

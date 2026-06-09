@@ -53,7 +53,6 @@
                                             <tr><th>Area</th><td>{{ $supplier->area }}</td></tr>
                                             <tr><th>State</th><td>{{ $supplier->state }}</td></tr>
                                             <tr><th>City</th><td>{{ $supplier->city }}</td></tr>
-                                            <tr><th>Country</th><td>{{ $supplier->country }}</td></tr>
                                             <tr><th>Address</th><td>{{ $supplier->address }}</td></tr>
                                             <tr><th>Status</th><td>{{ ucfirst($supplier->status) }}</td></tr>
                                         </table>
@@ -65,17 +64,10 @@
                                     <div class="card-header font-weight-bold">Account Details</div>
                                     <div class="card-body p-0">
                                         <table class="table table-bordered table-striped-custom mb-0">
-                                            <tr><th>GST No</th><td>{{ $supplier->gst_no }}</td></tr>
-                                            <tr><th>Bank Name</th><td>{{ $supplier->bank_name }}</td></tr>
-                                            <tr><th>Account No</th><td>{{ $supplier->account_no }}</td></tr>
-                                            <tr><th>Branch</th><td>{{ $supplier->branch }}</td></tr>
-                                            <tr><th>IFSC</th><td>{{ $supplier->ifsc }}</td></tr>
-                                            <tr><th>Type</th><td>{{ $supplier->style }}</td></tr>
                                             <tr><th>Open Balance</th><td>{{ $supplier->open_balance }}</td></tr>
                                             <tr><th>Excess Amount</th><td>{{ number_format($supplier->excess_amount ?? 0, 2, '.', '') }}</td></tr>
                                             <tr><th>Credit Limit</th><td>{{ $supplier->credit_limit }}</td></tr>
                                             <tr><th>Tax %</th><td>{{ $supplier->tax_percent }}</td></tr>
-                                            <tr><th>Discount %</th><td>{{ $supplier->less_discount_percent }}</td></tr>
                                             <tr><th>Due Days</th><td>{{ $supplier->due_days ?? 0 }}</td></tr>
                                             <tr><th>Remarks</th><td>{{ $supplier->remarks }}</td></tr>
                                         </table>

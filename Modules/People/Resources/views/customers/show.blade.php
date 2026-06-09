@@ -50,15 +50,12 @@
                                             <tr><th>Customer Code</th><td>{{ $customer->customer_code }}</td></tr>
                                             <tr><th>Customer Email</th><td>{{ $customer->customer_email }}</td></tr>
                                             <tr><th>Customer Phone</th><td>{{ $customer->customer_phone }}</td></tr>
+                                            <tr><th>VAT ID</th><td>{{ $customer->vat_id }}</td></tr>
                                             <tr><th>City</th><td>{{ $customer->city }}</td></tr>
                                             <tr><th>Area</th><td>{{ $customer->area }}</td></tr>
                                             <tr><th>State</th><td>{{ $customer->state }}</td></tr>
                                             <tr><th>Pincode</th><td>{{ $customer->pincode }}</td></tr>
-                                            <tr><th>Country</th><td>{{ $customer->country }}</td></tr>
                                             <tr><th>Address</th><td>{{ $customer->address }}</td></tr>
-                                            <tr><th>GST No</th><td>{{ $customer->gst_no }}</td></tr>
-                                            <tr><th>PAN No</th><td>{{ $customer->pan_no }}</td></tr>
-                                            <tr><th>Aadhar No</th><td>{{ $customer->aadhar_no }}</td></tr>
                                         </table>
                                     </div>
                                 </div>
@@ -71,16 +68,10 @@
                                             <tr><th>Open Balance</th><td>{{ $customer->opening_balance }}</td></tr>
                                             <tr><th>Excess Amount</th><td>{{ number_format($customer->excess_amount ?? 0, 2, '.', '') }}</td></tr>
                                             <tr><th>Credit Limit</th><td>{{ $customer->credit_limit }}</td></tr>
-                                            <tr><th>Cash Discount %</th><td>{{ $customer->cash_discount }}</td></tr>
-                                            <tr><th>Additional Discount %</th><td>{{ $customer->additional_discount ?? $customer->less_discount }}</td></tr>
-                                            <tr><th>Discount %</th><td>{{ $customer->discount_percent }}</td></tr>
-                                            <tr><th>Outstanding Days</th><td>{{ $customer->terms_days }}</td></tr>
                                             <tr><th>Lock</th><td>{{ $customer->lock }}</td></tr>
                                             <tr><th>Outstanding</th><td>{{ $customer->outstanding }}</td></tr>
                                             <tr><th>Active</th><td>{{ $customer->is_active ? 'Yes' : 'No' }}</td></tr>
-                                            <tr><th>Salesman</th><td>{{ $customer->salesman }}</td></tr>
                                             <tr><th>Account ID</th><td>{{ $customer->account_id }}</td></tr>
-                                            <tr><th>Del. Mode</th><td>{{ $customer->lr_through }}</td></tr>
                                             <tr><th>Remarks</th><td>{{ $customer->remarks }}</td></tr>
                                         </table>
                                     </div>

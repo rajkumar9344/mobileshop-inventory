@@ -19,7 +19,6 @@ class CreateSuppliersTable extends Migration
             $table->string('supplier_email');
             $table->string('supplier_phone');
             $table->string('city');
-            $table->string('country');
             $table->text('address');
             $table->timestamps();
         });
