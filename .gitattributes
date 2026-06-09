@@ -1,0 +1,11 @@
+* text=auto
+*.php text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.md text eol=lf
+Modules/Rack/Database/Migrations/*.php text eol=lf
+*.css linguist-vendored
+*.scss linguist-vendored
+*.js linguist-vendored
+CHANGELOG.md export-ignore

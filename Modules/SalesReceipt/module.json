@@ -1,0 +1,8 @@
+{
+    "name": "SalesReceipt",
+    "alias": "salesreceipt",
+    "description": "Sales Receipt module",
+    "providers": [
+        "Modules\\SalesReceipt\\Providers\\SalesReceiptServiceProvider"
+    ]
+}

@@ -1,0 +1,34 @@
+/node_modules
+/public/hot
+/public/storage
+/storage/*.key
+/vendor
+.env
+.env.backup
+.phpunit.result.cache
+docker-compose.override.yml
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+/.idea
+/.vscode
+.gitkeep
+storage/framework/views/
+*.onetoc2
+
+# Build artifacts
+/public/build
+/public/mix-manifest.json
+
+# Runtime storage files
+/storage/logs/*
+!/storage/logs/.gitignore
+/storage/framework/cache/data/*
+!/storage/framework/cache/data/.gitignore
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitignore
+/storage/framework/testing/*
+!/storage/framework/testing/.gitignore
+/storage/fonts/*
+!/storage/fonts/.gitignore

@@ -1,0 +1,21 @@
+{
+    "Product": true,
+    "Upload": true,
+    "User": true,
+    "Adjustment": true,
+    "Expense": true,
+    "People": true,
+    "Currency": true,
+    "Setting": true,
+    "Sale": true,
+    "SalesReceipt": true,
+    "Purchase": true,
+    "SaleReturn": true,
+    "SalesReturn": true,
+    "PurchasesReturn": true,
+    "PurchasesReceipt": true,
+    "Quotation": true,
+    "Reports": true,
+    "Rack": true,
+    "Bin": true
+}

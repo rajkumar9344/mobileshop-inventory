@@ -1,0 +1,67 @@
+<?php
+
+namespace Modules\People\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+
+class StoreSupplierRequest extends FormRequest
+{
+    public function authorize()
+    {
+        return auth()->check();
+    }
+
+    public function prepareForValidation()
+    {
+        // sanitize numeric/currency-like inputs
+        $fields = ['open_balance', 'excess_amount', 'credit_limit'];
+        foreach ($fields as $f) {
+            if ($this->has($f)) {
+                $clean = preg_replace('/[^0-9.\\-]/', '', (string) $this->input($f));
+                $this->merge([$f => $clean === '' ? null : $clean]);
+            }
+        }
+        if ($this->has('due_days')) {
+            $days = preg_replace('/[^0-9]/', '', (string) $this->input('due_days'));
+            $this->merge(['due_days' => $days === '' ? 0 : (int) $days]);
+        }
+        // Map new 'type' dropdown to legacy 'style' DB column and default to 1
+        $this->merge(['style' => $this->input('type', 1)]);
+    }
+
+    public function rules()
+    {
+        $ifsc = $this->input('ifsc');
+        return [
+            'supplier_name'  => 'required|string|max:80',
+            'supplier_code'  => ['required','alpha_num','max:10', Rule::unique('suppliers','supplier_code')],
+            'supplier_phone' => ['required','string','max:10','regex:/^[0-9]+$/', Rule::unique('suppliers','supplier_phone')],
+            'supplier_email' => ['nullable','email','max:50','lowercase', Rule::unique('suppliers','supplier_email')],
+            'area'           => 'required|string|max:30',
+            'state'          => 'required|string|max:30',
+            'city'           => 'nullable|string|max:30',
+            'country'        => 'nullable|string|max:30',
+            'address'        => 'nullable|string|max:200',
+            'gst_no'         => ['nullable','alpha_num','max:15', Rule::unique('suppliers','gst_no')],
+            'style'          => 'nullable|integer|in:1,2,3,4',
+            'bank_name'      => 'nullable|string|max:50',
+            'account_no'     => ['nullable','digits_between:1,20', Rule::unique('suppliers')->where(function ($q) use ($ifsc) {
+                if ($ifsc) {
+                    return $q->where('ifsc', $ifsc);
+                }
+                return $q->whereNull('ifsc');
+            })],
+            'branch'         => 'nullable|string|max:50',
+            'ifsc'           => 'nullable|alpha_num|max:20',
+            'open_balance'   => 'nullable|numeric',
+            'credit_limit'   => 'nullable|numeric',
+            'excess_amount'  => 'nullable|numeric',
+            'tax_percent'    => 'nullable|numeric|min:0|max:100',
+            'less_discount_percent' => 'nullable|numeric|min:0|max:100',
+            'due_days'       => 'required|integer|min:0|max:999',
+            'status'         => 'required|in:active,inactive',
+            'remarks'        => 'nullable|string|max:200',
+        ];
+    }
+}

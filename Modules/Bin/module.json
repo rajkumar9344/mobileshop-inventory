@@ -1,0 +1,11 @@
+{
+    "name": "Bin",
+    "alias": "bin",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Bin\\Providers\\BinServiceProvider"
+    ],
+    "files": []
+}

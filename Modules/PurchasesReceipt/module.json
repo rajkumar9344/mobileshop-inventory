@@ -1,0 +1,8 @@
+{
+    "name": "PurchasesReceipt",
+    "alias": "purchasesreceipt",
+    "description": "Purchases Receipt module",
+    "providers": [
+        "Modules\\PurchasesReceipt\\Providers\\PurchasesReceiptServiceProvider"
+    ]
+}
