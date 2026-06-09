@@ -10,10 +10,6 @@
     </ol>
 @endsection
 
-@section('head')
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-@endsection
-
 @section('content')
     <div class="container-fluid">
         <form action="{{ route('customers.store') }}" method="POST">
@@ -31,30 +27,26 @@
                                     <div class="form-group">
                                         <label for="customer_name">Customer Name <span class="text-danger">*</span></label>
                                         <input type="text" class="form-control" name="customer_name" required maxlength="80">
-                                        @error('customer_name')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
+                                        @error('customer_name')<small class="text-danger">{{ $message }}</small>@enderror
                                     </div>
                                 </div>
                                 <div class="col-lg-4">
                                     <div class="form-group">
                                         <label for="customer_phone">Phone <span class="text-danger">*</span></label>
                                         <input type="tel" class="form-control" name="customer_phone" id="customer_phone" required maxlength="10"
-                                            pattern="[0-9]{10}" title="Please enter exactly 10 digits" oninput="validatePhone(this); document.getElementById('customer_code').value = this.value;">
+                                            pattern="[0-9]{10}" title="Please enter exactly 10 digits"
+                                            oninput="validatePhone(this); document.getElementById('customer_code').value = this.value;">
                                         <small id="phone-error" class="text-danger" style="display: none;"></small>
-                                        @error('customer_phone')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
+                                        @error('customer_phone')<small class="text-danger">{{ $message }}</small>@enderror
                                     </div>
                                 </div>
                                 <div class="col-lg-4">
                                     <div class="form-group">
                                         <label for="customer_email">Email</label>
-                                        <input type="email" class="form-control" name="customer_email" id="customer_email" maxlength="50" oninput="this.value = this.value.replace(/[^a-zA-Z0-9@._]/g, '').slice(0,50); validateEmail(this);">
+                                        <input type="email" class="form-control" name="customer_email" id="customer_email" maxlength="50"
+                                            oninput="this.value = this.value.replace(/[^a-zA-Z0-9@._]/g, '').slice(0,50); validateEmail(this);">
                                         <small id="email-error" class="text-danger" style="display: none;"></small>
-                                        @error('customer_email')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
+                                        @error('customer_email')<small class="text-danger">{{ $message }}</small>@enderror
                                     </div>
                                 </div>
                             </div>
@@ -63,10 +55,9 @@
                                 <div class="col-lg-4">
                                     <div class="form-group">
                                         <label for="customer_code">Customer Code (Auto-filled from Mobile) <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="customer_code" id="customer_code" required maxlength="10" pattern="[A-Za-z0-9]+" oninput="this.value = this.value.replace(/[^A-Za-z0-9]/g,'').slice(0,10);">
-                                        @error('customer_code')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
+                                        <input type="text" class="form-control" name="customer_code" id="customer_code" required maxlength="10"
+                                            pattern="[A-Za-z0-9]+" oninput="this.value = this.value.replace(/[^A-Za-z0-9]/g,'').slice(0,10);">
+                                        @error('customer_code')<small class="text-danger">{{ $message }}</small>@enderror
                                     </div>
                                 </div>
                                 <div class="col-lg-4">
@@ -77,177 +68,86 @@
                                 </div>
                                 <div class="col-lg-4">
                                     <div class="form-group">
-                                        <label for="country">Country</label>
-                                        <input type="text" class="form-control" name="country" maxlength="30" value="India">
-                                        @error('country')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
+                                        <label for="vat_id">VAT ID</label>
+                                        <input type="text" class="form-control" name="vat_id" maxlength="20"
+                                            oninput="this.value = this.value.replace(/[^A-Za-z0-9]/g,'').slice(0,20)">
+                                        @error('vat_id')<small class="text-danger">{{ $message }}</small>@enderror
                                     </div>
                                 </div>
                             </div>
-
-
 
                             <div class="form-row">
                                 <div class="col-lg-4">
                                     <div class="form-group">
                                         <label for="state">State <span class="text-danger">*</span></label>
                                         <input type="text" class="form-control" name="state" maxlength="30" required>
-                                        @error('state')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
+                                        @error('state')<small class="text-danger">{{ $message }}</small>@enderror
                                     </div>
                                 </div>
                                 <div class="col-lg-4">
                                     <div class="form-group">
                                         <label for="pincode">Pincode</label>
-                                        <input type="text" class="form-control" name="pincode" maxlength="10" pattern="[0-9]*" title="Only numbers allowed" oninput="this.value = this.value.replace(/[^0-9]/g,'').slice(0,10)">
-                                        @error('pincode')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
+                                        <input type="text" class="form-control" name="pincode" maxlength="10"
+                                            oninput="this.value = this.value.replace(/[^0-9]/g,'').slice(0,10)">
+                                        @error('pincode')<small class="text-danger">{{ $message }}</small>@enderror
                                     </div>
                                 </div>
                                 <div class="col-lg-4">
                                     <div class="form-group">
                                         <label for="area">Area <span class="text-danger">*</span></label>
                                         <input type="text" class="form-control" name="area" maxlength="30" required>
-                                        @error('area')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
+                                        @error('area')<small class="text-danger">{{ $message }}</small>@enderror
                                     </div>
                                 </div>
                             </div>
 
                             <div class="form-row">
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="gst_no">GST No</label>
-                                        <input type="text" class="form-control" name="gst_no" maxlength="15"
-                                            pattern="[0-9A-Za-z]*" title="GST (alphanumeric)" placeholder="" oninput="this.value = this.value.replace(/[^A-Za-z0-9]/g,'').slice(0,15)">
-                                        @error('gst_no')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
-                                    </div>
-                                </div>
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="pan_no">PAN No</label>
-                                        <input type="text" class="form-control" name="pan_no" maxlength="10"
-                                            pattern="[A-Za-z0-9]*" title="PAN (alphanumeric)" placeholder="" oninput="this.value = this.value.replace(/[^A-Za-z0-9]/g,'').slice(0,10)">
-                                        @error('pan_no')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
-                                    </div>
-                                </div>
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="aadhar_no">Aadhar No</label>
-                                        <input type="text" class="form-control" name="aadhar_no" maxlength="12"
-                                            pattern="[0-9]*" title="Aadhar (12 digits)" placeholder="123412341234" oninput="this.value = this.value.replace(/[^0-9]/g,'').slice(0,12)">
-                                        @error('aadhar_no')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-row">
                                 <div class="col-lg-12">
                                     <div class="form-group">
                                         <label for="address">Address</label>
                                         <textarea class="form-control" name="address" rows="3" maxlength="200"></textarea>
-                                        @error('address')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
+                                        @error('address')<small class="text-danger">{{ $message }}</small>@enderror
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
                 <div class="col-lg-12">
                     <div class="card">
                         <div class="card-body">
                             <h5>Account Details</h5>
                             <div class="form-row">
-                                <div class="col-lg-3">
+                                <div class="col-lg-4">
                                     <div class="form-group">
                                         <label for="opening_balance">Open Balance <span class="text-danger">*</span></label>
-                                                <x-currency-input id="opening_balance" displayName="opening_balance_display" hiddenName="opening_balance" :value="old('opening_balance', 0)" />
-                                        @error('opening_balance')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
+                                        <x-currency-input id="opening_balance" displayName="opening_balance_display" hiddenName="opening_balance" :value="old('opening_balance', 0)" />
+                                        @error('opening_balance')<small class="text-danger">{{ $message }}</small>@enderror
                                     </div>
                                 </div>
-                                <div class="col-lg-3">
+                                <div class="col-lg-4">
                                     <div class="form-group">
                                         <label for="excess_amount">Excess Amount</label>
-                                                <x-currency-input id="excess_amount" displayName="excess_amount_display" hiddenName="excess_amount" :value="old('excess_amount', 0)" />
-                                        @error('excess_amount')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
+                                        <x-currency-input id="excess_amount" displayName="excess_amount_display" hiddenName="excess_amount" :value="old('excess_amount', 0)" />
+                                        @error('excess_amount')<small class="text-danger">{{ $message }}</small>@enderror
                                     </div>
                                 </div>
-                                <div class="col-lg-3">
+                                <div class="col-lg-4">
                                     <div class="form-group">
                                         <label for="credit_limit">Credit Limit <span class="text-danger">*</span></label>
-                                                <x-currency-input id="credit_limit" displayName="credit_limit_display" hiddenName="credit_limit" :value="old('credit_limit', 0)" />
-                                        @error('credit_limit')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
-                                    </div>
-                                </div>
-                                <div class="col-lg-3">
-                                    <div class="form-group">
-                                            <label for="terms_days">Outstanding Days <span class="text-danger">*</span></label>
-                                        <input type="text" name="terms_days" class="form-control" placeholder="Outstanding Days" required value="{{ old('terms_days', 0) }}" oninput="this.value = this.value.replace(/[^0-9]/g,'').slice(0,3)" pattern="^[0-9]{1,3}$" maxlength="3">
-                                        @error('terms_days')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
+                                        <x-currency-input id="credit_limit" displayName="credit_limit_display" hiddenName="credit_limit" :value="old('credit_limit', 0)" />
+                                        @error('credit_limit')<small class="text-danger">{{ $message }}</small>@enderror
                                     </div>
                                 </div>
                             </div>
 
                             <div class="form-row">
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="cash_discount">Cash Discount %</label>
-                                        <input type="text" class="form-control" name="cash_discount"
-                                            maxlength="5" pattern="^[0-9]*\.?[0-9]*$" inputmode="decimal" value="{{ old('cash_discount', '') }}" oninput="this.value = this.value.replace(/[^0-9.]/g,'').replace(/(\..*)\./g,'$1').slice(0,5)">
-                                    </div>
-                                </div>
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="additional_discount">Additional Discount %</label>
-                                        <input type="text" class="form-control" name="additional_discount"
-                                            maxlength="5" pattern="^[0-9]*\.?[0-9]*$" inputmode="decimal" value="{{ old('additional_discount', '') }}" oninput="this.value = this.value.replace(/[^0-9.]/g,'').replace(/(\..*)\./g,'$1').slice(0,5)">
-                                    </div>
-                                </div>
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="discount_percent">Discount % <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="discount_percent"
-                                            maxlength="5" pattern="^[0-9]*\.?[0-9]*$" inputmode="decimal" max="100" min="0" required value="{{ old('discount_percent', 0) }}" oninput="this.value = this.value.replace(/[^0-9.]/g,'').replace(/(\..*)\./g,'$1').slice(0,5)">
-                                        @error('discount_percent')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="salesman">Salesman <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="salesman" maxlength="20" required oninput="this.value = this.value.slice(0,20)">
-                                        @error('salesman')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
-                                    </div>
-                                </div>
                                 <div class="col-lg-4">
                                     <div class="form-group">
                                         <label for="account_id">Account ID</label>
-                                        <input type="text" class="form-control" name="account_id" maxlength="10" oninput="this.value = this.value.replace(/[^A-Za-z0-9]/g,'').slice(0,10)">
+                                        <input type="text" class="form-control" name="account_id" maxlength="10"
+                                            oninput="this.value = this.value.replace(/[^A-Za-z0-9]/g,'').slice(0,10)">
                                     </div>
                                 </div>
                                 <div class="col-lg-4">
@@ -257,68 +157,40 @@
                                             <option value="1" selected>Yes</option>
                                             <option value="0">No</option>
                                         </select>
-                                        @error('is_active')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
+                                        @error('is_active')<small class="text-danger">{{ $message }}</small>@enderror
                                     </div>
                                 </div>
-                            </div>
-
-                            <div class="form-row">
                                 <div class="col-lg-4">
                                     <div class="form-group">
-                                        <label for="lock">Lock <span class="text-danger">*</span>
-                                            <i class="bi bi-info-circle" data-toggle="tooltip" data-placement="top"
-                                                title="Lock: Yes/No flag."></i>
-                                        </label>
+                                        <label for="lock">Lock <span class="text-danger">*</span></label>
                                         <select name="lock" class="form-control" required>
                                             <option value="No" selected>No</option>
                                             <option value="Yes">Yes</option>
                                         </select>
-                                        @error('lock')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
-                                    </div>
-                                </div>
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="outstanding">Outstanding <span class="text-danger">*</span>
-                                            <i class="bi bi-info-circle" data-toggle="tooltip" data-placement="top"
-                                                title="Outstanding: Yes/No flag."></i>
-                                        </label>
-                                        <select name="outstanding" class="form-control" required>
-                                            <option value="No" selected>No</option>
-                                            <option value="Yes">Yes</option>
-                                        </select>
-                                        @error('outstanding')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
-                                    </div>
-                                </div>
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="lr_through">Del. Mode</label>
-                                        <input type="text" class="form-control" name="lr_through" maxlength="200">
-                                        @error('lr_through')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
+                                        @error('lock')<small class="text-danger">{{ $message }}</small>@enderror
                                     </div>
                                 </div>
                             </div>
 
                             <div class="form-row">
-                                <div class="col-lg-12">
+                                <div class="col-lg-4">
+                                    <div class="form-group">
+                                        <label for="outstanding">Outstanding <span class="text-danger">*</span></label>
+                                        <select name="outstanding" class="form-control" required>
+                                            <option value="No" selected>No</option>
+                                            <option value="Yes">Yes</option>
+                                        </select>
+                                        @error('outstanding')<small class="text-danger">{{ $message }}</small>@enderror
+                                    </div>
+                                </div>
+                                <div class="col-lg-8">
                                     <div class="form-group">
                                         <label for="remarks">Remarks</label>
-                                        <textarea class="form-control" name="remarks" rows="3" maxlength="200"></textarea>
-                                        @error('remarks')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
+                                        <textarea class="form-control" name="remarks" rows="2" maxlength="200"></textarea>
+                                        @error('remarks')<small class="text-danger">{{ $message }}</small>@enderror
                                     </div>
                                 </div>
                             </div>
-
-                            {{-- GST/PAN/Aadhar are optional per BRD; no JS toggling required. --}}
                         </div>
                     </div>
                 </div>
@@ -337,9 +209,4 @@
 @push('scripts')
     <script src="{{ asset('js/currency-input.js') }}"></script>
     <script src="{{ asset('js/validation.js') }}"></script>
-    <script>
-        $(function () {
-            $('[data-toggle="tooltip"]').tooltip();
-        });
-    </script>
 @endpush

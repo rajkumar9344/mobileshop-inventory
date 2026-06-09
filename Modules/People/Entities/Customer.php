@@ -10,22 +10,17 @@ class Customer extends Model
 
     use HasFactory;
 
-    // Allow mass assignment for these fields
     protected $fillable = [
-        'customer_name', 'customer_code', 'customer_email', 'customer_phone', 'address', 'city', 'state', 'country',
-        'pincode', 'area', 'gst_no', 'pan_no', 'aadhar_no', 'opening_balance', 'credit_limit', 'cash_discount',
-        'additional_discount', 'discount_percent', 'terms_days', 'lock', 'outstanding', 'is_active', 'salesman', 'account_id', 'lr_through', 'remarks', 'excess_amount'
+        'customer_name', 'customer_code', 'customer_email', 'customer_phone', 'address', 'city', 'state',
+        'pincode', 'area', 'vat_id', 'opening_balance', 'credit_limit',
+        'lock', 'outstanding', 'is_active', 'account_id', 'remarks', 'excess_amount'
     ];
 
     protected $casts = [
         'opening_balance' => 'decimal:2',
-        'credit_limit' => 'decimal:2',
-        'cash_discount' => 'decimal:2',
-        'additional_discount' => 'decimal:2',
-        'discount_percent' => 'decimal:2',
-        'terms_days' => 'integer',
-        'is_active' => 'boolean',
-            'excess_amount' => 'decimal:2',
+        'credit_limit'    => 'decimal:2',
+        'excess_amount'   => 'decimal:2',
+        'is_active'       => 'boolean',
     ];
 
     protected static function newFactory() {

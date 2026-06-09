@@ -95,10 +95,7 @@ class CustomersController extends Controller
         $data['lock'] = $data['lock'] ?? 'No';
         $data['outstanding'] = $data['outstanding'] ?? 'No';
 
-        // Normalize numeric fields and default them to zero when not provided.
-        // Note: `cash_discount` and `additional_discount` are intentionally nullable and
-        // therefore are NOT included here so they can remain null when absent.
-        foreach (['opening_balance','excess_amount','credit_limit','discount_percent','terms_days'] as $numField) {
+        foreach (['opening_balance', 'excess_amount', 'credit_limit'] as $numField) {
             if (array_key_exists($numField, $data)) {
                 if ($data[$numField] === null || $data[$numField] === '') {
                     $data[$numField] = 0;
@@ -224,11 +221,7 @@ class CustomersController extends Controller
         // Validation and sanitization handled by UpdateCustomerRequest
         $data = $request->validated();
 
-        // For updates, only modify numeric fields if they were present in the request.
-        // If a key exists but is empty/null, set to 0 to avoid DB NOT NULL errors.
-        // For updates, include terms_days too. Do not coerce cash/additional discounts to 0
-        // so they can remain null when intentionally left empty.
-        foreach (['opening_balance','excess_amount','credit_limit','discount_percent','terms_days'] as $numField) {
+        foreach (['opening_balance', 'excess_amount', 'credit_limit'] as $numField) {
             if (array_key_exists($numField, $data)) {
                 if ($data[$numField] === null || $data[$numField] === '') {
                     $data[$numField] = 0;
@@ -236,17 +229,6 @@ class CustomersController extends Controller
                     $data[$numField] = str_replace(',', '', $data[$numField]);
                 }
             }
-        }
-
-        // Preserve decimal values for discount fields (round to 2 decimals).
-        if (array_key_exists('discount_percent', $data)) {
-            $data['discount_percent'] = round(floatval($data['discount_percent'] ?? 0), 2);
-        }
-        if (array_key_exists('cash_discount', $data) && $data['cash_discount'] !== null && $data['cash_discount'] !== '') {
-            $data['cash_discount'] = round(floatval($data['cash_discount']), 2);
-        }
-        if (array_key_exists('additional_discount', $data) && $data['additional_discount'] !== null && $data['additional_discount'] !== '') {
-            $data['additional_discount'] = round(floatval($data['additional_discount']), 2);
         }
 
         $data['is_active'] = isset($data['is_active']) ? (bool) $data['is_active'] : $customer->is_active;
