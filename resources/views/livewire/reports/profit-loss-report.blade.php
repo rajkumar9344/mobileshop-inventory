@@ -2,6 +2,10 @@
     <div class="row">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
+                <div class="card-header d-flex align-items-center py-2">
+                    <i class="bi bi-funnel-fill mr-2" style="color:#f97316;font-size:14px;"></i>
+                    <strong>Filters</strong>
+                </div>
                 <div class="card-body">
                     <form wire:submit="generateReport">
                         <div class="form-row">
@@ -42,8 +46,8 @@
         <div class="col-12 col-lg-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-3 d-flex align-items-center">
-                    <div class="bg-primary p-3 mfe-3 rounded">
-                        <i class="bi bi-receipt font-2xl"></i>
+                    <div class="rm-stat-icon p-3 mfe-3 rounded">
+                        <i class="bi bi-receipt font-2xl" style="color:#fff;"></i>
                     </div>
                     <div>
                         <div class="text-value text-primary">{{ format_currency($sales_amount) }}</div>
@@ -56,8 +60,8 @@
         <div class="col-12 col-lg-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-3 d-flex align-items-center">
-                    <div class="bg-primary p-3 mfe-3 rounded">
-                        <i class="bi bi-arrow-return-left font-2xl"></i>
+                    <div class="rm-stat-icon p-3 mfe-3 rounded">
+                        <i class="bi bi-arrow-return-left font-2xl" style="color:#fff;"></i>
                     </div>
                     <div>
                         <div class="text-value text-primary">{{ format_currency($sale_returns_amount) }}</div>
@@ -70,8 +74,8 @@
         <div class="col-12 col-lg-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-3 d-flex align-items-center">
-                    <div class="bg-primary p-3 mfe-3 rounded">
-                        <i class="bi bi-trophy font-2xl"></i>
+                    <div class="rm-stat-icon p-3 mfe-3 rounded">
+                        <i class="bi bi-trophy font-2xl" style="color:#fff;"></i>
                     </div>
                     <div>
                         <div class="text-value text-primary">{{ format_currency($profit_amount) }}</div>
@@ -84,8 +88,8 @@
         <div class="col-12 col-lg-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-3 d-flex align-items-center">
-                    <div class="bg-primary p-3 mfe-3 rounded">
-                        <i class="bi bi-bag font-2xl"></i>
+                    <div class="rm-stat-icon p-3 mfe-3 rounded">
+                        <i class="bi bi-bag font-2xl" style="color:#fff;"></i>
                     </div>
                     <div>
                         <div class="text-value text-primary">{{ format_currency($purchases_amount) }}</div>
@@ -98,8 +102,8 @@
         <div class="col-12 col-lg-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-3 d-flex align-items-center">
-                    <div class="bg-primary p-3 mfe-3 rounded">
-                        <i class="bi bi-arrow-return-right font-2xl"></i>
+                    <div class="rm-stat-icon p-3 mfe-3 rounded">
+                        <i class="bi bi-arrow-return-right font-2xl" style="color:#fff;"></i>
                     </div>
                     <div>
                         <div class="text-value text-primary">{{ format_currency($purchase_returns_amount) }}</div>
@@ -112,8 +116,8 @@
         <div class="col-12 col-lg-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-3 d-flex align-items-center">
-                    <div class="bg-primary p-3 mfe-3 rounded">
-                        <i class="bi bi-wallet2 font-2xl"></i>
+                    <div class="rm-stat-icon p-3 mfe-3 rounded">
+                        <i class="bi bi-wallet2 font-2xl" style="color:#fff;"></i>
                     </div>
                     <div>
                         <div class="text-value text-primary">{{ format_currency($expenses_amount) }}</div>
@@ -126,8 +130,8 @@
         <div class="col-12 col-lg-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-3 d-flex align-items-center">
-                    <div class="bg-primary p-3 mfe-3 rounded">
-                        <i class="bi bi-cash-stack font-2xl"></i>
+                    <div class="rm-stat-icon p-3 mfe-3 rounded">
+                        <i class="bi bi-cash-stack font-2xl" style="color:#fff;"></i>
                     </div>
                     <div>
                         <div class="text-value text-primary">{{ format_currency($payments_received_amount) }}</div>
@@ -140,8 +144,8 @@
         <div class="col-12 col-lg-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-3 d-flex align-items-center">
-                    <div class="bg-primary p-3 mfe-3 rounded">
-                        <i class="bi bi-cash-stack font-2xl"></i>
+                    <div class="rm-stat-icon p-3 mfe-3 rounded">
+                        <i class="bi bi-cash-stack font-2xl" style="color:#fff;"></i>
                     </div>
                     <div>
                         <div class="text-value text-primary">{{ format_currency($payments_sent_amount) }}</div>
@@ -154,8 +158,8 @@
         <div class="col-12 col-lg-4">
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-3 d-flex align-items-center">
-                    <div class="bg-primary p-3 mfe-3 rounded">
-                        <i class="bi bi-cash-stack font-2xl"></i>
+                    <div class="rm-stat-icon p-3 mfe-3 rounded">
+                        <i class="bi bi-cash-stack font-2xl" style="color:#fff;"></i>
                     </div>
                     <div>
                         <div class="text-value text-primary">{{ format_currency($payments_net_amount) }}</div>

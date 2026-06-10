@@ -1,5 +1,6 @@
 ﻿
 <!-- Home -->
+<li class="c-sidebar-nav-title">Main</li>
 <li class="c-sidebar-nav-item {{ request()->routeIs('home') ? 'c-active' : '' }}">
     <a class="c-sidebar-nav-link" href="{{ route('home') }}">
         <i class="c-sidebar-nav-icon bi bi-house" style="line-height: 1;"></i> Home
@@ -249,6 +250,7 @@
 @endcan
 
 <!-- Reports -->
+<li class="c-sidebar-nav-title">Reports & Settings</li>
 @can('access_reports')
     <li class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs('*-report.index') || request()->routeIs('reports.*') ? 'c-show' : '' }}">
         <a class="c-sidebar-nav-link c-sidebar-nav-dropdown-toggle" href="#">
@@ -308,6 +310,7 @@
 @endcan
 
 <!-- User Management -->
+<li class="c-sidebar-nav-title">Administration</li>
 @can('access_user_management')
     <li class="c-sidebar-nav-item c-sidebar-nav-dropdown {{ request()->routeIs('roles*') || request()->routeIs('users*') ? 'c-show' : '' }}">
         <a class="c-sidebar-nav-link c-sidebar-nav-dropdown-toggle" href="#">

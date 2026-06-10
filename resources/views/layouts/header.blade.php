@@ -6,10 +6,15 @@
     <i class="bi bi-list" style="font-size: 2rem;"></i>
 </button>
 
-<ul class="c-header-nav ml-auto">
-
-</ul>
+<ul class="c-header-nav ml-auto"></ul>
 <ul class="c-header-nav ml-auto mr-4">
+    <!-- Dark / Light mode toggle -->
+    <li class="c-header-nav-item mr-2">
+        <button id="theme-toggle" title="Toggle dark / light mode">
+            <i class="bi bi-moon-fill" id="theme-icon"></i>
+        </button>
+    </li>
+
     @can('create_pos_sales')
     <li class="c-header-nav-item mr-3">
         <a class="btn btn-primary btn-pill {{ request()->routeIs('app.pos.index') ? 'disabled' : '' }}" href="{{ route('app.pos.index') }}">

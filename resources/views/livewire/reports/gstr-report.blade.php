@@ -1,5 +1,9 @@
 <div>
     <div class="card mb-3">
+        <div class="card-header d-flex align-items-center py-2">
+            <i class="bi bi-funnel-fill mr-2" style="color:#f97316;font-size:14px;"></i>
+            <strong>Filters</strong>
+        </div>
         <div class="card-body">
                 <form wire:submit.prevent="$refresh" class="mb-0 gstr-filters">
                     <div class="form-row align-items-center">
@@ -73,7 +77,7 @@
 
             <div class="table-responsive">
                 <table class="table table-bordered table-striped text-center mb-0">
-                    <thead class="thead-dark">
+                    <thead>
                         <tr>
                             <th>HSN</th>
                             <th>Description</th>
@@ -114,7 +118,7 @@
                                 <td>{{ rtrim(rtrim((string)($row->tax_percentage ?? 0), '0'), '.') }}</td>
                             </tr>
                         @empty
-                            <tr><td colspan="11"><span class="text-warning">No records found</span></td></tr>
+                            <tr><td colspan="11"><div class="text-center py-3 text-muted"><i class="bi bi-inbox" style="font-size:1.5rem;display:block;margin-bottom:4px;"></i>No data available</div></td></tr>
                         @endforelse
                     </tbody>
                 </table>

@@ -926,6 +926,8 @@ class SalesReceiptController extends Controller
      */
     public function toggleSettle(Request $request, $receiptId, $lineId)
     {
+        abort_if(Gate::denies('edit_sales_receipts'), 403);
+
         $receipt = SalesReceipt::with('lines')->findOrFail($receiptId);
         $line = SalesReceiptLine::where('sales_receipt_id', $receiptId)->where('id', $lineId)->firstOrFail();
 

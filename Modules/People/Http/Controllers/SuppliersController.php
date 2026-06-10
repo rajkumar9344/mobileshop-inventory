@@ -36,7 +36,7 @@ class SuppliersController extends Controller
 
         // Validation handled by StoreSupplierRequest
 
-        Supplier::create($request->all());
+        Supplier::create($request->validated());
 
         toast('Supplier Created!', 'success');
 
@@ -63,7 +63,7 @@ class SuppliersController extends Controller
 
         // Validation handled by UpdateSupplierRequest
 
-        $supplier->update($request->all());
+        $supplier->update($request->validated());
 
         toast('Supplier Updated!', 'info');
 

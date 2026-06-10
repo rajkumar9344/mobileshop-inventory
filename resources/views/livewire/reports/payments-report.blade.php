@@ -2,6 +2,10 @@
     <div class="row">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
+                <div class="card-header d-flex align-items-center py-2">
+                    <i class="bi bi-funnel-fill mr-2" style="color:#f97316;font-size:14px;"></i>
+                    <strong>Filters</strong>
+                </div>
                 <div class="card-body">
                     <form wire:submit="generateReport">
                         <div class="form-row">
@@ -71,50 +75,54 @@
         <div class="row">
             <div class="col-12">
                 <div class="card border-0 shadow-sm">
+                    <div class="card-header d-flex align-items-center py-2">
+                        <i class="bi bi-table mr-2" style="color:#f97316;font-size:14px;"></i>
+                        <strong>Payments Report</strong>
+                    </div>
                     <div class="card-body">
-                        <table class="table table-bordered table-striped text-center mb-0">
-                            <div wire:loading.flex class="col-12 position-absolute justify-content-center align-items-center" style="top:0;right:0;left:0;bottom:0;background-color: rgba(255,255,255,0.5);z-index: 99;">
+                        <div class="table-responsive position-relative">
+                            <div wire:loading.flex class="col-12 position-absolute justify-content-center align-items-center rm-loading-overlay" style="top:0;right:0;left:0;bottom:0;z-index: 99;">
                                 <div class="spinner-border text-primary" role="status">
                                     <span class="sr-only">Loading...</span>
                                 </div>
                             </div>
-                            <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Reference</th>
-                                <th>{{ ucwords(str_replace('_', ' ', $payments)) }}</th>
-                                <th>Total</th>
-                                <th>Payment Method</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            @forelse($information as $data)
+                            <table class="table table-bordered table-striped text-center mb-0">
+                                <thead>
                                 <tr>
-                                    <td>{{ \Carbon\Carbon::parse($data->date)->format('d M, Y') }}</td>
-                                    <td>{{ $data->reference }}</td>
-                                    <td>
-                                        @if($payments == 'sale')
-                                            {{ $data->sale->reference }}
-                                        @elseif($payments == 'purchase')
-                                            {{ $data->purchase->reference }}
-                                        @elseif($payments == 'sale_return')
-                                            {{ $data->saleReturn->reference }}
-                                        @elseif($payments == 'purchase_return')
-                                            {{ $data->purchaseReturn->reference }}
-                                        @endif
-                                    </td>
-                                    <td>{{ format_currency($data->amount) }}</td>
-                                    <td>{{ $data->payment_method }}</td>
+                                    <th>Date</th>
+                                    <th>Reference</th>
+                                    <th>{{ ucwords(str_replace('_', ' ', $payments)) }}</th>
+                                    <th>Total</th>
+                                    <th>Payment Method</th>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="8">
-                                        <span class="text-danger">No Data Available!</span>
-                                    </td>
-                                </tr>
-                            @endforelse
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                @forelse($information as $data)
+                                    <tr>
+                                        <td>{{ \Carbon\Carbon::parse($data->date)->format('d M, Y') }}</td>
+                                        <td>{{ $data->reference }}</td>
+                                        <td>
+                                            @if($payments == 'sale')
+                                                {{ $data->sale->reference }}
+                                            @elseif($payments == 'purchase')
+                                                {{ $data->purchase->reference }}
+                                            @elseif($payments == 'sale_return')
+                                                {{ $data->saleReturn->reference }}
+                                            @elseif($payments == 'purchase_return')
+                                                {{ $data->purchaseReturn->reference }}
+                                            @endif
+                                        </td>
+                                        <td>{{ format_currency($data->amount) }}</td>
+                                        <td>{{ $data->payment_method }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="8"><div class="text-center py-3 text-muted"><i class="bi bi-inbox" style="font-size:1.5rem;display:block;margin-bottom:4px;"></i>No data available</div></td>
+                                    </tr>
+                                @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                         <div @class(['mt-3' => $information->hasPages()])>
                             {{ $information->links() }}
                         </div>

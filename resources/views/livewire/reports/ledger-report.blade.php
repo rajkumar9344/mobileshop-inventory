@@ -1,5 +1,9 @@
 <div>
     <div class="card mb-3">
+        <div class="card-header d-flex align-items-center py-2">
+            <i class="bi bi-funnel-fill mr-2" style="color:#f97316;font-size:14px;"></i>
+            <strong>Filters</strong>
+        </div>
         <div class="card-body">
             <form class="row align-items-end">
                 <div class="col-lg-3 col-md-6 mb-2">

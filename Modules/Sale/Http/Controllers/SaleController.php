@@ -134,6 +134,8 @@ class SaleController extends Controller
      * Auto-save sale as draft via AJAX (called on page unload, back button, periodic save)
      */
     public function autoSaveDraft(\Illuminate\Http\Request $request) {
+        abort_if(Gate::denies('create_sales'), 403);
+
         try {
             // Basic validation - require cart items to save draft
             $cartContent = Cart::instance('sale')->content();

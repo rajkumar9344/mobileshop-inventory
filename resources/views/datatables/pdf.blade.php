@@ -82,7 +82,7 @@
                 <tr>
                     @foreach($row as $key => $value)
                         <td class="{{ (strpos($key, 'amount') !== false || strpos($key, 'Amount') !== false || strpos($key, 'balance') !== false || strpos($key, 'Balance') !== false || strpos($key, 'total') !== false || strpos($key, 'Total') !== false) ? 'currency unicode-text' : 'unicode-text' }}">
-                            {!! $value !!}
+                            {{ $value }}
                         </td>
                     @endforeach
                 </tr>

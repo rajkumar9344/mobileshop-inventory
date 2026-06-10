@@ -2,6 +2,10 @@
     <div class="row">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
+                <div class="card-header d-flex align-items-center py-2">
+                    <i class="bi bi-funnel-fill mr-2" style="color:#f97316;font-size:14px;"></i>
+                    <strong>Filters</strong>
+                </div>
                 <div class="card-body">
                     <form wire:submit="generateReport">
                         <div class="form-row">
@@ -75,75 +79,79 @@
     <div class="row">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
+                <div class="card-header d-flex align-items-center py-2">
+                    <i class="bi bi-table mr-2" style="color:#f97316;font-size:14px;"></i>
+                    <strong>Purchases Report</strong>
+                </div>
                 <div class="card-body">
-                    <table class="table table-bordered table-striped text-center mb-0">
-                        <div wire:loading.flex class="col-12 position-absolute justify-content-center align-items-center" style="top:0;right:0;left:0;bottom:0;background-color: rgba(255,255,255,0.5);z-index: 99;">
+                    <div class="table-responsive position-relative">
+                        <div wire:loading.flex class="col-12 position-absolute justify-content-center align-items-center rm-loading-overlay" style="top:0;right:0;left:0;bottom:0;z-index: 99;">
                             <div class="spinner-border text-primary" role="status">
                                 <span class="sr-only">Loading...</span>
                             </div>
                         </div>
-                        <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Reference</th>
-                            <th>Supplier</th>
-                            <th>Status</th>
-                            <th>Total</th>
-                            <th>Paid</th>
-                            <th>Due</th>
-                            <th>Payment Status</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @forelse($purchases as $purchase)
+                        <table class="table table-bordered table-striped text-center mb-0">
+                            <thead>
                             <tr>
-                                <td>{{ \Carbon\Carbon::parse($purchase->date)->format('d M, Y') }}</td>
-                                <td>{{ $purchase->reference }}</td>
-                                <td>{{ $purchase->supplier_name }}</td>
-                                <td>
-                                    @if ($purchase->status == 'Pending')
-                                        <span class="badge badge-info">
-                                    {{ $purchase->status }}
-                                </span>
-                                    @elseif ($purchase->status == 'Ordered')
-                                        <span class="badge badge-primary">
-                                    {{ $purchase->status }}
-                                </span>
-                                    @else
-                                        <span class="badge badge-success">
-                                    {{ $purchase->status }}
-                                </span>
-                                    @endif
-                                </td>
-                                <td>{{ format_currency($purchase->total_amount) }}</td>
-                                <td>{{ format_currency($purchase->paid_amount) }}</td>
-                                <td>{{ format_currency($purchase->due_amount) }}</td>
-                                <td>
-                                    @if ($purchase->payment_status == 'Partial')
-                                        <span class="badge badge-warning">
-                                    {{ $purchase->payment_status }}
-                                </span>
-                                    @elseif ($purchase->payment_status == 'Paid')
-                                        <span class="badge badge-success">
-                                    {{ $purchase->payment_status }}
-                                </span>
-                                    @else
-                                        <span class="badge badge-danger">
-                                    {{ $purchase->payment_status }}
-                                </span>
-                                    @endif
+                                <th>Date</th>
+                                <th>Reference</th>
+                                <th>Supplier</th>
+                                <th>Status</th>
+                                <th>Total</th>
+                                <th>Paid</th>
+                                <th>Due</th>
+                                <th>Payment Status</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @forelse($purchases as $purchase)
+                                <tr>
+                                    <td>{{ \Carbon\Carbon::parse($purchase->date)->format('d M, Y') }}</td>
+                                    <td>{{ $purchase->reference }}</td>
+                                    <td>{{ $purchase->supplier_name }}</td>
+                                    <td>
+                                        @if ($purchase->status == 'Pending')
+                                            <span class="badge badge-info">
+                                        {{ $purchase->status }}
+                                    </span>
+                                        @elseif ($purchase->status == 'Ordered')
+                                            <span class="badge badge-primary">
+                                        {{ $purchase->status }}
+                                    </span>
+                                        @else
+                                            <span class="badge badge-success">
+                                        {{ $purchase->status }}
+                                    </span>
+                                        @endif
+                                    </td>
+                                    <td>{{ format_currency($purchase->total_amount) }}</td>
+                                    <td>{{ format_currency($purchase->paid_amount) }}</td>
+                                    <td>{{ format_currency($purchase->due_amount) }}</td>
+                                    <td>
+                                        @if ($purchase->payment_status == 'Partial')
+                                            <span class="badge badge-warning">
+                                        {{ $purchase->payment_status }}
+                                    </span>
+                                        @elseif ($purchase->payment_status == 'Paid')
+                                            <span class="badge badge-success">
+                                        {{ $purchase->payment_status }}
+                                    </span>
+                                        @else
+                                            <span class="badge badge-danger">
+                                        {{ $purchase->payment_status }}
+                                    </span>
+                                        @endif
 
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="8">
-                                    <span class="text-danger">No Purchases Data Available!</span>
-                                </td>
-                            </tr>
-                        @endforelse
-                        </tbody>
-                    </table>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="8"><div class="text-center py-3 text-muted"><i class="bi bi-inbox" style="font-size:1.5rem;display:block;margin-bottom:4px;"></i>No data available</div></td>
+                                </tr>
+                            @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                     <div @class(['mt-3' => $purchases->hasPages()])>
                         {{ $purchases->links() }}
                     </div>

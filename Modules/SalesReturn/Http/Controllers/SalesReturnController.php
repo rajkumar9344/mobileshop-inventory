@@ -103,7 +103,7 @@ class SalesReturnController extends Controller
             ]);
 
             foreach ($cart->content() as $cart_item) {
-                $product  = Product::with('category')->findOrFail($cart_item->id);
+                $product  = Product::with('category')->lockForUpdate()->findOrFail($cart_item->id);
                 $options  = $cart_item->options;
                 $vals     = CartItemCalculator::compute($cart_item, $product);
 
@@ -312,7 +312,7 @@ class SalesReturnController extends Controller
             // Reverse stock changes if the return previously had a receipt
             if ($sale_return->create_receipt) {
                 foreach ($sale_return->saleReturnDetails as $sale_return_detail) {
-                    $product = Product::findOrFail($sale_return_detail->product_id);
+                    $product = Product::lockForUpdate()->findOrFail($sale_return_detail->product_id);
                     $product->removePurchaseStock($sale_return_detail->quantity);
                     $sale_return_detail->delete();
                 }
@@ -355,7 +355,7 @@ class SalesReturnController extends Controller
             ]);
 
             foreach ($cart->content() as $cart_item) {
-                $product  = Product::with('category')->findOrFail($cart_item->id);
+                $product  = Product::with('category')->lockForUpdate()->findOrFail($cart_item->id);
                 $options  = $cart_item->options;
                 $vals     = CartItemCalculator::compute($cart_item, $product);
 
@@ -391,7 +391,6 @@ class SalesReturnController extends Controller
 
             $cart->destroy();
             // receipt handling for update is performed via helper below
-            // on update: either create/sync or delete/restore based on checkbox
             if ($request->boolean('create_receipt')) {
                 $this->createOrSyncReceipt($sale_return, floatval($sale_return->overall_amount ?? $sale_return->total_amount ?? 0));
             } else {
@@ -420,7 +419,7 @@ class SalesReturnController extends Controller
             // Reverse stock changes only if the return had a receipt
             if ($sale_return->create_receipt) {
                 foreach ($sale_return->saleReturnDetails as $detail) {
-                    $product = Product::findOrFail($detail->product_id);
+                    $product = Product::lockForUpdate()->findOrFail($detail->product_id);
                     $product->removePurchaseStock($detail->quantity);
                 }
             }

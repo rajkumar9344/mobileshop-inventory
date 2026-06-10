@@ -444,6 +444,8 @@ class PurchaseController extends Controller
      * Auto-save purchase as draft via AJAX (called on page unload, back button, periodic save)
      */
     public function autoSaveDraft(Request $request) {
+        abort_if(Gate::denies('create_purchases'), 403);
+
         try {
             // Basic validation - require cart items to save draft
             $cart_items = Cart::instance('purchase')->content();
@@ -496,7 +498,7 @@ class PurchaseController extends Controller
 
                 // Calculate due amount
                 $paid_amount = floatval(str_replace([',', settings()->currency->symbol], '', (string) ($request->paid_amount ?? 0)));
-                $due_amount = $total_amount - $paid_amount - $submitted_discount;
+                $due_amount = $total_amount - $paid_amount;
                 if ($due_amount == $total_amount) {
                     $payment_status = 'Unpaid';
                 } elseif ($due_amount > 0) {

@@ -2,6 +2,10 @@
     <div class="row">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
+                <div class="card-header d-flex align-items-center py-2">
+                    <i class="bi bi-funnel-fill mr-2" style="color:#f97316;font-size:14px;"></i>
+                    <strong>Filters</strong>
+                </div>
                 <div class="card-body">
                     <form wire:submit.prevent="$refresh">
                         <div class="form-row align-items-end">
@@ -80,13 +84,13 @@
                     </div>
                     
                     <div class="table-responsive position-relative">
-                        <div wire:loading.flex class="col-12 position-absolute justify-content-center align-items-center" style="top:0;right:0;left:0;bottom:0;background-color: rgba(255,255,255,0.5);z-index: 99;">
+                        <div wire:loading.flex class="col-12 position-absolute justify-content-center align-items-center rm-loading-overlay" style="top:0;right:0;left:0;bottom:0;z-index: 99;">
                             <div class="spinner-border text-primary" role="status">
                                 <span class="sr-only">Loading...</span>
                             </div>
                         </div>
                         <table class="table table-bordered table-striped text-center mb-0">
-                            <thead class="thead-dark">
+                            <thead>
                                 <tr>
                                     <th>Customer Name</th>
                                     <th>Sales Bill Ref No</th>
@@ -133,7 +137,7 @@
                                 @endforelse
                             </tbody>
                             @if($sales->count() > 0)
-                                <tfoot class="bg-light">
+                                <tfoot style="background:var(--rm-bg-table-head);">
                                             <tr class="font-weight-bold">
                                                         <td colspan="3" class="text-right text-dark font-weight-bold">Totals:</td>
                                                         <td class="text-right text-dark font-weight-bold">{{ number_format($sales->sum(fn($s) => $s->overall_net_rate ?? $s->overall_amount ?? $s->total_amount ?? 0), 2) }}</td>

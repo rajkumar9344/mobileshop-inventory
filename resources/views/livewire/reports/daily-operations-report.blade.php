@@ -50,8 +50,8 @@
     @endif
 
     {{-- Loading Indicator --}}
-    <div wire:loading.flex class="position-fixed w-100 h-100 justify-content-center align-items-center" 
-         style="top:0;left:0;background:rgba(255,255,255,0.7);z-index:9999;">
+    <div wire:loading.flex class="position-fixed w-100 h-100 justify-content-center align-items-center rm-loading-overlay"
+         style="top:0;left:0;z-index:9999;">
         <div class="spinner-border text-primary" role="status">
             <span class="sr-only">Loading...</span>
         </div>
@@ -419,7 +419,7 @@
                                 @endforelse
                             </tbody>
                             @if(count($monthwise_data) > 0)
-                                <tfoot class="bg-light font-weight-bold">
+                                <tfoot style="background:var(--rm-bg-table-head);" class="font-weight-bold">
                                     <tr>
                                         <td>Total</td>
                                         <td class="text-right">{{ format_currency(collect($monthwise_data)->sum('grand_total')) }}</td>

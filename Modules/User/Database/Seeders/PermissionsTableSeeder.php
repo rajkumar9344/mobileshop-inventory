@@ -38,16 +38,6 @@ class PermissionsTableSeeder extends Seeder
             'show_product_categories',
             'edit_product_categories',
             'delete_product_categories',
-            //Product Subcategories
-            'access_product_subcategories',
-            'create_product_subcategories',
-            'show_product_subcategories',
-            'edit_product_subcategories',
-            'delete_product_subcategories',
-            //Barcode Printing (resource-specific)
-            'print_product_barcodes',
-            'print_rack_barcodes',
-            'print_bin_barcodes',
             //Adjustments
             'access_adjustments',
             'create_adjustments',
@@ -150,18 +140,6 @@ class PermissionsTableSeeder extends Seeder
             'create_units',
             'edit_units',
             'delete_units',
-            //Racks
-            'access_racks',
-            'create_racks',
-            'show_racks',
-            'edit_racks',
-            'delete_racks',
-            //Bins
-            'access_bins',
-            'create_bins',
-            'show_bins',
-            'edit_bins',
-            'delete_bins'
         ];
 
         foreach ($permissions as $permission) {
