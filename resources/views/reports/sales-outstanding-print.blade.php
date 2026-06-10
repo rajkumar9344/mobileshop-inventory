@@ -68,7 +68,6 @@
                 <th>Bill Overall Amount</th>
                 <th>Received Amount</th>
                 <th>Balance Amount</th>
-                <th>Bill Due Date</th>
                 <th>Aging (Days)</th>
             </tr>
         </thead>
@@ -79,7 +78,7 @@
                 $billAmount    = $sale->overall_net_rate ?? $sale->overall_amount ?? $sale->total_amount ?? 0;
                 $paidAmount    = $sale->paid_amount ?? 0;
                 $balanceAmount = $sale->due_amount ?? ($billAmount - $paidAmount);
-                $agingDays     = \Carbon\Carbon::parse($sale->due_date)->diffInDays(\Carbon\Carbon::today());
+                $agingDays     = \Carbon\Carbon::parse($sale->date)->diffInDays(\Carbon\Carbon::today());
                 $totalBill    += $billAmount;
                 $totalPaid    += $paidAmount;
                 $totalBalance += $balanceAmount;
@@ -92,12 +91,11 @@
                 <td class="t-right">{{ number_format($billAmount, 2) }}</td>
                 <td class="t-right">{{ number_format($paidAmount, 2) }}</td>
                 <td class="t-right text-danger">{{ number_format($balanceAmount, 2) }}</td>
-                <td class="t-center">{{ \Carbon\Carbon::parse($sale->due_date)->format('d-m-Y') }}</td>
                 <td class="t-center {{ $agingDays > 90 ? 'text-danger' : '' }}">{{ $agingDays }}</td>
             </tr>
             @empty
             <tr>
-                <td colspan="9" class="t-center" style="padding:20px;color:#888;">No outstanding bills found.</td>
+                <td colspan="8" class="t-center" style="padding:20px;color:#888;">No outstanding bills found.</td>
             </tr>
             @endforelse
             @if($sales->count() > 0)
@@ -106,7 +104,7 @@
                 <td class="t-right" style="border:1px solid #999;">{{ number_format($totalBill, 2) }}</td>
                 <td class="t-right" style="border:1px solid #999;">{{ number_format($totalPaid, 2) }}</td>
                 <td class="t-right text-danger" style="border:1px solid #999;">{{ number_format($totalBalance, 2) }}</td>
-                <td colspan="2" style="border:1px solid #999;"></td>
+                <td colspan="1" style="border:1px solid #999;"></td>
             </tr>
             @endif
         </tbody>

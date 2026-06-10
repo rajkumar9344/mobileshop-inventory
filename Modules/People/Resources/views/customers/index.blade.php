@@ -47,7 +47,6 @@
                                             <th class="text-center">Overall Customers Count</th>
                                             <th class="text-center">Overall Total Bills Amount</th>
                                             <th class="text-center">Overall Received Amount</th>
-                                            <th class="text-center">Overall Discount</th>
                                             <th class="text-center">Overall Bill Balance</th>
                                             <th class="text-center">Overall Open Balance</th>
                                             <th class="text-center">Overall Excess</th>
@@ -58,7 +57,6 @@
                                             <td class="text-center" id="totals-count">0</td>
                                             <td class="text-center" id="totals-amount">₹0.00</td>
                                             <td class="text-center" id="totals-received">₹0.00</td>
-                                            <td class="text-center" id="totals-discount">₹0.00</td>
                                             <td class="text-center" id="totals-bill-balance">₹0.00</td>
                                             <td class="text-center" id="totals-open-balance">₹0.00</td>
                                             <td class="text-center" id="totals-excess">₹0.00</td>
@@ -144,7 +142,6 @@
                         document.getElementById('totals-count').textContent = (s.customers_count !== undefined ? s.customers_count : 0);
                         document.getElementById('totals-amount').textContent = (s.overall_total !== undefined ? s.overall_total : '₹0.00');
                         document.getElementById('totals-received').textContent = (s.overall_paid !== undefined ? s.overall_paid : '₹0.00');
-                        document.getElementById('totals-discount').textContent = (s.overall_discount !== undefined ? s.overall_discount : '₹0.00');
                         document.getElementById('totals-bill-balance').textContent = (s.overall_balance !== undefined ? s.overall_balance : '₹0.00');
                         document.getElementById('totals-open-balance').textContent = (s.overall_open_balance !== undefined ? s.overall_open_balance : '₹0.00');
                         document.getElementById('totals-excess').textContent = (s.overall_excess !== undefined ? s.overall_excess : '₹0.00');

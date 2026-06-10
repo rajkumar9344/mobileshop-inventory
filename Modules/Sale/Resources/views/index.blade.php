@@ -95,8 +95,6 @@
                                             <th class="text-center">Overall Total Bills Amount</th>
                                             <th class="text-center">Overall Balance</th>
                                             <th class="text-center">Overall Received Amount</th>
-                                            <th class="text-center">Overall CGST</th>
-                                            <th class="text-center">Overall SGST</th>
                                             <th class="text-center">Overall TAX Amount</th>
                                         </tr>
                                     </thead>
@@ -106,8 +104,6 @@
                                             <td class="text-center" id="totals-amount">₹0.00</td>
                                             <td class="text-center" id="totals-balance">₹0.00</td>
                                             <td class="text-center" id="totals-received">₹0.00</td>
-                                            <td class="text-center" id="totals-cgst">₹0.00</td>
-                                            <td class="text-center" id="totals-sgst">₹0.00</td>
                                             <td class="text-center" id="totals-tax">₹0.00</td>
                                         </tr>
                                     </tbody>
@@ -142,8 +138,6 @@
                         $('#totals-amount').text(formatINR(data.overall_total_amount || 0));
                         $('#totals-balance').text(formatINR(data.overall_balance || 0));
                         $('#totals-received').text(formatINR(data.overall_received_amount || data.total || 0));
-                        $('#totals-cgst').text(formatINR(data.overall_cgst || 0));
-                        $('#totals-sgst').text(formatINR(data.overall_sgst || 0));
                         $('#totals-tax').text(formatINR(data.overall_tax_amount || 0));
                     });
                 }

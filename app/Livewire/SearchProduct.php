@@ -40,12 +40,8 @@ class SearchProduct extends Component
         'products.product_cost',
         'products.product_price',
         'products.product_unit',
-        'products.rack_no',
-        'products.bin_no',
         'products.product_order_tax',
         'products.product_note',
-        'products.mrp',
-        'products.hsn',
         'products.list_price',
     ];
 
@@ -114,9 +110,8 @@ class SearchProduct extends Component
             return;
         }
 
-        // Use eager loading for related models (category, rack, bin) to avoid N+1 queries
         // Named $builder to avoid confusion with the $this->query search-text property
-        $builder = Product::query()->with(['category', 'rack', 'bin']);
+        $builder = Product::query()->with(['category']);
 
         if ($this->category_id) {
             $builder->where('products.category_id', $this->category_id);
@@ -200,19 +195,13 @@ class SearchProduct extends Component
                 'product_code'     => $product->product_code,
                 'product_codes'    => $allCodes,
                 'category'         => $product->category?->category_name,
-                'mrp'              => $product->mrp,
                 'product_cost'     => $product->product_cost ?? null,
                 'product_price'    => $product->product_price,
                 'list_price'       => $product->list_price,
                 'product_quantity' => $product->product_quantity,
                 'purchase_quantity'=> $product->purchase_quantity ?? 0,
                 'stock'            => $availableStock,
-                'hsn'              => $product->hsn,
                 'product_unit'     => $product->product_unit,
-                'rack_name'        => $product->rack?->rack_name ?? null,
-                'bin_name'         => $product->bin?->bin_name  ?? null,
-                'rack_no'          => $product->rack_no ?? null,
-                'bin_no'           => $product->bin_no  ?? null,
                 'product_order_tax'=> $product->product_order_tax ?? null,
                 'product_note'     => $product->product_note ?? null,
             ];
@@ -248,7 +237,7 @@ class SearchProduct extends Component
 
     public function selectProduct($product) {
         // Accept product id, load fresh product and dispatch a simple array payload
-        $productModel = Product::with(['category', 'rack', 'bin'])->find($product);
+        $productModel = Product::with(['category'])->find($product);
         if (!$productModel) return;
 
         $allCodes = ProductCode::where('product_id', $productModel->id)
@@ -266,17 +255,13 @@ class SearchProduct extends Component
             'product_codes' => $allCodes,
             'category' => $productModel->category ? $productModel->category->category_name : null,
             'category_name' => $productModel->category ? $productModel->category->category_name : null,
-            'mrp' => $productModel->mrp,
             'product_cost' => $productModel->product_cost ?? null,
             'product_price' => $productModel->product_price,
             'list_price' => $productModel->list_price,
             'product_quantity' => $productModel->product_quantity,
             'open_quantity' => $productModel->open_quantity ?? 0,
             'purchase_quantity' => $productModel->purchase_quantity ?? 0,
-            'hsn' => $productModel->hsn,
             'product_unit' => $productModel->product_unit,
-            'rack' => $productModel->rack ? $productModel->rack->rack_name : null,
-            'bin' => $productModel->bin ? $productModel->bin->bin_name : null,
             'product_order_tax' => $productModel->product_order_tax,
         ];
 

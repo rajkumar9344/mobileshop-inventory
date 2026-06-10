@@ -69,8 +69,6 @@ class SalesOutstandingReport extends Component
         $query = Sale::query()
             ->whereIn('payment_status', ['Unpaid', 'Pending', 'Partial', 'Partially Paid'])
             ->where('status', '!=', 'Draft')
-            ->whereNotNull('due_date')
-            ->whereDate('due_date', '<', $today)
             ->with('customer:id,customer_name');
 
         // Filter by customer
@@ -83,15 +81,13 @@ class SalesOutstandingReport extends Component
             $query->where('reference', 'like', '%' . $this->reference . '%');
         }
 
-        // Filter by aging range
+        // Filter by aging range (age measured from invoice date)
         if (!empty($this->aging_range)) {
             $query = $this->applyAgingFilter($query, $this->aging_range, $today);
         }
 
-        // Order by aging (most aged first)
-        // Calculate aging as days between due_date and today
-        // Order descending so oldest (highest aging) comes first
-        $query->orderByRaw('DATEDIFF(?, due_date) DESC', [$today]);
+        // Order oldest invoices first (most aged)
+        $query->orderBy('date', 'asc');
 
         return $query;
     }
@@ -100,27 +96,27 @@ class SalesOutstandingReport extends Component
     {
         switch ($range) {
             case '1-10':
-                $query->whereDate('due_date', '>=', $today->copy()->subDays(10))
-                      ->whereDate('due_date', '<', $today);
+                $query->whereDate('date', '>=', $today->copy()->subDays(10))
+                      ->whereDate('date', '<=', $today);
                 break;
             case '10-20':
-                $query->whereDate('due_date', '>=', $today->copy()->subDays(20))
-                      ->whereDate('due_date', '<', $today->copy()->subDays(10));
+                $query->whereDate('date', '>=', $today->copy()->subDays(20))
+                      ->whereDate('date', '<', $today->copy()->subDays(10));
                 break;
             case '20-30':
-                $query->whereDate('due_date', '>=', $today->copy()->subDays(30))
-                      ->whereDate('due_date', '<', $today->copy()->subDays(20));
+                $query->whereDate('date', '>=', $today->copy()->subDays(30))
+                      ->whereDate('date', '<', $today->copy()->subDays(20));
                 break;
             case '30-60':
-                $query->whereDate('due_date', '>=', $today->copy()->subDays(60))
-                      ->whereDate('due_date', '<', $today->copy()->subDays(30));
+                $query->whereDate('date', '>=', $today->copy()->subDays(60))
+                      ->whereDate('date', '<', $today->copy()->subDays(30));
                 break;
             case '60-90':
-                $query->whereDate('due_date', '>=', $today->copy()->subDays(90))
-                      ->whereDate('due_date', '<', $today->copy()->subDays(60));
+                $query->whereDate('date', '>=', $today->copy()->subDays(90))
+                      ->whereDate('date', '<', $today->copy()->subDays(60));
                 break;
             case '90+':
-                $query->whereDate('due_date', '<', $today->copy()->subDays(90));
+                $query->whereDate('date', '<', $today->copy()->subDays(90));
                 break;
         }
         return $query;
@@ -139,21 +135,21 @@ class SalesOutstandingReport extends Component
     }
 
     /**
-     * Calculate aging days for a sale
+     * Calculate aging days from invoice date
      */
-    public static function calculateAging($dueDate)
+    public static function calculateAging($invoiceDate)
     {
-        if (!$dueDate) {
+        if (!$invoiceDate) {
             return 0;
         }
-        $due = Carbon::parse($dueDate);
+        $invoiced = Carbon::parse($invoiceDate);
         $today = Carbon::today();
-        
-        if ($due >= $today) {
+
+        if ($invoiced >= $today) {
             return 0;
         }
-        
-        return $today->diffInDays($due);
+
+        return $today->diffInDays($invoiced);
     }
 
     /**

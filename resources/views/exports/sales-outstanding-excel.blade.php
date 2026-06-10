@@ -7,14 +7,13 @@
             <th>Bill Overall Amount</th>
             <th>Received Amount</th>
             <th>Balance Amount</th>
-            <th>Bill Due Date</th>
             <th>Aging (Days)</th>
         </tr>
     </thead>
     <tbody>
         @foreach($sales as $sale)
             @php
-                $agingDays = \App\Exports\SalesOutstandingExport::calculateAging($sale->due_date);
+                $agingDays = \App\Exports\SalesOutstandingExport::calculateAging($sale->date);
                 $billAmount = $sale->overall_net_rate ?? $sale->overall_amount ?? $sale->total_amount ?? 0;
                 $paidAmount = $sale->paid_amount ?? 0;
                 $balanceAmount = $sale->due_amount ?? ($billAmount - $paidAmount);
@@ -26,7 +25,6 @@
                 <td>{{ number_format($billAmount, 2) }}</td>
                 <td>{{ number_format($paidAmount, 2) }}</td>
                 <td>{{ number_format($balanceAmount, 2) }}</td>
-                <td>{{ \Carbon\Carbon::parse($sale->due_date)->format('d-m-Y') }}</td>
                 <td>{{ $agingDays }}</td>
             </tr>
         @endforeach
@@ -38,7 +36,7 @@
                 <td><strong>{{ number_format($sales->sum(fn($s) => $s->overall_net_rate ?? $s->overall_amount ?? $s->total_amount ?? 0), 2) }}</strong></td>
                 <td><strong>{{ number_format($sales->sum('paid_amount'), 2) }}</strong></td>
                 <td><strong>{{ number_format($sales->sum('due_amount'), 2) }}</strong></td>
-                <td colspan="2"></td>
+                <td></td>
             </tr>
         </tfoot>
     @endif

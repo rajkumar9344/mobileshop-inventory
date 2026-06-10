@@ -25,8 +25,7 @@ class SearchBin extends Component
     public function updatedQuery() {
         $query = Bin::query();
 
-        $results = $query->with('rack')
-            ->where(function($q) {
+        $results = $query->where(function($q) {
                 $q->where('bin_name', 'like', '%' . $this->query . '%')
                   ->orWhere('bin_id', 'like', '%' . $this->query . '%');
             })

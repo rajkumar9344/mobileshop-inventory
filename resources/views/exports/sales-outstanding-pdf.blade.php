@@ -143,7 +143,6 @@
                 <th>Bill Overall Amount</th>
                 <th>Received Amount</th>
                 <th>Balance Amount</th>
-                <th>Bill Due Date</th>
                 <th>Aging (Days)</th>
             </tr>
         </thead>
@@ -151,7 +150,7 @@
             @php $totalBill = 0; $totalPaid = 0; $totalBalance = 0; @endphp
             @forelse($sales as $sale)
                 @php
-                    $agingDays = \App\Exports\SalesOutstandingExport::calculateAging($sale->due_date);
+                    $agingDays = \App\Exports\SalesOutstandingExport::calculateAging($sale->date);
                     $billAmount = $sale->overall_net_rate ?? $sale->overall_amount ?? $sale->total_amount ?? 0;
                     $paidAmount = $sale->paid_amount ?? 0;
                     $balanceAmount = $sale->due_amount ?? ($billAmount - $paidAmount);
@@ -176,7 +175,6 @@
                     <td class="text-right">{{ number_format($billAmount, 2) }}</td>
                     <td class="text-right">{{ number_format($paidAmount, 2) }}</td>
                     <td class="text-right text-danger font-weight-bold">{{ number_format($balanceAmount, 2) }}</td>
-                    <td class="text-center">{{ \Carbon\Carbon::parse($sale->due_date)->format('d-m-Y') }}</td>
                     <td class="text-center {{ $agingClass }}">{{ $agingDays }}</td>
                 </tr>
             @empty

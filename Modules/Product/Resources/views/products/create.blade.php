@@ -81,23 +81,12 @@
                                 </div>
                             </div>
 
-                            {{-- Row 2: Product Name | Supplier Name --}}
+                            {{-- Row 2: Product Name --}}
                             <div class="form-row">
-                                <div class="col-md-6">
+                                <div class="col-md-12">
                                     <div class="form-group">
                                         <label for="product_name">Product Name <span class="text-danger">*</span></label>
                                         <input type="text" class="form-control" name="product_name" required value="{{ old('product_name') }}" maxlength="50" title="Max 50 characters" oninput="this.value = this.value.slice(0,50)">
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="supplier_id">Supplier Name</label>
-                                        <select class="form-control" name="supplier_id" id="supplier_id">
-                                            <option value="" selected>Select Supplier</option>
-                                            @foreach($suppliers as $id => $name)
-                                                <option value="{{ $id }}">{{ $name }}</option>
-                                            @endforeach
-                                        </select>
                                     </div>
                                 </div>
                             </div>

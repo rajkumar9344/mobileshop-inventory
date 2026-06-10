@@ -62,7 +62,7 @@ class SalesOutstandingExport implements FromQuery, WithMapping, WithHeadings, Wi
 
     public function map($sale): array
     {
-        $agingDays = self::calculateAging($sale->due_date);
+        $agingDays = self::calculateAging($sale->date);
         $billAmount = $sale->overall_net_rate ?? $sale->overall_amount ?? $sale->total_amount ?? 0;
         $paidAmount = $sale->paid_amount ?? 0;
         $balanceAmount = $sale->due_amount ?? ($billAmount - $paidAmount);
@@ -74,7 +74,6 @@ class SalesOutstandingExport implements FromQuery, WithMapping, WithHeadings, Wi
             number_format($billAmount, 2),
             number_format($paidAmount, 2),
             number_format($balanceAmount, 2),
-            optional(Carbon::parse($sale->due_date))->format('d-m-Y'),
             $agingDays,
         ];
     }
@@ -88,7 +87,6 @@ class SalesOutstandingExport implements FromQuery, WithMapping, WithHeadings, Wi
             'Bill Overall Amount',
             'Received Amount',
             'Balance Amount',
-            'Bill Due Date',
             'Aging (Days)',
         ];
     }
@@ -98,48 +96,18 @@ class SalesOutstandingExport implements FromQuery, WithMapping, WithHeadings, Wi
         return 500; // reasonable default
     }
 
-    protected function applyAgingFilter($query, $range, $today)
+    public static function calculateAging($invoiceDate)
     {
-        switch ($range) {
-            case '1-10':
-                $query->whereDate('due_date', '>=', $today->copy()->subDays(10))
-                      ->whereDate('due_date', '<', $today);
-                break;
-            case '10-20':
-                $query->whereDate('due_date', '>=', $today->copy()->subDays(20))
-                      ->whereDate('due_date', '<', $today->copy()->subDays(10));
-                break;
-            case '20-30':
-                $query->whereDate('due_date', '>=', $today->copy()->subDays(30))
-                      ->whereDate('due_date', '<', $today->copy()->subDays(20));
-                break;
-            case '30-60':
-                $query->whereDate('due_date', '>=', $today->copy()->subDays(60))
-                      ->whereDate('due_date', '<', $today->copy()->subDays(30));
-                break;
-            case '60-90':
-                $query->whereDate('due_date', '>=', $today->copy()->subDays(90))
-                      ->whereDate('due_date', '<', $today->copy()->subDays(60));
-                break;
-            case '90+':
-                $query->whereDate('due_date', '<', $today->copy()->subDays(90));
-                break;
-        }
-        return $query;
-    }
-
-    public static function calculateAging($dueDate)
-    {
-        if (!$dueDate) {
+        if (!$invoiceDate) {
             return 0;
         }
-        $due = Carbon::parse($dueDate);
+        $invoiced = Carbon::parse($invoiceDate);
         $today = Carbon::today();
-        
-        if ($due >= $today) {
+
+        if ($invoiced >= $today) {
             return 0;
         }
-        
-        return $today->diffInDays($due);
+
+        return $today->diffInDays($invoiced);
     }
 }

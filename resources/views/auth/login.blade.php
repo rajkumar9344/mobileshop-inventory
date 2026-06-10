@@ -53,15 +53,21 @@
             bottom: -50px; left: -50px;
         }
 
-        .brand-icon-wrap {
-            width: 88px; height: 88px;
-            background: linear-gradient(135deg, #f97316, #ea580c);
-            border-radius: 22px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 2.6rem; color: #fff;
-            box-shadow: 0 8px 32px rgba(249,115,22,0.4);
+        .brand-logo-wrap {
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 0.75rem 1.5rem;
             margin-bottom: 1.75rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             position: relative; z-index: 1;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+        .brand-logo-wrap img {
+            max-height: 46px;
+            width: auto;
+            object-fit: contain;
         }
 
         .brand-title {
@@ -122,18 +128,42 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 2rem;
-            background: #f1f5f9;
+            padding: 3rem 2rem;
+            background: #ffffff;
+            position: relative;
+            overflow: hidden;
+        }
+        .login-form-panel::before {
+            content: '';
+            position: absolute;
+            width: 420px; height: 420px;
+            border-radius: 50%;
+            background: rgba(249,115,22,0.06);
+            top: -160px; right: -120px;
+            pointer-events: none;
+        }
+        .login-form-panel::after {
+            content: '';
+            position: absolute;
+            width: 280px; height: 280px;
+            border-radius: 50%;
+            background: rgba(249,115,22,0.04);
+            bottom: -100px; left: -80px;
+            pointer-events: none;
         }
 
         .login-form-inner {
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
+            position: relative;
+            z-index: 1;
         }
 
+        /* Logo hidden on desktop — shown in left brand panel */
         .login-logo {
+            display: none;
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
         .login-logo img {
             max-height: 48px;
@@ -141,24 +171,45 @@
             object-fit: contain;
         }
 
+        .login-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(249,115,22,0.1);
+            border-radius: 20px;
+            padding: 0.3rem 0.85rem;
+            margin-bottom: 0.85rem;
+        }
+        .login-badge .dot {
+            width: 6px; height: 6px;
+            background: #f97316;
+            border-radius: 50%;
+        }
+        .login-badge .lbl {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #f97316;
+        }
+
         .login-heading {
-            font-size: 1.65rem;
+            font-size: 1.75rem;
             font-weight: 800;
             color: #0f172a;
             letter-spacing: -0.02em;
-            margin-bottom: 0.35rem;
+            margin-bottom: 0.3rem;
         }
         .login-sub {
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             color: #64748b;
             margin-bottom: 2rem;
         }
 
         .form-card {
-            background: #ffffff;
+            background: #f8fafc;
             border-radius: 1rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 8px 24px -4px rgba(0,0,0,.10);
+            box-shadow: 0 2px 6px rgba(0,0,0,.05), 0 8px 24px -4px rgba(0,0,0,.09);
             padding: 2rem;
+            border-top: 3px solid #f97316;
         }
 
         .field-label {
@@ -301,15 +352,24 @@
 
         /* ── Responsive ── */
         @media (max-width: 768px) {
-            body { flex-direction: column; }
-            .login-brand {
-                flex: none;
-                padding: 2rem 1.5rem;
-                border-radius: 0 0 1.5rem 1.5rem;
+            .login-brand { display: none !important; }
+
+            /* Show logo on mobile */
+            .login-logo { display: block; }
+
+            .login-form-panel {
+                padding: 2.5rem 1.25rem;
+                background: #ffffff;
             }
-            .brand-features { display: none; }
-            .brand-divider { display: none; }
-            .login-form-panel { padding: 1.5rem 1rem; }
+            .login-form-inner { max-width: 100%; }
+            .login-badge { margin-bottom: 0.6rem; }
+            .login-heading { font-size: 1.5rem; }
+            .login-sub { margin-bottom: 1.5rem; }
+            .form-card { padding: 1.5rem; }
+        }
+
+        @media (max-width: 360px) {
+            .form-card { padding: 1.1rem; }
         }
     </style>
 </head>
@@ -317,11 +377,13 @@
 <body>
     {{-- Left: Brand Panel --}}
     <div class="login-brand">
-        <div class="brand-icon-wrap">
-            <i class="bi bi-phone"></i>
+        <div class="brand-logo-wrap">
+            <img src="{{ settings()->site_logo ?: asset('images/logo.png') }}" alt="{{ config('app.name') }}">
         </div>
-        <div class="brand-title">{{ config('app.name', 'Mobile Shop') }}</div>
-        <div class="brand-subtitle">Inventory & POS Management</div>
+        <div class="brand-text-group">
+            <div class="brand-title">{{ config('app.name', 'Mobile Shop') }}</div>
+            <div class="brand-subtitle">Inventory & POS Management</div>
+        </div>
         <div class="brand-divider"></div>
         <ul class="brand-features">
             <li>
@@ -355,6 +417,10 @@
                 <img src="{{ settings()->site_logo ?: asset('images/logo-dark.png') }}" alt="{{ config('app.name') }}">
             </div>
 
+            <div class="login-badge">
+                <span class="dot"></span>
+                <span class="lbl">Secure Login</span>
+            </div>
             <div class="login-heading">Welcome back</div>
             <div class="login-sub">Sign in to your account to continue</div>
 

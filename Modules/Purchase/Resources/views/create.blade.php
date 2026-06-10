@@ -64,8 +64,6 @@
                                     <label for="invoice_date" class="mb-1">Invoice Date <span class="text-danger">*</span></label>
                                     <input type="date" class="form-control" name="invoice_date" id="invoice_date" required value="{{ now()->format('Y-m-d') }}">
                                 </div>
-                                <input type="hidden" name="days" id="days" value="0">
-                                <input type="hidden" name="due_date" id="due_date" value="">
                                 <div class="col-md-2 pr-1">
                                     <label for="excess_amount" class="mb-1">Excess</label>
                                     <input type="text" class="form-control" name="excess_amount" id="excess_amount" maxlength="15" readonly placeholder="0.00" value="0.00">

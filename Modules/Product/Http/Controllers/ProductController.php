@@ -26,11 +26,7 @@ class ProductController extends Controller
             ->orderBy('category_name')
             ->get(['id', 'category_name']);
 
-        $subcategories = \Modules\Product\Entities\Subcategory::where('status', true)
-            ->orderBy('subcategory_name')
-            ->get(['id', 'subcategory_name', 'category_id']);
-
-        return $dataTable->render('product::products.index', compact('categories', 'subcategories'));
+        return $dataTable->render('product::products.index', compact('categories'));
     }
 
 
@@ -152,22 +148,8 @@ class ProductController extends Controller
 
 
     public function store(StoreProductRequest $request) {
-        // Validate subcategory_id is a valid foreign key for the selected category_id
-        $subcategoryId = $request->input('subcategory_id');
-        $categoryId = $request->input('category_id');
-        $subcategory = \DB::table('subcategories')
-            ->where('id', $subcategoryId)
-            ->where('category_id', $categoryId)
-            ->first();
-
-        if (!$subcategory) {
-            return back()->withInput()->withErrors(['subcategory_id' => 'Selected subcategory does not belong to the chosen category.']);
-        }
-
-        // Ensure subcategory_id is saved as integer foreign key
-        // Exclude transient form-only fields that are not DB columns (e.g. hsn_unknown)
-        $data = $request->except(['document', 'hsn_unknown', 'additional_codes']);
-        $data['subcategory_id'] = (int) $subcategoryId;
+        // Exclude transient form-only fields that are not DB columns
+        $data = $request->except(['document', 'additional_codes']);
         $data['buy_price'] = $request->input('buy_price');
         $data['list_price'] = $request->input('list_price');
 
@@ -274,7 +256,7 @@ class ProductController extends Controller
 
 
     public function update(UpdateProductRequest $request, Product $product) {
-        $data = $request->except(['document', 'hsn_unknown', 'additional_codes']);
+        $data = $request->except(['document', 'additional_codes']);
         // normalize supplier_id to null when empty
         $data['supplier_id'] = $request->input('supplier_id') ? (int) $request->input('supplier_id') : null;
     $data['buy_price'] = $request->input('buy_price');

@@ -111,8 +111,11 @@ class SuppliersDataTable extends DataTable
         // computed columns (total_amount, paid_amount, discount_amount, balance_amount)
         // are available in the DataTable rows.
         $supplierCols = [
-            'suppliers.id', 'suppliers.supplier_name', 'suppliers.area', 'suppliers.gst_no',
-            'suppliers.open_balance', 'suppliers.excess_amount', 'suppliers.account_no', 'suppliers.supplier_email', 'suppliers.supplier_phone',
+            'suppliers.id', 'suppliers.supplier_name', 'suppliers.supplier_code', 'suppliers.area',
+            'suppliers.supplier_email', 'suppliers.supplier_phone', 'suppliers.city', 'suppliers.state',
+            'suppliers.address', 'suppliers.open_balance', 'suppliers.excess_amount',
+            'suppliers.credit_limit', 'suppliers.tax_percent', 'suppliers.due_days',
+            'suppliers.status', 'suppliers.remarks',
             'suppliers.created_at', 'suppliers.updated_at'
         ];
 
@@ -175,10 +178,6 @@ class SuppliersDataTable extends DataTable
 
             Column::computed('paid_amount')
                 ->title('Paid Amount')
-                ->className('text-center align-middle'),
-
-            Column::computed('discount_amount')
-                ->title('Discount Amount')
                 ->className('text-center align-middle'),
 
             Column::computed('balance_amount')

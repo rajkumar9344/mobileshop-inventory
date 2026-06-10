@@ -119,13 +119,11 @@ class CustomersDataTable extends DataTable
         // strict SQL modes (ONLY_FULL_GROUP_BY).
         $customerCols = [
             'customers.id', 'customers.customer_code', 'customers.customer_name', 'customers.customer_email',
-            'customers.customer_phone', 'customers.city', 'customers.country', 'customers.address',
-            'customers.gst_no', 'customers.pan_no', 'customers.aadhar_no', 'customers.area',
-            'customers.excess_amount',
-            'customers.state', 'customers.pincode', 'customers.lr_through', 'customers.opening_balance',
-            'customers.credit_limit', 'customers.cash_discount', 'customers.additional_discount',
-            'customers.discount_percent', 'customers.terms_days', 'customers.lock', 'customers.outstanding',
-            'customers.is_active', 'customers.salesman', 'customers.account_id', 'customers.remarks',
+            'customers.customer_phone', 'customers.city', 'customers.address', 'customers.area',
+            'customers.vat_id', 'customers.excess_amount',
+            'customers.state', 'customers.pincode', 'customers.opening_balance',
+            'customers.credit_limit', 'customers.lock', 'customers.outstanding',
+            'customers.is_active', 'customers.account_id', 'customers.remarks',
             'customers.created_at', 'customers.updated_at'
         ];
 
@@ -195,10 +193,6 @@ class CustomersDataTable extends DataTable
 
             Column::computed('paid_amount')
                 ->title('Received Amount')
-                ->className('text-center align-middle'),
-
-            Column::computed('discount_amount')
-                ->title('Discount Amount')
                 ->className('text-center align-middle'),
 
             Column::computed('balance_amount')

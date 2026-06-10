@@ -132,18 +132,16 @@ class CustomersController extends Controller
 
         $today = Carbon::today();
 
-        // Match Sales Outstanding Report condition: only overdue bills (due_date < today)
+        // Check if customer has any unpaid outstanding sales
         $hasOverdueOutstanding = Sale::query()
             ->where('customer_id', $customer->id)
             ->whereIn('payment_status', ['Unpaid', 'Pending', 'Partial', 'Partially Paid'])
             ->where('status', '!=', 'Draft')
-            ->whereNotNull('due_date')
-            ->whereDate('due_date', '<', $today)
             ->exists();
 
         // Return only the fields needed by the sale form
         $payload = $customer->only([
-            'id', 'customer_name', 'customer_phone', 'area', 'opening_balance', 'terms_days', 'lock', 'discount_percent', 'cash_discount', 'additional_discount', 'credit_limit', 'excess_amount', 'outstanding'
+            'id', 'customer_name', 'customer_phone', 'area', 'opening_balance', 'lock', 'credit_limit', 'excess_amount', 'outstanding'
         ]);
 
         $payload['has_overdue_outstanding'] = $hasOverdueOutstanding;

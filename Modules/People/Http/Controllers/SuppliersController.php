@@ -93,7 +93,7 @@ class SuppliersController extends Controller
         // Return only the fields needed by the purchase form
         // Include supplier discount so purchase form can apply it to the cart
         return response()->json($supplier->only([
-            'id', 'supplier_name', 'supplier_phone', 'area', 'open_balance', 'credit_limit', 'tax_percent', 'excess_amount', 'style', 'less_discount_percent', 'due_days'
+            'id', 'supplier_name', 'supplier_phone', 'area', 'open_balance', 'credit_limit', 'tax_percent', 'excess_amount', 'due_days'
         ]));
     }
 

@@ -43,7 +43,6 @@
                 <td style="width:60%; vertical-align:top; padding-left:6px;">
                     <div style="font-weight:700;">{{ optional($supplier)->supplier_name }}</div>
                     <div style="font-size:10px;">{{ optional($supplier)->address }}</div>
-                    <div style="font-size:10px;">GST NO: {{ optional($supplier)->gst_no }}</div>
                 </td>
                 <td style="width:40%; vertical-align:top;">
                     <div style="font-size:10px;">Vehicle Name:</div>
@@ -56,101 +55,66 @@
     {{-- BODY SECTION --}}
     <!-- reserve space for footer -->
     <div class="invoice-body" style="padding:0; margin-bottom:20mm;">
-        {{-- items table with GST column --}}
         <table style="width:100%; border-collapse:collapse; margin-top:8px; font-size:10px; border-top:1px solid #000; border-bottom:1px solid #000; table-layout:fixed;">
             <colgroup>
-                <col style="width:30px;">
-                <col style="width:70px;">
-                <col style="width:100px;">
-                <col style="width:70px;">
-                <col style="width:40px;">
-                <col style="width:70px;">
-                <col style="width:70px;">
-                <col style="width:50px;">
-                <col style="width:50px;">
-                <col style="width:50px;">
-                <col style="width:80px;">
+                <col style="width:26px;">
+                <col style="width:65px;">
+                <col style="width:*;">
+                <col style="width:35px;">
+                <col style="width:65px;">
+                <col style="width:45px;">
+                <col style="width:75px;">
             </colgroup>
             <thead>
             <tr>
-                <th style="border:1px solid #000; padding:6px; width:30px; border-left:0;">No</th>
-                <th style="border:1px solid #000; padding:6px; width:70px; white-space:normal; word-break:break-word; overflow-wrap:anywhere;">Product Code</th>
-                <th style="border:1px solid #000; padding:6px; width:100px; white-space:normal; word-break:break-word; overflow-wrap:anywhere;">Product Name</th>
-                <th style="border:1px solid #000; padding:6px; width:70px; white-space:normal; word-break:break-word; overflow-wrap:anywhere;">HSN</th>
-                <th style="border:1px solid #000; padding:6px; width:40px;">Qty</th>
-                <th style="border:1px solid #000; padding:6px; width:70px;">MRP</th>
-                <th style="border:1px solid #000; padding:6px; width:70px;">Rate</th>
-                <th style="border:1px solid #000; padding:6px; width:50px;">SGST</th>
-                <th style="border:1px solid #000; padding:6px; width:50px;">CGST</th>
-                <th style="border:1px solid #000; padding:6px; width:50px;">GST</th>
-                <th style="border:1px solid #000; padding:6px; width:80px; border-right:0;">Value</th>
+                <th style="border:1px solid #000; padding:5px; border-left:0; text-align:center;">No</th>
+                <th style="border:1px solid #000; padding:5px; white-space:normal; word-break:break-word;">Code</th>
+                <th style="border:1px solid #000; padding:5px; white-space:normal; word-break:break-word;">Product Name</th>
+                <th style="border:1px solid #000; padding:5px; text-align:center;">Qty</th>
+                <th style="border:1px solid #000; padding:5px; text-align:right;">Rate</th>
+                <th style="border:1px solid #000; padding:5px; text-align:right;">Tax</th>
+                <th style="border:1px solid #000; padding:5px; text-align:right; border-right:0;">Amount</th>
             </tr>
             </thead>
             <tbody>
-            @php $i=1; $total_cgst=0; $total_sgst=0; $total_gst=0; $total_value=0; $total_qty = 0; @endphp
+            @php $i=1; $total_tax=0; $total_value=0; $total_qty=0; @endphp
             @foreach($purchase->purchaseDetails as $item)
                 @php
-                    $qty = (float) ($item->quantity ?? 0);
-                    $mrp = (float) ($item->mrp ?? 0);
-                    $rate = (float) ($item->rate ?? 0);
+                    $qty   = (float) ($item->quantity ?? 0);
+                    $rate  = (float) ($item->rate ?? 0);
+                    $tax   = (float) ($item->product_tax_amount ?? 0);
                     $value = $qty * $rate;
-                    $gst = (float) ($item->product_tax_amount ?? 0);
-                    $sgst = $cgst = $gst / 2;
-                    $total_cgst += $cgst;
-                    $total_sgst += $sgst;
-                    $total_gst += $gst;
+                    $total_tax   += $tax;
                     $total_value += $value;
-                    $total_qty += $qty;
+                    $total_qty   += $qty;
                 @endphp
                 <tr>
-                    <td style="border:1px solid #000; padding:6px; text-align:center; border-left:0;">{{ $i++ }}</td>
-                    <td style="border:1px solid #000; padding:6px; white-space:normal; word-break:break-word; overflow-wrap:anywhere;">{{ $item->productCode->code ?? $item->product_code ?? '' }}</td>
-                    <td style="border:1px solid #000; padding:6px; white-space:normal; word-break:break-word; overflow-wrap:anywhere;">{{ $item->product_name ?? '' }}</td>
-                    <td style="border:1px solid #000; padding:6px; text-align:center; white-space:normal; word-break:break-word; overflow-wrap:anywhere;">{{ $item->hsn ?? '' }}</td>
-                    <td style="border:1px solid #000; padding:6px; text-align:center;">{{ $qty }}</td>
-                    <td style="border:1px solid #000; padding:6px; text-align:right;">{{ $currency($mrp) }}</td>
-                    <td style="border:1px solid #000; padding:6px; text-align:right;">{{ $currency($rate) }}</td>
-                    <td style="border:1px solid #000; padding:6px; text-align:right;">{{ $currency($sgst) }}</td>
-                    <td style="border:1px solid #000; padding:6px; text-align:right;">{{ $currency($cgst) }}</td>
-                    <td style="border:1px solid #000; padding:6px; text-align:right;">{{ $currency($gst) }}</td>
-                    <td style="border:1px solid #000; padding:6px; text-align:right; border-right:0;">{{ $currency($value) }}</td>
+                    <td style="border:1px solid #000; padding:5px; text-align:center; border-left:0;">{{ $i++ }}</td>
+                    <td style="border:1px solid #000; padding:5px; white-space:normal; word-break:break-word; overflow-wrap:anywhere;">{{ $item->productCode->code ?? $item->product_code ?? '' }}</td>
+                    <td style="border:1px solid #000; padding:5px; white-space:normal; word-break:break-word; overflow-wrap:anywhere;">{{ $item->product_name ?? '' }}</td>
+                    <td style="border:1px solid #000; padding:5px; text-align:center;">{{ $qty }}</td>
+                    <td style="border:1px solid #000; padding:5px; text-align:right;">{{ $currency($rate) }}</td>
+                    <td style="border:1px solid #000; padding:5px; text-align:right;">{{ $currency($tax) }}</td>
+                    <td style="border:1px solid #000; padding:5px; text-align:right; border-right:0;">{{ $currency($value) }}</td>
                 </tr>
             @endforeach
             </tbody>
-        </table>
-
-        {{-- Totals row aligned under the same columns as the items table --}}
-        <table style="width:100%; border-collapse:collapse; margin-top:2px; font-size:10px; table-layout:fixed;">
-            <colgroup>
-                <col style="width:30px;">
-                <col style="width:70px;">
-                <col style="width:100px;">
-                <col style="width:70px;">
-                <col style="width:40px;">
-                <col style="width:70px;">
-                <col style="width:70px;">
-                <col style="width:50px;">
-                <col style="width:50px;">
-                <col style="width:50px;">
-                <col style="width:80px;">
-            </colgroup>
+            <tfoot>
             <tr>
-                <td style="padding:4px;"></td>
-                <td style="padding:4px;"></td>
-                <td style="padding:4px;"></td>
-                <td style="padding:4px;"></td>
-                <td style="padding:4px; text-align:center; font-weight:700;">{{ $total_qty }}</td>
-                <td style="padding:4px;"></td>
-                <td style="padding:4px;"></td>
-                <td style="padding:4px; text-align:right;">{{ $currency($total_sgst) }}</td>
-                <td style="padding:4px; text-align:right;">{{ $currency($total_cgst) }}</td>
-                <td style="padding:4px; text-align:right;">{{ $currency($total_gst) }}</td>
-                <td style="padding:4px; text-align:right; font-weight:700;">{{ $currency($total_value) }}</td>
+                <td style="border-top:1px solid #000; padding:4px; border-left:0;"></td>
+                <td style="border-top:1px solid #000; padding:4px;"></td>
+                <td style="border-top:1px solid #000; padding:4px; text-align:right; font-weight:700;">Total</td>
+                <td style="border-top:1px solid #000; padding:4px; text-align:center; font-weight:700;">{{ $total_qty }}</td>
+                <td style="border-top:1px solid #000; padding:4px;"></td>
+                <td style="border-top:1px solid #000; padding:4px; text-align:right;">{{ $currency($total_tax) }}</td>
+                <td style="border-top:1px solid #000; padding:4px; text-align:right; font-weight:700; border-right:0;">{{ $currency($total_value) }}</td>
             </tr>
+            </tfoot>
         </table>
 
         {{-- Rupees in words on the left and Round Off / Total aligned under the Value column on the right --}}
         @php
+            $total_gst = $total_tax; // alias kept for words calculation below
             if (!function_exists('number_to_words')) {
                 function number_to_words($number)
                 {
@@ -219,10 +183,12 @@
                 </td>
                 <td style="width:40%; vertical-align:top; padding-right:6px;">
                     <table style="width:100%; border-collapse:collapse;">
+                        @if($total_tax > 0)
                         <tr>
-                            <td style="padding:4px; text-align:right; font-weight:700;">GST</td>
-                            <td style="padding:4px; text-align:right; width:80px;">{{ $currency($total_gst) }}</td>
+                            <td style="padding:4px; text-align:right; font-weight:700;">Tax Amount</td>
+                            <td style="padding:4px; text-align:right; width:80px;">{{ $currency($total_tax) }}</td>
                         </tr>
+                        @endif
                         @if(($purchase->overall_other ?? 0) != 0)
                         <tr>
                             <td style="padding:4px; text-align:right; font-weight:700;">Other</td>
@@ -236,9 +202,21 @@
                         </tr>
                         @endif
                         <tr>
-                            <td style="padding:4px; text-align:right; font-weight:700; border-top:1px solid #000;">Total</td>
-                            <td style="padding:4px; text-align:right; font-weight:700; border-top:1px solid #000;">{{ $currency($total_value + $total_gst + ($purchase->overall_other ?? 0)) }}</td>
+                            <td style="padding:4px; text-align:right; font-weight:700; border-top:1px solid #000; font-size:11px;">Grand Total</td>
+                            <td style="padding:4px; text-align:right; font-weight:700; border-top:1px solid #000; font-size:11px;">{{ $currency($purchase->total_amount ?? ($total_value + $total_gst + ($purchase->overall_other ?? 0))) }}</td>
                         </tr>
+                        @if(($purchase->paid_amount ?? 0) > 0)
+                        <tr>
+                            <td style="padding:4px; text-align:right; color:#333;">Paid</td>
+                            <td style="padding:4px; text-align:right; color:#333;">{{ $currency($purchase->paid_amount) }}</td>
+                        </tr>
+                        @endif
+                        @if(($purchase->due_amount ?? 0) > 0)
+                        <tr>
+                            <td style="padding:4px; text-align:right; font-weight:700; color:#c00;">Balance Due</td>
+                            <td style="padding:4px; text-align:right; font-weight:700; color:#c00;">{{ $currency($purchase->due_amount) }}</td>
+                        </tr>
+                        @endif
                     </table>
                 </td>
             </tr>

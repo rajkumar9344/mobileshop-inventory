@@ -164,6 +164,22 @@ a:hover { color: $accent-dark; }
 .c-main {
     padding-top: 1.5rem;
     padding-bottom: 2rem;
+    @media (max-width: 576px) {
+        padding-top: 1rem;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+}
+
+// Mobile card / form improvements
+@media (max-width: 576px) {
+    .card-body { padding: 1rem; }
+    .card-header { padding: 0.75rem 1rem; }
+    .form-row { margin-left: 0; margin-right: 0; }
+    .form-row > [class*="col-"] { padding-left: 0; padding-right: 0; }
+    .btn { font-size: 0.82rem; padding: 0.4rem 0.85rem; }
+    .c-subheader { padding: 0.5rem 0.75rem !important; }
+    .breadcrumb { font-size: 0.75rem; }
 }
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
@@ -565,9 +581,22 @@ div.dataTables_wrapper {
     .c-avatar { background: #334155; }
 }
 
-// ─── Responsive table width ───────────────────────────────────────────────────
-table { width: 990px !important; }
-@media (min-width: 992px) { table { width: 100% !important; } }
+// ─── Responsive table / DataTable horizontal scroll ──────────────────────────
+// Livewire report tables are already in .table-responsive wrappers.
+// DataTables render inside div.dataTables_wrapper — make it scroll on mobile.
+@media (max-width: 991px) {
+    div.dataTables_wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    div.dataTables_wrapper table.dataTable {
+        min-width: 600px;
+        width: 100% !important;
+    }
+    .table-responsive table {
+        min-width: 560px;
+    }
+}
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 .shadow-sm { box-shadow: var(--rm-shadow-card) !important; }

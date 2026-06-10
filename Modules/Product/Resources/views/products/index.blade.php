@@ -98,16 +98,6 @@
                                     </select>
                                 </div>
 
-                                <!-- Subcategory Filter -->
-                                <div class="form-group mb-0" style="min-width: 180px;">
-                                    <select id="filter-subcategory" class="form-control form-control-sm">
-                                        <option value="">All Subcategories</option>
-                                        @foreach($subcategories as $subcategory)
-                                            <option value="{{ $subcategory->id }}" data-category="{{ $subcategory->category_id }}">{{ $subcategory->subcategory_name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
                                 <!-- Date Range Filter (product-specific: compact + Reset) -->
                                 <div class="d-flex align-items-center daterange-compact" style="min-width: 320px;">
                                     @include('components.daterange-filter', ['tableId' => 'product-table', 'noWrapper' => true])
@@ -181,91 +171,16 @@
                 $('#filter-end-product-table').val('');
             });
 
-            // Store all subcategory options (full list with all category_ids) for client-side filtering
-            var allSubcategoryOptions = $('#filter-subcategory option').clone();
-
-            // On page load: show deduplicated subcategory list (unique by name)
-            // We keep a flag `subcategoryDeduped` so server-side filtering can
-            // know whether the select options represent unique-names (deduped)
-            var subcategoryDeduped = false;
-            (function() {
-                var $sub = $('#filter-subcategory');
-                $sub.html('<option value="">All Subcategories</option>');
-                var seenNames = {};
-                allSubcategoryOptions.each(function() {
-                    var $opt = $(this);
-                    if ($opt.val() === '') return;
-                    var name = $opt.text().trim();
-                    if (!seenNames[name]) {
-                        seenNames[name] = true;
-                        $sub.append($opt.clone());
-                    }
-                });
-                subcategoryDeduped = true;
-            })();
-
-            // Category change - filter subcategories client-side and auto-reload table
+            // Category change - auto-reload table
             $('#filter-category').on('change', function() {
-                var categoryId = $(this).val();
-                var $subcategorySelect = $('#filter-subcategory');
-                
-                // Reset subcategory selection
-                $subcategorySelect.val('');
-                
-                // Reset to "All Subcategories" option first
-                $subcategorySelect.html('<option value="">All Subcategories</option>');
-                
-                if (categoryId) {
-                    // Filter and show only subcategories for the selected category
-                    allSubcategoryOptions.each(function() {
-                        var $opt = $(this);
-                        if ($opt.val() !== '' && $opt.data('category') == categoryId) {
-                            $subcategorySelect.append($opt.clone());
-                        }
-                    });
-                } else {
-                    // Show all subcategories when no category is selected — deduplicate by name
-                    var seenNames = {};
-                    allSubcategoryOptions.each(function() {
-                        var $opt = $(this);
-                        if ($opt.val() === '') return; // skip the "All" placeholder
-                        var name = $opt.text().trim();
-                        if (!seenNames[name]) {
-                            seenNames[name] = true;
-                            $subcategorySelect.append($opt.clone());
-                        }
-                    });
-                }
-                
-                // Auto-reload table on category change
                 if ($.fn.dataTable.isDataTable('#product-table')) {
                     $('#product-table').DataTable().ajax.reload();
                 }
             });
-
-            // Subcategory change - auto-reload table
-            $('#filter-subcategory').on('change', function() {
-                if ($.fn.dataTable.isDataTable('#product-table')) {
-                    $('#product-table').DataTable().ajax.reload();
-                }
-            });
-
-            // The daterange component handles Apply/Clear for the date filters (scoped to product-table).
 
             // Add filter parameters to DataTable AJAX request
             table.on('preXhr.dt', function(e, settings, data) {
                 data.category_id = $('#filter-category').val() || null;
-                var subVal = $('#filter-subcategory').val() || null;
-                if (subcategoryDeduped && subVal) {
-                    // When deduped, the select holds one representative id but the
-                    // name is the meaningful filter across categories. Send the
-                    // subcategory_name to the server and omit subcategory_id.
-                    data.subcategory_name = $('#filter-subcategory option:selected').text().trim() || null;
-                    data.subcategory_id = null;
-                } else {
-                    data.subcategory_id = subVal;
-                    data.subcategory_name = null;
-                }
                 data.start_date = $('#filter-start-product-table').val() || null;
                 data.end_date = $('#filter-end-product-table').val() || null;
             });
@@ -296,24 +211,6 @@
                             $(this).val('');
                         }
                     });
-
-                // restore subcategory options (deduplicated by name) and reset selection
-                if (typeof allSubcategoryOptions !== 'undefined') {
-                    var $sub = $('#filter-subcategory');
-                    $sub.html('<option value="">All Subcategories</option>');
-                    var seenNames = {};
-                    allSubcategoryOptions.each(function() {
-                        var $opt = $(this);
-                        if ($opt.val() === '') return;
-                        var name = $opt.text().trim();
-                        if (!seenNames[name]) {
-                            seenNames[name] = true;
-                            $sub.append($opt.clone());
-                        }
-                    });
-                } else {
-                    $('#filter-subcategory').val('');
-                }
 
                 // clear DataTable global search and reload
                 try { table.search(''); table.columns().search(''); } catch (err) {}

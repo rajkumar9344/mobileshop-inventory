@@ -58,8 +58,6 @@
                                     <label for="invoice_date" class="mb-1">Invoice Date <span class="text-danger">*</span></label>
                                     <input type="date" class="form-control" name="invoice_date" id="invoice_date" value="{{ $purchase->invoice_date }}" required @if($isReadOnly) disabled @endif>
                                 </div>
-                                <input type="hidden" name="days" id="days" value="{{ old('days', $purchase->days ?? 0) }}">
-                                <input type="hidden" name="due_date" id="due_date" value="{{ old('due_date', $purchase->due_date ? \Carbon\Carbon::parse($purchase->due_date)->format('Y-m-d') : '') }}">
                                 <div class="col-md-2 pr-1">
                                     <label for="excess_amount" class="mb-1">Excess</label>
                                     <input type="text" class="form-control" name="excess_amount" id="excess_amount" maxlength="15" readonly value="{{ optional($purchase->supplier)->excess_amount ?? '0.00' }}" @if($isReadOnly) disabled @endif>

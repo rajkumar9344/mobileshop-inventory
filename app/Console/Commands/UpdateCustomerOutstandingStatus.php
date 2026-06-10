@@ -39,12 +39,10 @@ class UpdateCustomerOutstandingStatus extends Command
         $updatedCount = 0;
 
         foreach ($customers as $customer) {
-            // Check if customer has overdue outstanding sales
+            // Check if customer has any unpaid outstanding sales
             $hasOverdue = Sale::where('customer_id', $customer->id)
                 ->whereIn('payment_status', ['Unpaid', 'Pending', 'Partial', 'Partially Paid'])
                 ->where('status', '!=', 'Draft')
-                ->whereNotNull('due_date')
-                ->whereDate('due_date', '<', $today)
                 ->exists();
 
             $newOutstanding = $hasOverdue ? 'Yes' : 'No';

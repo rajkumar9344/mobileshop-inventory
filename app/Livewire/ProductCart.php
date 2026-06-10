@@ -642,7 +642,6 @@ class ProductCart extends Component
                 'product_tax_per_unit'  => $product_tax,
                 'unit_price'            => $rate,
                 'category'              => $categoryName,
-                'hsn'                   => $fullProduct['hsn'],
                 'tax_percent'           => $tax_percent,
                 'gst_percent'           => $tax_percent,
                 // Store MRP as the product master MRP when present, otherwise fall back to base_rate
@@ -981,7 +980,6 @@ class ProductCart extends Component
             'product_discount_percent' => (float) ($cart_item->options->product_discount_percent ?? 0),
             'gst_percent'              => $cart_item->options->gst_percent ?? $tax_percent,
             'category'                 => $cart_item->options->category ?? '-',
-            'hsn'                      => $cart_item->options->hsn ?? '',
             'tax_percent'              => $tax_percent,
             'mrp'                      => $cart_item->options->mrp ?? $current_price,
             'rate_before_discount'     => $rate_before_discount,

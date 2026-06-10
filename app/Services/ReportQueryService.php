@@ -81,8 +81,6 @@ class ReportQueryService
         $query = Sale::query()
             ->whereIn('payment_status', ['Unpaid', 'Pending', 'Partial', 'Partially Paid'])
             ->where('status', '!=', 'Draft')
-            ->whereNotNull('due_date')
-            ->whereDate('due_date', '<', $today)
             ->with('customer:id,customer_name');
 
         if (!empty($filters['customer_id'])) {
@@ -97,32 +95,32 @@ class ReportQueryService
             $range = $filters['aging_range'];
             switch ($range) {
                 case '1-10':
-                    $query->whereDate('due_date', '>=', $today->copy()->subDays(10))
-                          ->whereDate('due_date', '<', $today);
+                    $query->whereDate('date', '>=', $today->copy()->subDays(10))
+                          ->whereDate('date', '<=', $today);
                     break;
                 case '10-20':
-                    $query->whereDate('due_date', '>=', $today->copy()->subDays(20))
-                          ->whereDate('due_date', '<', $today->copy()->subDays(10));
+                    $query->whereDate('date', '>=', $today->copy()->subDays(20))
+                          ->whereDate('date', '<', $today->copy()->subDays(10));
                     break;
                 case '20-30':
-                    $query->whereDate('due_date', '>=', $today->copy()->subDays(30))
-                          ->whereDate('due_date', '<', $today->copy()->subDays(20));
+                    $query->whereDate('date', '>=', $today->copy()->subDays(30))
+                          ->whereDate('date', '<', $today->copy()->subDays(20));
                     break;
                 case '30-60':
-                    $query->whereDate('due_date', '>=', $today->copy()->subDays(60))
-                          ->whereDate('due_date', '<', $today->copy()->subDays(30));
+                    $query->whereDate('date', '>=', $today->copy()->subDays(60))
+                          ->whereDate('date', '<', $today->copy()->subDays(30));
                     break;
                 case '60-90':
-                    $query->whereDate('due_date', '>=', $today->copy()->subDays(90))
-                          ->whereDate('due_date', '<', $today->copy()->subDays(60));
+                    $query->whereDate('date', '>=', $today->copy()->subDays(90))
+                          ->whereDate('date', '<', $today->copy()->subDays(60));
                     break;
                 case '90+':
-                    $query->whereDate('due_date', '<', $today->copy()->subDays(90));
+                    $query->whereDate('date', '<', $today->copy()->subDays(90));
                     break;
             }
         }
 
-        $query->orderByRaw('DATEDIFF(?, due_date) DESC', [$today]);
+        $query->orderBy('date', 'asc');
 
         return $query;
     }
@@ -133,8 +131,6 @@ class ReportQueryService
 
         $query = Purchase::query()
             ->where('status', '!=', 'Draft')
-            ->whereNotNull('due_date')
-            ->whereDate('due_date', '<', $today)
             ->where('due_amount', '>', 0)
             ->with('supplier:id,supplier_name');
 
@@ -150,32 +146,32 @@ class ReportQueryService
             $range = $filters['aging_range'];
             switch ($range) {
                 case '1-10':
-                    $query->whereDate('due_date', '>=', $today->copy()->subDays(10))
-                          ->whereDate('due_date', '<', $today);
+                    $query->whereDate('date', '>=', $today->copy()->subDays(10))
+                          ->whereDate('date', '<=', $today);
                     break;
                 case '10-20':
-                    $query->whereDate('due_date', '>=', $today->copy()->subDays(20))
-                          ->whereDate('due_date', '<', $today->copy()->subDays(10));
+                    $query->whereDate('date', '>=', $today->copy()->subDays(20))
+                          ->whereDate('date', '<', $today->copy()->subDays(10));
                     break;
                 case '20-30':
-                    $query->whereDate('due_date', '>=', $today->copy()->subDays(30))
-                          ->whereDate('due_date', '<', $today->copy()->subDays(20));
+                    $query->whereDate('date', '>=', $today->copy()->subDays(30))
+                          ->whereDate('date', '<', $today->copy()->subDays(20));
                     break;
                 case '30-60':
-                    $query->whereDate('due_date', '>=', $today->copy()->subDays(60))
-                          ->whereDate('due_date', '<', $today->copy()->subDays(30));
+                    $query->whereDate('date', '>=', $today->copy()->subDays(60))
+                          ->whereDate('date', '<', $today->copy()->subDays(30));
                     break;
                 case '60-90':
-                    $query->whereDate('due_date', '>=', $today->copy()->subDays(90))
-                          ->whereDate('due_date', '<', $today->copy()->subDays(60));
+                    $query->whereDate('date', '>=', $today->copy()->subDays(90))
+                          ->whereDate('date', '<', $today->copy()->subDays(60));
                     break;
                 case '90+':
-                    $query->whereDate('due_date', '<', $today->copy()->subDays(90));
+                    $query->whereDate('date', '<', $today->copy()->subDays(90));
                     break;
             }
         }
 
-        $query->orderByRaw('DATEDIFF(?, due_date) DESC', [$today]);
+        $query->orderBy('date', 'asc');
 
         return $query;
     }

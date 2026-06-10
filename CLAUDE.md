@@ -23,15 +23,16 @@ Laravel 10 · NWIDART Modules · Livewire v3 · Bootstrap 4 / CoreUI 3 · Yajra 
 | Area | Changes |
 |---|---|
 | Rack, Bin modules | Deleted entirely (dirs, providers, routes, menu) |
-| Product | Removed: barcode, sub-category, MRP, HSN, rack/bin, image upload. "Compatibility" → "Comments". Supplier moved to row 2 |
+| Product | Removed: barcode, sub-category, MRP, HSN, rack/bin, image upload, supplier field from form/view. "Compatibility" → "Comments" |
 | Customer | Removed: GST, PAN, Aadhaar, country, discounts, salesman. **Added: `vat_id`** |
 | Supplier | Removed: GST, country, bank details, style/type, additional discount% |
-| Sale | Removed: HSN col, discount%, CGST, SGST, IGST, TCS%, adj, due date/days. "Net Rate" → "Total Amount". Balance = total − paid |
+| Sale | Removed: HSN col, discount% col (DataTable), CGST, SGST, IGST, TCS%, adj, due date/days. "Net Rate" → "Total Amount". Balance = total − paid |
 | Purchase | Removed same fields. Added: draft save redirect, reorder button, payment status badge in DataTable |
 | Sale Return / Purchase Return | Removed same India fields (were already hidden-only) |
 | Sale Invoice | Removed: HSN/SGST/CGST cols, "Rupees" text, vehicle fields. Added: Tax col, Paid row, Balance Due row |
+| Purchase Invoice | Removed: HSN/SGST/CGST cols, supplier GST No. Added: Tax col (matches Sale invoice) |
 | Product Cart | Silicon cover items get editable product name (`custom_product_names[]` in `ProductCart.php`) |
-| Reports | Added Profit/Loss report. "Purchase Order Report" → "Current Stock Report". GSTR removed from menu |
+| Reports | Added Profit/Loss report. "Purchase Order Report" → "Current Stock Report". GSTR removed from menu. Outstanding reports use invoice `date` for aging (due_date removed from sales) |
 | Migrations | All India-specific columns removed from migration files directly (pre-first-run). Bigint conversion migrations fixed to guard removed columns |
 
 ---

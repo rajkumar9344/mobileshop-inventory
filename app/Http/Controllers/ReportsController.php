@@ -206,30 +206,7 @@ class ReportsController extends Controller
      */
     protected function getSalesOutstandingQuery($filters)
     {
-        $today = Carbon::today();
-
-        $query = Sale::query()
-            ->whereIn('payment_status', ['Unpaid', 'Pending', 'Partial', 'Partially Paid'])
-            ->where('status', '!=', 'Draft')
-            ->whereNotNull('due_date')
-            ->whereDate('due_date', '<', $today)
-            ->with('customer:id,customer_name');
-
-        if (!empty($filters['customer_id'])) {
-            $query->where('customer_id', $filters['customer_id']);
-        }
-
-        if (!empty($filters['reference'])) {
-            $query->where('reference', 'like', '%' . $filters['reference'] . '%');
-        }
-
-        if (!empty($filters['aging_range'])) {
-            $query = $this->applyAgingFilter($query, $filters['aging_range'], $today);
-        }
-
-        $query->orderByRaw('DATEDIFF(?, due_date) DESC', [$today]);
-
-        return $query;
+        return app(\App\Services\ReportQueryService::class)->buildSalesOutstandingQuery($filters);
     }
 
     /**
@@ -722,39 +699,6 @@ class ReportsController extends Controller
     // Ledger data building moved to App\Services\LedgerService
 
     // Query building moved to App\Services\ReportQueryService
-
-    /**
-     * Apply aging range filter to query
-     */
-    protected function applyAgingFilter($query, $range, $today)
-    {
-        switch ($range) {
-            case '1-10':
-                $query->whereDate('due_date', '>=', $today->copy()->subDays(10))
-                      ->whereDate('due_date', '<', $today);
-                break;
-            case '10-20':
-                $query->whereDate('due_date', '>=', $today->copy()->subDays(20))
-                      ->whereDate('due_date', '<', $today->copy()->subDays(10));
-                break;
-            case '20-30':
-                $query->whereDate('due_date', '>=', $today->copy()->subDays(30))
-                      ->whereDate('due_date', '<', $today->copy()->subDays(20));
-                break;
-            case '30-60':
-                $query->whereDate('due_date', '>=', $today->copy()->subDays(60))
-                      ->whereDate('due_date', '<', $today->copy()->subDays(30));
-                break;
-            case '60-90':
-                $query->whereDate('due_date', '>=', $today->copy()->subDays(90))
-                      ->whereDate('due_date', '<', $today->copy()->subDays(60));
-                break;
-            case '90+':
-                $query->whereDate('due_date', '<', $today->copy()->subDays(90));
-                break;
-        }
-        return $query;
-    }
 
     /**
      * Daily Operations Report - PDF Export

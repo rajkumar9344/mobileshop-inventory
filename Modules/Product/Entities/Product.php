@@ -17,22 +17,9 @@ class Product extends Model implements HasMedia
 
     protected $guarded = [];
 
-    /**
-     * Default attributes for the model.
-     * Ensure new products default to Code 128 (C128) which supports alphanumeric codes.
-     */
-    protected $attributes = [
-        'product_barcode_symbology' => 'C128'
-    ];
-
     protected $with = ['media', 'category'];
 
-    protected $appends = ['formatted_mrp', 'category_name'];
-
-    public function getFormattedMrpAttribute()
-    {
-        return $this->mrp ?? $this->product_price;
-    }
+    protected $appends = ['category_name'];
 
     public function getCategoryNameAttribute()
     {
@@ -46,22 +33,8 @@ class Product extends Model implements HasMedia
         return $array;
     }
 
-    public function rack()
-    {
-        return $this->belongsTo(\Modules\Rack\Entities\Rack::class, 'rack_no', 'rack_id');
-    }
-
-    public function bin()
-    {
-        return $this->belongsTo(\Modules\Bin\Entities\Bin::class, 'bin_no', 'bin_id');
-    }
-
     public function category() {
         return $this->belongsTo(Category::class, 'category_id', 'id');
-    }
-
-    public function subcategory() {
-        return $this->belongsTo(Subcategory::class, 'subcategory_id', 'id');
     }
 
     public function productCodes()
@@ -134,14 +107,6 @@ class Product extends Model implements HasMedia
     }
 
     public function getListPriceAttribute($value) {
-        return $this->fromMinor($value);
-    }
-
-    public function setMrpAttribute($value) {
-        $this->attributes['mrp'] = $this->toMinor($value);
-    }
-
-    public function getMrpAttribute($value) {
         return $this->fromMinor($value);
     }
 

@@ -71,7 +71,6 @@ class PosController extends Controller
                 'balance' => $customer->opening_balance,
                 'bill_type' => 'Cash',
                 'days' => 0,
-                'due_date' => now()->format('Y-m-d'),
                 'phone_no' => $customer->phone_no ?? '',
                 'discount_type' => null,
                 'tax_percentage' => 0, // No longer using percentage

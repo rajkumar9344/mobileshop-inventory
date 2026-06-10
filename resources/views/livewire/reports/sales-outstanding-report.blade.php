@@ -98,14 +98,13 @@
                                     <th>Bill Overall Amount</th>
                                     <th>Received Amount</th>
                                     <th>Balance Amount</th>
-                                    <th>Bill Due Date</th>
                                     <th>Aging (Days)</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($sales as $sale)
                                     @php
-                                        $agingDays = \App\Livewire\Reports\SalesOutstandingReport::calculateAging($sale->due_date);
+                                        $agingDays = \App\Livewire\Reports\SalesOutstandingReport::calculateAging($sale->date);
                                         $badgeClass = \App\Livewire\Reports\SalesOutstandingReport::getAgingBadgeClass($agingDays);
                                         $billAmount = $sale->overall_net_rate ?? $sale->overall_amount ?? $sale->total_amount ?? 0;
                                         $paidAmount = $sale->paid_amount ?? 0;
@@ -122,7 +121,6 @@
                                         <td class="text-right">{{ number_format($billAmount, 2) }}</td>
                                         <td class="text-right">{{ number_format($paidAmount, 2) }}</td>
                                         <td class="text-right font-weight-bold text-danger">{{ number_format($balanceAmount, 2) }}</td>
-                                        <td>{{ \Carbon\Carbon::parse($sale->due_date)->format('d-m-Y') }}</td>
                                         <td>
                                             <span class="badge {{ $badgeClass }}">{{ $agingDays }} days</span>
                                         </td>
@@ -130,7 +128,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8">
+                                        <td colspan="7">
                                             <span class="text-success"><i class="bi bi-check-circle"></i> No Outstanding Bills Found!</span>
                                         </td>
                                     </tr>
@@ -143,7 +141,7 @@
                                                         <td class="text-right text-dark font-weight-bold">{{ number_format($sales->sum(fn($s) => $s->overall_net_rate ?? $s->overall_amount ?? $s->total_amount ?? 0), 2) }}</td>
                                                         <td class="text-right text-dark font-weight-bold">{{ number_format($sales->sum('paid_amount'), 2) }}</td>
                                                         <td class="text-right text-dark font-weight-bold">{{ number_format($sales->sum('due_amount'), 2) }}</td>
-                                                        <td colspan="2"></td>
+                                                        <td colspan="1"></td>
                                                     </tr>
                                 </tfoot>
                             @endif

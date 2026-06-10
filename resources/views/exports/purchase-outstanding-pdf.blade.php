@@ -55,7 +55,6 @@
                 <th>Bill Overall Amount</th>
                 <th>Paid Amount</th>
                 <th>Balance Amount</th>
-                <th>Bill Due Date</th>
                 <th>Aging (Days)</th>
             </tr>
         </thead>
@@ -63,7 +62,7 @@
             @php $totalBill = 0; $totalPaid = 0; $totalBalance = 0; @endphp
             @forelse($purchases as $purchase)
                 @php
-                    $agingDays = \App\Exports\PurchaseOutstandingExport::calculateAging($purchase->due_date);
+                    $agingDays = \App\Exports\PurchaseOutstandingExport::calculateAging($purchase->date);
                     $billAmount = $purchase->overall_net_rate ?? $purchase->total_amount ?? 0;
                     $paidAmount = $purchase->paid_amount ?? 0;
                     $balanceAmount = $purchase->due_amount ?? ($billAmount - $paidAmount);
@@ -88,12 +87,11 @@
                     <td class="text-right">{{ number_format($billAmount, 2) }}</td>
                     <td class="text-right">{{ number_format($paidAmount, 2) }}</td>
                     <td class="text-right text-danger font-weight-bold">{{ number_format($balanceAmount, 2) }}</td>
-                    <td class="text-center">{{ \Carbon\Carbon::parse($purchase->due_date)->format('d-m-Y') }}</td>
                     <td class="text-center {{ $agingClass }}">{{ $agingDays }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="8" class="text-center">No Outstanding Bills Found!</td>
+                    <td colspan="7" class="text-center">No Outstanding Bills Found!</td>
                 </tr>
             @endforelse
         </tbody>

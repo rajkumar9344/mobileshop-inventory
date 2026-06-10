@@ -26,9 +26,6 @@ class SalesDataTable extends DataTable
             ->addColumn('paid_amount', function ($data) {
                 return format_currency($data->paid_amount ?? 0);
             })
-            ->addColumn('discount_amount', function ($data) {
-                return format_currency($data->discount_amount ?? 0);
-            })
             ->addColumn('due_amount', function ($data) {
                 // If due_amount is negative, show as Advance (extra paid) with positive value
                 if ($data->due_amount < 0) {
@@ -215,10 +212,6 @@ class SalesDataTable extends DataTable
 
             Column::make('paid_amount')
                 ->title('Received Amount')
-                ->className('text-end align-middle'),
-
-            Column::computed('discount_amount')
-                ->title('Discount Amount')
                 ->className('text-end align-middle'),
 
             Column::computed('due_amount')

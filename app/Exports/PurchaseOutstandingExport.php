@@ -41,7 +41,7 @@ class PurchaseOutstandingExport implements FromQuery, WithMapping, WithHeadings,
 
     public function map($purchase): array
     {
-        $agingDays = self::calculateAging($purchase->due_date);
+        $agingDays = self::calculateAging($purchase->date);
         $billAmount = $purchase->overall_net_rate ?? $purchase->total_amount ?? 0;
         $paidAmount = $purchase->paid_amount ?? 0;
         $balanceAmount = $purchase->due_amount ?? ($billAmount - $paidAmount);
@@ -53,7 +53,6 @@ class PurchaseOutstandingExport implements FromQuery, WithMapping, WithHeadings,
             number_format($billAmount, 2),
             number_format($paidAmount, 2),
             number_format($balanceAmount, 2),
-            optional(Carbon::parse($purchase->due_date))->format('d-m-Y'),
             $agingDays,
         ];
     }
@@ -67,7 +66,6 @@ class PurchaseOutstandingExport implements FromQuery, WithMapping, WithHeadings,
             'Bill Overall Amount',
             'Paid Amount',
             'Balance Amount',
-            'Bill Due Date',
             'Aging (Days)',
         ];
     }
@@ -77,19 +75,19 @@ class PurchaseOutstandingExport implements FromQuery, WithMapping, WithHeadings,
         return 500;
     }
 
-    public static function calculateAging($dueDate)
+    public static function calculateAging($invoiceDate)
     {
-        if (!$dueDate) {
+        if (!$invoiceDate) {
             return 0;
         }
 
-        $due = Carbon::parse($dueDate);
+        $invoiced = Carbon::parse($invoiceDate);
         $today = Carbon::today();
 
-        if ($due >= $today) {
+        if ($invoiced >= $today) {
             return 0;
         }
 
-        return $today->diffInDays($due);
+        return $today->diffInDays($invoiced);
     }
 }
