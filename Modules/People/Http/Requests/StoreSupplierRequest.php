@@ -33,7 +33,7 @@ class StoreSupplierRequest extends FormRequest
             'supplier_name'  => 'required|string|max:80',
             'supplier_code'  => ['required', 'alpha_num', 'max:10', Rule::unique('suppliers', 'supplier_code')],
             'supplier_phone' => ['required', 'string', 'max:10', 'regex:/^[0-9]+$/', Rule::unique('suppliers', 'supplier_phone')],
-            'supplier_email' => ['nullable', 'email', 'max:50', 'lowercase', Rule::unique('suppliers', 'supplier_email')],
+            'supplier_email' => ['nullable', 'email:rfc,strict', 'max:50', 'lowercase', Rule::unique('suppliers', 'supplier_email')],
             'area'           => 'required|string|max:30',
             'state'          => 'required|string|max:30',
             'city'           => 'nullable|string|max:30',

@@ -3,6 +3,7 @@
 namespace Modules\User\Http\Controllers;
 
 use Modules\User\DataTables\RolesDataTable;
+use App\Services\AuditLogger;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -67,6 +68,8 @@ class RolesController extends Controller
             $role->givePermissionTo($validPermissions);
         }
 
+        AuditLogger::log('role.created', ['role_id' => $role->id, 'name' => $role->name]);
+
         toast('Role Created With Selected Permissions!', 'success');
 
         return redirect()->route('roles.index');
@@ -113,6 +116,8 @@ class RolesController extends Controller
         $validPermissions = Permission::whereIn('name', $requested)->pluck('name')->toArray();
         $role->syncPermissions($validPermissions);
 
+        AuditLogger::log('role.updated', ['role_id' => $role->id, 'name' => $role->name]);
+
         toast('Role Updated With Selected Permissions!', 'success');
 
         return redirect()->route('roles.index');
@@ -121,6 +126,8 @@ class RolesController extends Controller
 
     public function destroy(Role $role) {
         abort_if(Gate::denies('access_user_management'), 403);
+
+        AuditLogger::log('role.deleted', ['role_id' => $role->id, 'name' => $role->name]);
 
         $role->delete();
 

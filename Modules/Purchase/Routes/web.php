@@ -15,6 +15,8 @@ Route::group(['middleware' => 'auth'], function () {
 
     //Generate PDF
     Route::get('/purchases/pdf/{id}', function ($id) {
+        abort_if(\Illuminate\Support\Facades\Gate::denies('show_purchases'), 403);
+
         $purchase = \Modules\Purchase\Entities\Purchase::findOrFail($id);
         // Use find() for supplier so draft purchases without a supplier don't cause a 404
         $supplier = \Modules\People\Entities\Supplier::find($purchase->supplier_id);

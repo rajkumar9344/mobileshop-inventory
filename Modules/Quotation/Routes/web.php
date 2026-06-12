@@ -14,6 +14,8 @@
 Route::group(['middleware' => 'auth'], function () {
     //Generate PDF
     Route::get('/quotations/pdf/{id}', function ($id) {
+        abort_if(\Illuminate\Support\Facades\Gate::denies('show_quotations'), 403);
+
         $quotation = \Modules\Quotation\Entities\Quotation::findOrFail($id);
 
         // when customer_type is 'new' the record won't have a customer_id,

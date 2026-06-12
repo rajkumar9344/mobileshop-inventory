@@ -4,6 +4,7 @@ namespace Modules\User\Http\Controllers;
 
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
+use App\Services\AuditLogger;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -21,7 +22,7 @@ class ProfileController extends Controller
     public function update(Request $request) {
         $request->validate([
             'name'  => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . auth()->id()
+            'email' => 'required|email:rfc,strict|unique:users,email,' . auth()->id()
         ]);
 
         auth()->user()->update([
@@ -54,12 +55,17 @@ class ProfileController extends Controller
     public function updatePassword(Request $request) {
         $request->validate([
             'current_password'  => ['required', 'max:255', new MatchCurrentPassword()],
-            'password' => 'required|min:8|max:255|confirmed'
+            'password' => ['required', 'min:8', 'max:255', 'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&\#])[A-Za-z\d@$!%*?&\#]+$/'],
+        ], [
+            'password.regex' => 'Password must contain at least one lowercase letter, one uppercase letter, one number and one special character (@$!%*?&#).',
         ]);
 
         auth()->user()->update([
             'password' => Hash::make($request->password)
         ]);
+
+        AuditLogger::log('password.changed', ['user_id' => auth()->id()]);
 
         toast('Password Updated!', 'success');
 

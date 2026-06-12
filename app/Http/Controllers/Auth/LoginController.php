@@ -38,6 +38,7 @@ class LoginController extends Controller
     public function __construct()
     {
         $this->middleware('guest')->except('logout');
+        $this->middleware('throttle:5,1')->only('login');
     }
 
     protected function authenticated(Request $request, $user) {

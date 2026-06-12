@@ -20,6 +20,8 @@ Route::group(['middleware' => 'auth'], function () {
 
     //Generate PDF
     Route::get('/sales/pdf/{id}', function ($id) {
+        abort_if(\Illuminate\Support\Facades\Gate::denies('show_sales'), 403);
+
         $sale = \Modules\Sale\Entities\Sale::findOrFail($id);
         // Use find() so missing customer (drafts) do not cause a 404
         $customer = \Modules\People\Entities\Customer::find($sale->customer_id);
@@ -35,6 +37,8 @@ Route::group(['middleware' => 'auth'], function () {
     })->name('sales.pdf');
 
     Route::get('/sales/pos/pdf/{id}', function ($id) {
+        abort_if(\Illuminate\Support\Facades\Gate::denies('show_sales'), 403);
+
         $sale = \Modules\Sale\Entities\Sale::findOrFail($id);
 
         $pdf = app(\App\Services\PdfGenerator::class)->make('sale::print-pos', [

@@ -27,7 +27,7 @@ class StoreCustomerRequest extends FormRequest
             'customer_name'   => 'required|string|max:80',
             'customer_code'   => 'required|alpha_num|max:10|unique:customers,customer_code',
             'customer_phone'  => ['required','string','max:10','regex:/^[0-9]+$/','unique:customers,customer_phone'],
-            'customer_email'  => ['nullable','email','max:50','unique:customers,customer_email'],
+            'customer_email'  => ['nullable','email:rfc,strict','max:50','unique:customers,customer_email'],
             'city'            => 'nullable|string|max:30',
             'state'           => 'required|string|max:30',
             'address'         => 'nullable|string|max:200',

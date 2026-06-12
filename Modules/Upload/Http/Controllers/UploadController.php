@@ -49,9 +49,13 @@ class UploadController extends Controller
 
 
     public function dropzoneUpload(Request $request) {
+        $request->validate([
+            'file' => 'required|file|image|mimes:png,jpeg,jpg,gif,webp|max:5120'
+        ]);
+
         $file = $request->file('file');
 
-        $filename = now()->timestamp . '.' . trim($file->getClientOriginalExtension());
+        $filename = now()->timestamp . '.' . strtolower($file->getClientOriginalExtension());
 
         Storage::putFileAs('temp/dropzone/', $file, $filename);
 
@@ -62,8 +66,11 @@ class UploadController extends Controller
     }
 
     public function dropzoneDelete(Request $request) {
-        Storage::delete('temp/dropzone/' . $request->file_name);
+        // basename() strips any directory components to prevent path traversal (e.g. ../../.env)
+        $fileName = basename((string) $request->file_name);
 
-        return response()->json($request->file_name, 200);
+        Storage::delete('temp/dropzone/' . $fileName);
+
+        return response()->json($fileName, 200);
     }
 }

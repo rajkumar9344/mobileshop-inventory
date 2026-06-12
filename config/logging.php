@@ -54,6 +54,14 @@ return [
             'days' => 14,
         ],
 
+        // Security audit trail: user/role/password changes (see App\Services\AuditLogger)
+        'audit' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/audit.log'),
+            'level' => 'info',
+            'days' => 90,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),

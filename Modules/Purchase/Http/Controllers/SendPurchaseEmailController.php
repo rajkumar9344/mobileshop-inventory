@@ -5,6 +5,7 @@ namespace Modules\Purchase\Http\Controllers;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
@@ -16,6 +17,8 @@ use App\Models\EmailLog;
 class SendPurchaseEmailController extends Controller
 {
     public function __invoke(Purchase $purchase) {
+        abort_if(Gate::denies('show_purchases'), 403);
+
         // Check if supplier exists and has email
         $supplier = Supplier::find($purchase->supplier_id);
         if (!$supplier || !$supplier->supplier_email) {
@@ -25,7 +28,7 @@ class SendPurchaseEmailController extends Controller
 
         // Validate email format
         $validator = Validator::make(['email' => $supplier->supplier_email], [
-            'email' => 'required|email',
+            'email' => 'required|email:rfc,strict',
         ]);
 
         if ($validator->fails()) {

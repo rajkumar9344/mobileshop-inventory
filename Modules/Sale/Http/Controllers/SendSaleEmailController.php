@@ -26,7 +26,7 @@ class SendSaleEmailController extends Controller
 
         // Validate email format
         $validator = Validator::make(['email' => $sale->customer->customer_email], [
-            'email' => 'required|email',
+            'email' => 'required|email:rfc,strict',
         ]);
 
         if ($validator->fails()) {

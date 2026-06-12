@@ -70,7 +70,12 @@
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
-        "sort-packages": true
+        "sort-packages": true,
+        "audit": {
+            "ignore": {
+                "CVE-2026-48019": "CRLF injection in default email rule is only fixed in Laravel 12.60+/13.10+; no Laravel 10.x patch exists. Mitigated app-side by enforcing email:rfc,strict validation everywhere."
+            }
+        }
     },
     "minimum-stability": "stable",
     "prefer-stable": true

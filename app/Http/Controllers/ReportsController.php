@@ -492,7 +492,7 @@ class ReportsController extends Controller
     public function ledgerSendEmail(Request $request)
     {
         $data = $request->validate([
-            'to' => 'nullable|email',
+            'to' => 'nullable|email:rfc,strict',
             'customer_id' => 'nullable|integer',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
@@ -613,7 +613,7 @@ class ReportsController extends Controller
     public function supplierLedgerSendEmail(Request $request)
     {
         $data = $request->validate([
-            'to' => 'nullable|email',
+            'to' => 'nullable|email:rfc,strict',
             'supplier_id' => 'nullable|integer',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',

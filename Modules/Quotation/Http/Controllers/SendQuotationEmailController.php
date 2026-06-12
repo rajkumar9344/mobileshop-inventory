@@ -24,7 +24,7 @@ class SendQuotationEmailController extends Controller
         }
 
         $validator = Validator::make(['email' => $emailAddress], [
-            'email' => 'required|email',
+            'email' => 'required|email:rfc,strict',
         ]);
 
         // load customer record only if there is an actual customer_id; otherwise leave it null

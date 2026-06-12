@@ -4,6 +4,7 @@ namespace Modules\User\Http\Controllers;
 
 use Modules\User\DataTables\UsersDataTable;
 use App\Models\User;
+use App\Services\AuditLogger;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -33,8 +34,11 @@ class UsersController extends Controller
 
         $request->validate([
             'name'     => 'required|string|max:255',
-            'email'    => 'required|email|max:255|unique:users,email',
-            'password' => 'required|string|min:8|max:255|confirmed'
+            'email'    => 'required|email:rfc,strict|max:255|unique:users,email',
+            'password' => ['required', 'string', 'min:8', 'max:255', 'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&\#])[A-Za-z\d@$!%*?&\#]+$/'],
+        ], [
+            'password.regex' => 'Password must contain at least one lowercase letter, one uppercase letter, one number and one special character (@$!%*?&#).',
         ]);
 
         $user = User::create([
@@ -45,6 +49,8 @@ class UsersController extends Controller
         ]);
 
         $user->assignRole($request->role);
+
+        AuditLogger::log('user.created', ['user_id' => $user->id, 'email' => $user->email, 'role' => $request->role]);
 
         if ($request->has('image')) {
             $tempFile = Upload::where('folder', $request->image)->first();
@@ -75,7 +81,7 @@ class UsersController extends Controller
 
         $request->validate([
             'name'     => 'required|string|max:255',
-            'email'    => 'required|email|max:255|unique:users,email,'.$user->id,
+            'email'    => 'required|email:rfc,strict|max:255|unique:users,email,'.$user->id,
         ]);
 
         $user->update([
@@ -85,6 +91,8 @@ class UsersController extends Controller
         ]);
 
         $user->syncRoles($request->role);
+
+        AuditLogger::log('user.updated', ['user_id' => $user->id, 'email' => $user->email, 'role' => $request->role]);
 
         if ($request->has('image')) {
             $tempFile = Upload::where('folder', $request->image)->first();
@@ -109,6 +117,8 @@ class UsersController extends Controller
 
     public function destroy(User $user) {
         abort_if(Gate::denies('access_user_management'), 403);
+
+        AuditLogger::log('user.deleted', ['user_id' => $user->id, 'email' => $user->email]);
 
         $user->delete();
 
