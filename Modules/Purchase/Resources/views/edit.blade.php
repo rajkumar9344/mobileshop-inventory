@@ -358,7 +358,7 @@
             // Get total amount button click (guarded)
             if ($('#getTotalAmount').length) {
                 $('#getTotalAmount').on('click', function() {
-                    var totalAmount = parseFloat($('#overall_net_rate').val()) || 0;
+                    var totalAmount = parseFloat($('#overall_amount').val()) || 0;
                     if ($('#paid_amount').length) {
                         $('#paid_amount').maskMoney('mask', totalAmount);
                     }
@@ -478,7 +478,7 @@
             window.updateHiddenFields = updateHiddenFields;
 
             function calculateBalance() {
-                var totalAmount = parseFloat($('#overall_net_rate').val()) || 0;
+                var totalAmount = parseFloat($('#overall_amount').val()) || 0;
                 var paidAmount = $('#paid_amount').length && $('#paid_amount').data('maskMoney') ? ($('#paid_amount').maskMoney('unmasked')[0] || 0) : (parseFloat($('#paid_amount').val()) || 0);
                 var balance = totalAmount - paidAmount;
                 $('#balance_amount').val('{{ settings()->currency->symbol }}' + balance.toFixed(2));
@@ -488,7 +488,7 @@
             function updateHiddenFields() {
                 // Get current cart total dynamically (support masked / formatted inputs)
                 var cartTotal = 0;
-                var $overall = $('#overall_net_rate');
+                var $overall = $('#overall_amount');
                 if ($overall.length && $overall.data('maskMoney')) {
                     cartTotal = $overall.maskMoney('unmasked')[0] || 0;
                 } else {

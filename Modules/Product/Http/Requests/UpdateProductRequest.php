@@ -32,7 +32,6 @@ class UpdateProductRequest extends FormRequest
             'product_tax_type' => ['nullable', 'in:1,2'],
             'product_note' => ['nullable', 'string', 'max:300'],
             'category_id' => ['required', 'integer', 'exists:categories,id'],
-            'supplier_id' => ['nullable', 'integer', 'exists:suppliers,id'],
             'open_quantity' => ['nullable', 'integer', 'min:0', 'max:9999'],
             'location' => ['nullable', 'string', 'max:255'],
             'status' => ['required', 'in:Active,Inactive,active,inactive'],

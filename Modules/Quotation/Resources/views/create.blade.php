@@ -353,10 +353,10 @@
             const overallIgst = document.getElementById('overall_igst')?.value || '0';
             const overallTaxAmount = document.getElementById('overall_tax_amount')?.value || '0';
             const overallTcsPercent = document.getElementById('overall_tcs_percent')?.value || '0';
-            const overallAmount = document.getElementById('overall_amount')?.value || '0';
+            const overallAmount = String(document.getElementById('overall_amount')?.value || '').replace(/,/g, '') || '0';
             const overallOther = document.getElementById('overall_other')?.value || '0';
             const overallAdj = document.getElementById('overall_adj')?.value || '0';
-            const overallNetRate = document.getElementById('overall_net_rate')?.value || '0';
+            const overallNetRate = document.getElementById('overall_amount')?.value || '0';
 
             document.getElementById('hidden_overall_nos').value = overallNos;
             document.getElementById('hidden_overall_quantity').value = overallQuantity;

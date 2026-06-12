@@ -214,7 +214,7 @@
             }
 
             function updateBalance(){
-                var netRateVal = document.getElementById('overall_net_rate')?.value || '0';
+                var netRateVal = document.getElementById('overall_amount')?.value || '0';
                 var netRate = parseFloat(netRateVal.replace(/,/g, '')) || 0;
                 var paidAmount = parseFloat(document.getElementById('paid_amount_hidden')?.value || '0');
                 var balance = netRate - paidAmount;
@@ -296,7 +296,7 @@
 
                 // Get current cart total dynamically (support masked / formatted inputs)
                 var cartTotal = 0;
-                var $overall = $('#overall_net_rate');
+                var $overall = $('#overall_amount');
                 if ($overall.length) {
                     // Prefer maskMoney if present (legacy)
                     if ($overall.data('maskMoney')) {
@@ -306,6 +306,8 @@
                         var el = $overall.get(0);
                         if (el && el.dataset && el.dataset.raw) {
                             cartTotal = parseFloat(String(el.dataset.raw).replace(/[^0-9.\-]/g, '')) || 0;
+                        } else if (el && el.value) {
+                            cartTotal = parseFloat(String(el.value).replace(/[^0-9.\-]/g, '')) || 0;
                         } else {
                             var cartTotalElement = document.querySelector('.table-responsive .table .table-striped tr:last-child th:last-child');
                             var text = cartTotalElement ? cartTotalElement.textContent : '';
@@ -320,7 +322,7 @@
                 var overallGrossAmount = document.getElementById('overall_gross_amount')?.value || document.getElementById('hidden_overall_gross_amount').value || '0';
                 var overallTaxableAmount = document.getElementById('overall_taxable_amount')?.value || document.getElementById('hidden_overall_taxable_amount').value || '0';
                 var overallTaxAmount = document.getElementById('overall_tax_amount')?.value || document.getElementById('hidden_overall_tax_amount').value || '0';
-                var overallAmount = document.getElementById('overall_amount')?.value || document.getElementById('hidden_overall_amount').value || '0';
+                var overallAmount = String(document.getElementById('overall_amount')?.value || '').replace(/,/g, '') || document.getElementById('hidden_overall_amount').value || '0';
 
                 document.getElementById('hidden_overall_nos').value = overallNos;
                 document.getElementById('hidden_overall_quantity').value = overallQuantity;
@@ -471,11 +473,11 @@
                     if (typeof updateHiddenFields === 'function') {
                         updateHiddenFields();
                     }
-                    var el = document.getElementById('overall_net_rate');
+                    var el = document.getElementById('overall_amount');
                     if (el && el.dataset && el.dataset.raw) {
                         return parseFloat(String(el.dataset.raw).replace(/[^0-9.\-]/g, '')) || 0;
                     }
-                    var visible = $('#overall_net_rate').val() || $('#overall_net_rate').text() || '0';
+                    var visible = $('#overall_amount').val() || $('#overall_amount').text() || '0';
                     return parseFloat(String(visible).replace(/[^0-9.\-]/g, '')) || 0;
                 }
 
@@ -547,9 +549,9 @@
                     
                     // Get total from hidden field or livewire fields
                     var totalAmount = parseFloat($('#hidden_total_amount').val()) || 0;
-                    // If still 0, try to get from livewire overall_net_rate
+                    // If still 0, try to get from livewire overall_amount
                     if (totalAmount === 0) {
-                        var netRateVal = $('#overall_net_rate').val() || '';
+                        var netRateVal = $('#overall_amount').val() || '';
                         var amountVal = $('#overall_amount').val() || '';
                         totalAmount = parseFloat(netRateVal.replace(/,/g, '')) || parseFloat(amountVal.replace(/,/g, '')) || 0;
                     }
@@ -636,7 +638,7 @@
                         // Get total from hidden field or livewire fields
                         var totalAmount = parseFloat($('#hidden_total_amount').val()) || 0;
                         if (totalAmount === 0) {
-                            totalAmount = parseFloat($('#overall_net_rate').val()) || parseFloat($('#overall_amount').val()) || 0;
+                            totalAmount = parseFloat($('#overall_amount').val()) || parseFloat($('#overall_amount').val()) || 0;
                         }
 
                         isCreditLimitCheck(customerId, totalAmount, paidNumeric).then(function(resp) {
@@ -713,13 +715,13 @@
             window.updateHiddenFields = updateHiddenFields;
             window.updateBalance = updateBalance;
 
-            // Observe changes to overall_net_rate to update balance
-            if (document.getElementById('overall_net_rate')) {
+            // Observe changes to overall_amount to update balance
+            if (document.getElementById('overall_amount')) {
                 const observer = new MutationObserver(function(){
                     try { updateBalance(); } catch(e){}
                     try { if (typeof validateAmounts === 'function') validateAmounts(); } catch(e){}
                 });
-                observer.observe(document.getElementById('overall_net_rate'), { attributes: true, attributeFilter: ['value'] });
+                observer.observe(document.getElementById('overall_amount'), { attributes: true, attributeFilter: ['value'] });
             }
                 // Disable submit when cart invalid — listen for Livewire event, browser event, and fallback to DOM
                 (function(){

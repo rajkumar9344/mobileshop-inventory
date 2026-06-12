@@ -32,9 +32,7 @@ class ProductController extends Controller
 
     public function create() {
         abort_if(Gate::denies('create_products'), 403);
-        $suppliers = \Modules\People\Entities\Supplier::where('status', 'active')->orderBy('supplier_name')->pluck('supplier_name', 'id');
-
-        return view('product::products.create', compact('suppliers'));
+        return view('product::products.create');
     }
 
     /**
@@ -165,9 +163,6 @@ class ProductController extends Controller
             $data['re_order'] = $data['product_stock_alert'] - $data['product_quantity'];
         }
 
-        // normalize supplier_id to null when empty
-        $data['supplier_id'] = $request->input('supplier_id') ? (int) $request->input('supplier_id') : null;
-
         // Collect all codes (primary + additional)
         $primaryCode    = trim($data['product_code'] ?? '');
         $additionalCodes = array_filter(
@@ -248,17 +243,14 @@ class ProductController extends Controller
 
     public function edit(Product $product) {
     abort_if(Gate::denies('edit_products'), 403);
-    $suppliers = \Modules\People\Entities\Supplier::where('status', 'active')->orderBy('supplier_name')->pluck('supplier_name', 'id');
     $productCodes = $product->productCodes()->orderByDesc('is_primary')->get();
 
-    return view('product::products.edit', compact('product', 'suppliers', 'productCodes'));
+    return view('product::products.edit', compact('product', 'productCodes'));
     }
 
 
     public function update(UpdateProductRequest $request, Product $product) {
         $data = $request->except(['document', 'additional_codes']);
-        // normalize supplier_id to null when empty
-        $data['supplier_id'] = $request->input('supplier_id') ? (int) $request->input('supplier_id') : null;
     $data['buy_price'] = $request->input('buy_price');
     $data['list_price'] = $request->input('list_price');
     $data['open_quantity'] = (int) $request->input('open_quantity', 0);

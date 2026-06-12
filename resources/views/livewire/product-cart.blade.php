@@ -760,7 +760,7 @@
             </div>
             <div class="col-md-2 pr-1">
                 <label for="overall_amount">Total Amount</label>
-                <input type="text" class="form-control" name="overall_amount" id="overall_net_rate" value="{{ format_currency(in_array($cart_instance, ['sale','sale_edit','sale_return','quotation','quotation_edit','sale_view','sale_return_view','quotation_view']) ? round($this->overall_calculations['overall_amount'] ?? 0, 0) : ($this->overall_calculations['overall_amount'] ?? 0), true, false) }}" readonly>
+                <input type="text" class="form-control" name="overall_amount" id="overall_amount" value="{{ format_currency(in_array($cart_instance, ['sale','sale_edit','sale_return','quotation','quotation_edit','sale_view','sale_return_view','quotation_view']) ? round($this->overall_calculations['overall_amount'] ?? 0, 0) : ($this->overall_calculations['overall_amount'] ?? 0), true, false) }}" readonly>
             </div>
         </div>
     </div>

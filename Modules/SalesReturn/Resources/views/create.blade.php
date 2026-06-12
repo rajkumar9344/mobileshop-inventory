@@ -152,8 +152,8 @@
             document.getElementById('hidden_discount_percentage').value = '0';
             document.getElementById('hidden_shipping_amount').value = '0';
 
-            // Prefer the Overall Net Rate field from the ProductCart Livewire component if present
-            const overallNetEl = document.getElementById('overall_net_rate');
+            // Prefer the Overall Amount field from the ProductCart Livewire component if present
+            const overallNetEl = document.getElementById('overall_amount');
             let cartTotal = '0';
             if (overallNetEl) {
                 cartTotal = overallNetEl.value || overallNetEl.textContent || '0';

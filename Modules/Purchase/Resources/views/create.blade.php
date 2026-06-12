@@ -249,7 +249,7 @@
 
             if ($('#getTotalAmount').length) {
                 $('#getTotalAmount').click(function () {
-                    var totalAmount = parseFloat($('#overall_net_rate').val()) || 0;
+                    var totalAmount = parseFloat($('#overall_amount').val()) || 0;
                     if ($('#paid_amount').length) {
                         $('#paid_amount').maskMoney('mask', totalAmount);
                     }
@@ -265,8 +265,8 @@
             }
 
             // Update balance when cart total changes
-            if ($('#overall_net_rate').length && ($('#paid_amount').length || $('#balance_amount').length)) {
-                $('#overall_net_rate').on('change input', function() {
+            if ($('#overall_amount').length && ($('#paid_amount').length || $('#balance_amount').length)) {
+                $('#overall_amount').on('change input', function() {
                     if (typeof calculateBalance === 'function') calculateBalance();
                 });
             }
@@ -403,7 +403,7 @@
             }
 
             function calculateBalance() {
-                var totalAmount = parseFloat($('#overall_net_rate').val()) || 0;
+                var totalAmount = parseFloat($('#overall_amount').val()) || 0;
                 var paidAmount = $('#paid_amount').length && $('#paid_amount').data('maskMoney') ? ($('#paid_amount').maskMoney('unmasked')[0] || 0) : (parseFloat($('#paid_amount').val()) || 0);
                 var balance = totalAmount - paidAmount;
                 $('#balance_amount').val('{{ settings()->currency->symbol }}' + balance.toFixed(2));
@@ -413,7 +413,7 @@
             function updateHiddenFields() {
                 // Get current cart total dynamically (support masked / formatted inputs)
                 var cartTotal = 0;
-                var $overall = $('#overall_net_rate');
+                var $overall = $('#overall_amount');
                 if ($overall.length && $overall.data('maskMoney')) {
                     cartTotal = $overall.maskMoney('unmasked')[0] || 0;
                 } else {

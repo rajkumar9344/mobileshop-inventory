@@ -1178,7 +1178,7 @@ class PurchaseController extends Controller
     }
 
     public function reorder(Purchase $purchase) {
-        $this->authorize('create_purchases');
+        abort_if(Gate::denies('create_purchases'), 403);
 
         $purchase->load('purchaseDetails');
 
@@ -1211,9 +1211,12 @@ class PurchaseController extends Controller
         ]);
 
         // Copy line items (no stock change — draft)
+        // attributesToArray() returns only DB column values via getters (rupees, not raw paise)
+        // without any eager-loaded relationships — avoids both the 'product' array and
+        // the productCode relationship overwriting the product_code string column in toArray()
         foreach ($purchase->purchaseDetails as $detail) {
             $newPurchase->purchaseDetails()->create(
-                collect($detail->toArray())
+                collect($detail->attributesToArray())
                     ->except(['id', 'purchase_id', 'created_at', 'updated_at'])
                     ->toArray()
             );

@@ -23,10 +23,6 @@ class ProductDataTable extends DataTable
             ->addColumn('action', function ($data) {
                 return view('product::products.partials.actions', compact('data'));
             })
-            ->addColumn('product_image', function ($data) {
-                $url = $data->getFirstMediaUrl('images', 'thumb');
-                return '<img src="' . $url . '" border="0" width="50" class="img-thumbnail" align="center"/>';
-            })
             ->addColumn('category_name', function ($data) {
                 return $data->category_name ?? '';
             })
@@ -71,7 +67,7 @@ class ProductDataTable extends DataTable
                       });
                  });
             })
-            ->rawColumns(['product_image']);
+            ->rawColumns(['action']);
     }
 
     public function query(Product $model)
@@ -147,12 +143,6 @@ class ProductDataTable extends DataTable
         $table = (new Product())->getTable();
 
         return [
-            Column::computed('product_image')
-                ->title('Image')
-                ->exportable(false)
-                ->printable(false)
-                ->className('text-center align-middle'),
-
             Column::make('category_name')
                 ->name('categories.category_name')
                 ->title('Brand')

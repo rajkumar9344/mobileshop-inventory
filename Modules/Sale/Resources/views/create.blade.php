@@ -241,11 +241,11 @@
             // --- Shared validation helpers ---
             function getNetRate() {
                 if (typeof updateHiddenFields === 'function') updateHiddenFields();
-                var overallEl = document.getElementById('overall_net_rate');
+                var overallEl = document.getElementById('overall_amount');
                 if (overallEl && overallEl.dataset && overallEl.dataset.raw) {
                     return parseFloat(String(overallEl.dataset.raw).replace(/[^0-9.\-]/g, '')) || 0;
                 }
-                var visible = $('#overall_net_rate').val() || $('#overall_net_rate').text() || '0';
+                var visible = $('#overall_amount').val() || $('#overall_amount').text() || '0';
                 return parseFloat(String(visible).replace(/[^0-9.\-]/g, '')) || 0;
             }
 
@@ -320,7 +320,7 @@
                 // Get total from cart display or hidden field
                 var totalAmount = parseFloat($('#hidden_total_amount').val()) || 0;
                 if (totalAmount === 0) {
-                    var netRateVal = $('#overall_net_rate').val() || '';
+                    var netRateVal = $('#overall_amount').val() || '';
                     var amountVal = $('#overall_amount').val() || '';
                     totalAmount = parseFloat(netRateVal.replace(/,/g, '')) || parseFloat(amountVal.replace(/,/g, '')) || 0;
                 }
@@ -483,7 +483,7 @@
                     // Get total from hidden field or livewire fields
                     var totalAmount = parseFloat($('#hidden_total_amount').val()) || 0;
                     if (totalAmount === 0) {
-                        totalAmount = parseFloat($('#overall_net_rate').val()) || parseFloat($('#overall_amount').val()) || 0;
+                        totalAmount = parseFloat($('#overall_amount').val()) || parseFloat($('#overall_amount').val()) || 0;
                     }
 
                     isCreditLimitCheck(customerId, totalAmount, paidNumeric).then(function(resp) {
@@ -575,10 +575,10 @@
             document.getElementById('hidden_discount_percentage').value = '0';
             document.getElementById('hidden_shipping_amount').value = '0';
             // Get current cart total dynamically. Prefer dataset.raw from the
-            // visible overall_net_rate (used by the central currency widget),
-            // then fall back to hidden_overall_net_rate, then table text.
+            // visible overall_amount (used by the central currency widget),
+            // then fall back to hidden_overall_amount, then table text.
             var cartTotal = 0;
-            var overallEl = document.getElementById('overall_net_rate');
+            var overallEl = document.getElementById('overall_amount');
             if (overallEl) {
                 var rawFromDataset = overallEl.dataset && overallEl.dataset.raw ? overallEl.dataset.raw : null;
                 if (rawFromDataset) {
@@ -600,7 +600,7 @@
             const overallGrossAmount = document.getElementById('overall_gross_amount')?.value || '0';
             const overallTaxableAmount = document.getElementById('overall_taxable_amount')?.value || '0';
             const overallTaxAmount = document.getElementById('overall_tax_amount')?.value || '0';
-            const overallAmount = document.getElementById('overall_amount')?.value || '0';
+            const overallAmount = String(document.getElementById('overall_amount')?.value || '').replace(/,/g, '') || '0';
 
             document.getElementById('hidden_overall_nos').value = overallNos;
             document.getElementById('hidden_overall_quantity').value = overallQuantity;
@@ -617,7 +617,7 @@
 
         // Function to calculate and update balance
         function updateBalance() {
-            var netRateVal = document.getElementById('overall_net_rate')?.value || '0';
+            var netRateVal = document.getElementById('overall_amount')?.value || '0';
             const netRate = parseFloat(netRateVal.replace(/,/g, '')) || 0;
             const paidAmount = parseFloat(document.getElementById('paid_amount_hidden')?.value || '0');
             const balance = netRate - paidAmount;
@@ -640,13 +640,13 @@
         window.updateHiddenFields = updateHiddenFields;
         window.updateBalance = updateBalance;
 
-        // Observe changes to overall_net_rate to update balance and re-validate
-        if (document.getElementById('overall_net_rate')) {
+        // Observe changes to overall_amount to update balance and re-validate
+        if (document.getElementById('overall_amount')) {
             const observer = new MutationObserver(function(){
                 try { updateBalance(); } catch(e){}
                 try { if (typeof validateAmounts === 'function') validateAmounts(); } catch(e){}
             });
-            observer.observe(document.getElementById('overall_net_rate'), { attributes: true, attributeFilter: ['value'] });
+            observer.observe(document.getElementById('overall_amount'), { attributes: true, attributeFilter: ['value'] });
         }
         @include('partials.cart_submit_sync', ['formId' => 'sale-form', 'actionAvailabilityFn' => 'updateSaleActionAvailability'])
     </script>
