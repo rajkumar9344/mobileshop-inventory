@@ -133,7 +133,7 @@
                                             @endif
                                         </td>
                                         <td>{{ optional($line->sale && $line->sale->date ? \Carbon\Carbon::parse($line->sale->date) : null)->format('d-m-Y') ?? (optional($line->bill_date)->format('d-m-Y') ?? '-') }}</td>
-                                        <td class="text-right">{{ number_format($line->bill_amount ?? ($line->sale ? ($line->sale->overall_net_rate ?? $line->sale->overall_amount ?? $line->sale->total_amount ?? 0) : 0), 2) }}</td>
+                                        <td class="text-right">{{ number_format($line->bill_amount ?? ($line->sale ? ($line->sale->overall_amount ?? $line->sale->total_amount ?? 0) : 0), 2) }}</td>
                                         <td class="text-center">
                                             @if(!empty($line->receipt))
                                                 <a href="{{ route('sales-receipts.show', $line->receipt->id) }}" target="_blank">

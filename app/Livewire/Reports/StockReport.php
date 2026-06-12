@@ -99,7 +99,7 @@ class StockReport extends Component
         $filters = [
             'category_id' => $this->category_id,
             'supplier_id' => $this->supplier_id,
-            'hsn_no' => $this->hsn_no,
+            'compatibility' => $this->compatibility,
             'generated_date_from' => $this->generated_date_from,
             'generated_date_to' => $this->generated_date_to,
             'search' => $this->search,

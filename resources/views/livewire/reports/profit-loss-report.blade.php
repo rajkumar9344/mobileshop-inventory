@@ -1,171 +1,134 @@
 <div>
-    <div class="row">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header d-flex align-items-center py-2">
-                    <i class="bi bi-funnel-fill mr-2" style="color:#f97316;font-size:14px;"></i>
-                    <strong>Filters</strong>
-                </div>
-                <div class="card-body">
-                    <form wire:submit="generateReport">
-                        <div class="form-row">
-                            <div class="col-lg-6">
-                                <div class="form-group">
-                                    <label>Start Date <span class="text-danger">*</span></label>
-                                    <input wire:model="start_date" type="date" class="form-control" name="start_date">
-                                    @error('start_date')
-                                    <span class="text-danger mt-1">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="form-group">
-                                    <label>End Date <span class="text-danger">*</span></label>
-                                    <input wire:model="end_date" type="date" class="form-control" name="end_date">
-                                    @error('end_date')
-                                    <span class="text-danger mt-1">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group mb-0">
-                            <button type="submit" class="btn btn-primary">
-                                <span wire:target="generateReport" wire:loading class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                <i wire:target="generateReport" wire:loading.remove class="bi bi-shuffle"></i>
-                                Filter Report
-                            </button>
-                        </div>
-                    </form>
-                </div>
+    <div class="card">
+        <div class="card-header d-flex flex-wrap align-items-center">
+            <h5 class="mb-0">Profit / Loss Report <small class="text-muted">(per sales bill)</small></h5>
+            <div class="ml-auto">
+                @php
+                    $exportParams = array_filter([
+                        'customer_id' => $customer_id,
+                        'reference'   => $reference,
+                        'start_date'  => $start_date,
+                        'end_date'    => $end_date,
+                        'pl_status'   => $pl_status,
+                    ]);
+                @endphp
+                <a href="{{ route('reports.profit-loss-excel', $exportParams) }}" class="btn btn-success btn-sm">
+                    <i class="bi bi-file-earmark-excel"></i> Export Excel
+                </a>
+                <a href="{{ route('reports.profit-loss-pdf', $exportParams) }}" target="_blank" class="btn btn-danger btn-sm">
+                    <i class="bi bi-file-earmark-pdf"></i> Export PDF
+                </a>
             </div>
         </div>
-    </div>
 
-    <div class="row">
-        {{-- Sales --}}
-        <div class="col-12 col-lg-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-3 d-flex align-items-center">
-                    <div class="rm-stat-icon p-3 mfe-3 rounded">
-                        <i class="bi bi-receipt font-2xl" style="color:#fff;"></i>
-                    </div>
-                    <div>
-                        <div class="text-value text-primary">{{ format_currency($sales_amount) }}</div>
-                        <div class="text-uppercase font-weight-bold small ">{{ $total_sales }} Sales</div>
-                    </div>
+        <div class="card-body">
+            {{-- Filters --}}
+            <div class="form-row align-items-end">
+                <div class="col-md-3 mb-2">
+                    <label class="mb-1">Customer</label>
+                    <select wire:model.live="customer_id" class="form-control">
+                        <option value="">All Customers</option>
+                        @foreach($customers as $customer)
+                            <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="mb-1">Bill Ref No</label>
+                    <input wire:model.live.debounce.400ms="reference" type="text" class="form-control" placeholder="e.g. SSA/00001">
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="mb-1">From Date</label>
+                    <input wire:model.live="start_date" type="date" class="form-control">
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="mb-1">To Date</label>
+                    <input wire:model.live="end_date" type="date" class="form-control">
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="mb-1">Profit/Loss Status</label>
+                    <select wire:model.live="pl_status" class="form-control">
+                        <option value="">All</option>
+                        <option value="profit">Profit</option>
+                        <option value="loss">Loss</option>
+                    </select>
+                </div>
+                <div class="col-md-1 mb-2">
+                    <button wire:click="resetFilters" type="button" class="btn btn-outline-danger btn-block" title="Clear all filters">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
                 </div>
             </div>
-        </div>
-        {{-- Sale Returns --}}
-        <div class="col-12 col-lg-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-3 d-flex align-items-center">
-                    <div class="rm-stat-icon p-3 mfe-3 rounded">
-                        <i class="bi bi-arrow-return-left font-2xl" style="color:#fff;"></i>
-                    </div>
-                    <div>
-                        <div class="text-value text-primary">{{ format_currency($sale_returns_amount) }}</div>
-                        <div class="text-uppercase font-weight-bold small">{{ $total_sale_returns }} Sale Returns</div>
-                    </div>
-                </div>
+
+            <div wire:loading class="text-center py-2">
+                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
             </div>
-        </div>
-        {{-- Profit --}}
-        <div class="col-12 col-lg-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-3 d-flex align-items-center">
-                    <div class="rm-stat-icon p-3 mfe-3 rounded">
-                        <i class="bi bi-trophy font-2xl" style="color:#fff;"></i>
-                    </div>
-                    <div>
-                        <div class="text-value text-primary">{{ format_currency($profit_amount) }}</div>
-                        <div class="text-uppercase font-weight-bold small">Profit</div>
-                    </div>
-                </div>
+
+            {{-- Listing --}}
+            <div class="table-responsive mt-2">
+                <table class="table table-bordered table-striped table-sm mb-0">
+                    <thead class="thead-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Customer Name</th>
+                        <th>Bill Ref No</th>
+                        <th>Bill Date</th>
+                        <th class="text-right">Overall Amount (Incl. VAT)</th>
+                        <th class="text-right">Overall Amount (Without VAT)</th>
+                        <th class="text-right">Purchased Rate Total</th>
+                        <th class="text-right">Profit / Loss Amount</th>
+                        <th class="text-center">Status</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @forelse($sales as $i => $sale)
+                        @php
+                            $profit = $sale->profit_amount / 100;
+                        @endphp
+                        <tr>
+                            <td>{{ $sales->firstItem() + $i }}</td>
+                            <td>{{ $sale->customer->customer_name ?? $sale->customer_name ?? '-' }}</td>
+                            <td>{{ $sale->reference }}</td>
+                            <td>{{ \Carbon\Carbon::parse($sale->date)->format('d-m-Y') }}</td>
+                            <td class="text-right">{{ format_currency($sale->amount_incl_vat / 100) }}</td>
+                            <td class="text-right">{{ format_currency($sale->amount_excl_vat / 100) }}</td>
+                            <td class="text-right">{{ format_currency($sale->purchase_total / 100) }}</td>
+                            <td class="text-right {{ $profit >= 0 ? 'text-success' : 'text-danger' }} font-weight-bold">
+                                {{ format_currency(abs($profit)) }}
+                            </td>
+                            <td class="text-center">
+                                @if($profit >= 0)
+                                    <span class="badge badge-success">Profit</span>
+                                @else
+                                    <span class="badge badge-danger">Loss</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-3">No sales bills found for the selected filters.</td>
+                        </tr>
+                    @endforelse
+                    </tbody>
+                    @if($sales->isNotEmpty())
+                    <tfoot>
+                    <tr class="font-weight-bold">
+                        <td colspan="4" class="text-right">Page Total</td>
+                        <td class="text-right">{{ format_currency($pageTotals['incl_vat']) }}</td>
+                        <td class="text-right">{{ format_currency($pageTotals['excl_vat']) }}</td>
+                        <td class="text-right">{{ format_currency($pageTotals['purchase_total']) }}</td>
+                        <td class="text-right {{ $pageTotals['profit'] >= 0 ? 'text-success' : 'text-danger' }}">
+                            {{ format_currency(abs($pageTotals['profit'])) }} {{ $pageTotals['profit'] >= 0 ? '(Profit)' : '(Loss)' }}
+                        </td>
+                        <td></td>
+                    </tr>
+                    </tfoot>
+                    @endif
+                </table>
             </div>
-        </div>
-        {{-- Purchases --}}
-        <div class="col-12 col-lg-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-3 d-flex align-items-center">
-                    <div class="rm-stat-icon p-3 mfe-3 rounded">
-                        <i class="bi bi-bag font-2xl" style="color:#fff;"></i>
-                    </div>
-                    <div>
-                        <div class="text-value text-primary">{{ format_currency($purchases_amount) }}</div>
-                        <div class="text-uppercase font-weight-bold small">{{ $total_purchases }} Purchases</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {{-- Purchase Returns --}}
-        <div class="col-12 col-lg-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-3 d-flex align-items-center">
-                    <div class="rm-stat-icon p-3 mfe-3 rounded">
-                        <i class="bi bi-arrow-return-right font-2xl" style="color:#fff;"></i>
-                    </div>
-                    <div>
-                        <div class="text-value text-primary">{{ format_currency($purchase_returns_amount) }}</div>
-                        <div class="text-uppercase font-weight-bold small">{{ $total_purchase_returns }} Purchase Returns</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {{-- Expenses --}}
-        <div class="col-12 col-lg-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-3 d-flex align-items-center">
-                    <div class="rm-stat-icon p-3 mfe-3 rounded">
-                        <i class="bi bi-wallet2 font-2xl" style="color:#fff;"></i>
-                    </div>
-                    <div>
-                        <div class="text-value text-primary">{{ format_currency($expenses_amount) }}</div>
-                        <div class="text-uppercase font-weight-bold small">Expenses</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {{-- Payments Received --}}
-        <div class="col-12 col-lg-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-3 d-flex align-items-center">
-                    <div class="rm-stat-icon p-3 mfe-3 rounded">
-                        <i class="bi bi-cash-stack font-2xl" style="color:#fff;"></i>
-                    </div>
-                    <div>
-                        <div class="text-value text-primary">{{ format_currency($payments_received_amount) }}</div>
-                        <div class="text-uppercase font-weight-bold small">Payments Received</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {{-- Payments Sent --}}
-        <div class="col-12 col-lg-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-3 d-flex align-items-center">
-                    <div class="rm-stat-icon p-3 mfe-3 rounded">
-                        <i class="bi bi-cash-stack font-2xl" style="color:#fff;"></i>
-                    </div>
-                    <div>
-                        <div class="text-value text-primary">{{ format_currency($payments_sent_amount) }}</div>
-                        <div class="text-uppercase font-weight-bold small">Payments Sent</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {{-- Payments Net --}}
-        <div class="col-12 col-lg-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-3 d-flex align-items-center">
-                    <div class="rm-stat-icon p-3 mfe-3 rounded">
-                        <i class="bi bi-cash-stack font-2xl" style="color:#fff;"></i>
-                    </div>
-                    <div>
-                        <div class="text-value text-primary">{{ format_currency($payments_net_amount) }}</div>
-                        <div class="text-uppercase font-weight-bold small">Payments Net</div>
-                    </div>
-                </div>
+
+            <div class="mt-3">
+                {{ $sales->links() }}
             </div>
         </div>
     </div>

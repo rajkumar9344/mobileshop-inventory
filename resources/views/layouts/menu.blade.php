@@ -263,18 +263,13 @@
                 </a>
             </li>
             <li class="c-sidebar-nav-item">
-                <a class="c-sidebar-nav-link {{ request()->routeIs('stock-report.index') ? 'c-active' : '' }}" href="{{ route('stock-report.index') }}">
+                <a class="c-sidebar-nav-link {{ request()->routeIs('current-stock-report.index') ? 'c-active' : '' }}" href="{{ route('current-stock-report.index') }}">
                     <i class="c-sidebar-nav-icon bi bi-clipboard-data" style="line-height: 1;"></i> Current Stock Report
                 </a>
             </li>
             <li class="c-sidebar-nav-item">
-                <a class="c-sidebar-nav-link {{ request()->routeIs('sales-outstanding-report.index') ? 'c-active' : '' }}" href="{{ route('sales-outstanding-report.index') }}">
-                    <i class="c-sidebar-nav-icon bi bi-exclamation-triangle" style="line-height: 1;"></i> Sales Outstanding Report
-                </a>
-            </li>
-            <li class="c-sidebar-nav-item">
-                <a class="c-sidebar-nav-link {{ request()->routeIs('purchase-outstanding-report.index') ? 'c-active' : '' }}" href="{{ route('purchase-outstanding-report.index') }}">
-                    <i class="c-sidebar-nav-icon bi bi-exclamation-circle" style="line-height: 1;"></i> Purchase Outstanding Report
+                <a class="c-sidebar-nav-link {{ request()->routeIs('reorder-report.index') ? 'c-active' : '' }}" href="{{ route('reorder-report.index') }}">
+                    <i class="c-sidebar-nav-icon bi bi-arrow-repeat" style="line-height: 1;"></i> Reorder Report
                 </a>
             </li>
             <li class="c-sidebar-nav-item">

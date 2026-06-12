@@ -85,7 +85,7 @@
                 <td class="t-left">{{ $line->receipt->customer->customer_name ?? '-' }}</td>
                 <td class="t-center">{{ $line->sale->reference ?? $line->bill_ref ?? '-' }}</td>
                 <td class="t-center">{{ optional($line->sale && $line->sale->date ? \Carbon\Carbon::parse($line->sale->date) : null)->format('d-m-Y') ?? (optional($line->bill_date)->format('d-m-Y') ?? '-') }}</td>
-                <td class="t-right">{{ number_format($line->bill_amount ?? ($line->sale->overall_net_rate ?? $line->sale->overall_amount ?? $line->sale->total_amount ?? 0), 2) }}</td>
+                <td class="t-right">{{ number_format($line->bill_amount ?? ($line->sale->overall_amount ?? $line->sale->total_amount ?? 0), 2) }}</td>
                 <td class="t-center">{{ $line->receipt->reference ?? ($line->receipt ? 'RE'.str_pad($line->receipt->id, 5, '0', STR_PAD_LEFT) : '-') }}</td>
                 <td class="t-center">{{ $line->is_settled ? 'Yes' : 'No' }}</td>
                 <td class="t-right">{{ number_format($line->payment_amount, 2) }}</td>

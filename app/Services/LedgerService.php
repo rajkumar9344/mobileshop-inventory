@@ -82,7 +82,7 @@ class LedgerService
         $salesBefore = Sale::where('customer_id', $customer->id)
             ->where('status', '!=', 'Draft')
             ->whereDate('date', '<', $start)
-            ->sum('overall_net_rate') / 100;
+            ->sum(DB::raw('COALESCE(overall_amount, total_amount, 0)')) / 100;
 
         $receiptsBefore = SalesReceipt::where('customer_id', $customer->id)
             ->whereDate('date', '<', $start)
@@ -139,7 +139,7 @@ class LedgerService
                 'date' => $s->date,
                 'reference' => $s->reference,
                 'payment_mode' => $s->payment_method ?? '',
-                'amount' => $s->overall_net_rate ?? $s->overall_amount ?? $s->total_amount ?? 0,
+                'amount' => $s->overall_amount ?? $s->total_amount ?? 0,
             ]);
 
         $receipts = SalesReceipt::where('customer_id', $customer->id)

@@ -8,7 +8,6 @@ use Livewire\Component;
 use Modules\Product\Entities\Product;
 use Modules\Product\Entities\Category;
 use Modules\Product\Entities\ProductCode;
-use Modules\Product\Entities\Subcategory;
 
 class SearchProduct extends Component
 {
@@ -19,7 +18,6 @@ class SearchProduct extends Component
     public $query;
     public $search_results;
     public $category_id;
-    public $subcategory_id;
     public $context; // 'sale', 'purchase', or 'purchase_return'
     public $showResults  = false;
     public $totalCount   = 0;   // total matched products (before any limit)
@@ -48,7 +46,6 @@ class SearchProduct extends Component
     public function mount($context = 'sale') {
         $this->query        = '';
         $this->category_id  = '';
-        $this->subcategory_id = '';
         $this->context      = $context;
         $this->search_results = Collection::empty();
         $this->showResults  = false;
@@ -57,33 +54,14 @@ class SearchProduct extends Component
     }
 
     public function render() {
-        // Load brands (categories) and subcategories with natural, case-insensitive ordering
+        // Load brands (categories) with natural, case-insensitive ordering
         $categories = Category::where('status', true)
             ->select('id', 'category_name')
             ->get()
             ->sortBy(function($c){ return $c->category_name; }, SORT_NATURAL|SORT_FLAG_CASE)
             ->values();
 
-        // Preload subcategories: if a category is selected, show its subcategories;
-        // otherwise show all active subcategories so the user can filter by subcategory directly.
-        $subcategoriesQuery = Subcategory::where('status', true)->select('id', 'subcategory_name', 'category_id');
-        if ($this->category_id) {
-            $subcategoriesQuery->where('category_id', $this->category_id);
-        }
-        $subcategories = $subcategoriesQuery->get();
-        // When no category is selected, deduplicate subcategories by name (case-insensitive)
-        if (empty($this->category_id)) {
-            $subcategories = $subcategories->unique(function($s){
-                $n = preg_replace('/\s+/u', ' ', trim($s->subcategory_name));
-                return mb_strtolower($n);
-            })->values();
-        }
-        $subcategories = $subcategories->sortBy(function($s){
-            $n = preg_replace('/\s+/u', ' ', trim($s->subcategory_name));
-            return $n;
-        }, SORT_NATURAL|SORT_FLAG_CASE)->values();
-
-        return view('livewire.search-product', compact('categories', 'subcategories'));
+        return view('livewire.search-product', compact('categories'));
     }
 
     public function updatedQuery() {
@@ -91,19 +69,14 @@ class SearchProduct extends Component
     }
 
     public function updatedCategoryId() {
-        // Reset subcategory when brand changes; hide stale results before re-fetching
-        $this->subcategory_id = '';
+        // Hide stale results before re-fetching
         $this->showResults = false;
-        $this->performSearch();
-    }
-
-    public function updatedSubcategoryId() {
         $this->performSearch();
     }
 
     public function performSearch() {
         // If no filter is active at all, clear results and return
-        if (empty($this->query) && empty($this->category_id) && empty($this->subcategory_id)) {
+        if (empty($this->query) && empty($this->category_id)) {
             $this->search_results = Collection::empty();
             $this->totalCount  = 0;
             $this->isLimited   = false;
@@ -115,34 +88,6 @@ class SearchProduct extends Component
 
         if ($this->category_id) {
             $builder->where('products.category_id', $this->category_id);
-        }
-
-        if ($this->subcategory_id) {
-            // If the value is numeric we received a real subcategory ID (category-filtered select).
-            // If it's non-numeric we received a deduplicated subcategory NAME (no category selected),
-            // so resolve matching subcategory IDs across all brands and filter by those IDs.
-            if (is_numeric($this->subcategory_id)) {
-                $builder->where('products.subcategory_id', (int) $this->subcategory_id);
-            } else {
-                // Normalize client-provided name (lowercase, collapse spaces)
-                $normalized = mb_strtolower(preg_replace('/\s+/u', ' ', trim($this->subcategory_id)));
-
-                // Attempt an exact normalized match via a DB query (avoids loading all rows into memory)
-                $matchedIds = Subcategory::where('status', true)
-                    ->whereRaw('LOWER(REPLACE(REGEXP_REPLACE(subcategory_name, "\\s+", " "), "\r", "")) = ?', [$normalized])
-                    ->pluck('id')
-                    ->toArray();
-
-                if (!empty($matchedIds)) {
-                    $builder->whereIn('products.subcategory_id', $matchedIds);
-                } else {
-                    // Fall back to a case-insensitive LIKE search if DB doesn't support the exact normalization above
-                    // This uses a WHERE HAS to match related subcategory names.
-                    $builder->whereHas('subcategory', function ($q) use ($normalized) {
-                        $q->whereRaw('LOWER(subcategory_name) like ?', ["%{$normalized}%"]);
-                    });
-                }
-            }
         }
 
         // Only apply text filter when the user has typed something
@@ -211,7 +156,7 @@ class SearchProduct extends Component
     }
 
     /**
-     * Only close the dropdown panel — keeps brand/subcategory selections intact.
+     * Only close the dropdown panel — keeps the brand selection intact.
      * Used when the user clicks outside the dropdown.
      */
     public function closeDropdown() {
@@ -222,13 +167,12 @@ class SearchProduct extends Component
     }
 
     /**
-     * Full reset — clears all filters including brand and subcategory.
+     * Full reset — clears all filters including brand.
      * Used by the "Clear All" button.
      */
     public function resetQuery() {
         $this->query        = '';
         $this->category_id  = '';
-        $this->subcategory_id = '';
         $this->showResults  = false;
         $this->totalCount   = 0;
         $this->isLimited    = false;

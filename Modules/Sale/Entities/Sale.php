@@ -254,10 +254,6 @@ class Sale extends Model
         return $value / 100;
     }
 
-    public function getOverallNetRateAttribute($value) {
-        return $value / 100;
-    }
-
     public function getBalanceAttribute($value) {
         return $value / 100;
     }

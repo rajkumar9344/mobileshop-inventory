@@ -62,8 +62,8 @@ class BackfillSalesPaymentsDiscounts extends Command
                     ->sum('discount_amount');
 
                 // Use the sale's authoritative overall total for calculations.
-                // Prefer `overall_net_rate`, then `overall_amount`, then `total_amount`.
-                $authoritativeTotal = $sale->overall_net_rate ?? $sale->overall_amount ?? $sale->total_amount ?? 0;
+                // Prefer `overall_amount`, then `total_amount`.
+                $authoritativeTotal = $sale->overall_amount ?? $sale->total_amount ?? 0;
 
                 // If `total_amount` field differs from authoritative total, update it
                 // (do not change receipt bill_amounts). Report in dry-run.

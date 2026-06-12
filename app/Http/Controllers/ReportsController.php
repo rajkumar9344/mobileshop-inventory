@@ -11,8 +11,7 @@ use Modules\Purchase\Entities\Purchase;
 use Modules\People\Entities\Customer;
 use Modules\People\Entities\Supplier;
 use App\Exports\ReorderReportExport;
-use App\Exports\SalesOutstandingExport;
-use App\Exports\PurchaseOutstandingExport;
+use App\Exports\ProfitLossReportExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use PDF;
@@ -105,116 +104,51 @@ class ReportsController extends Controller
     }
 
     /**
-     * Sales Outstanding Report - PDF Export
+     * Profit / Loss Report - PDF Export
      */
-    public function salesOutstandingPdf(Request $request)
+    public function profitLossPdf(Request $request)
     {
         try {
-            $filters = $request->only(['customer_id', 'reference', 'aging_range']);
+            $filters = $request->only(['customer_id', 'reference', 'start_date', 'end_date', 'pl_status']);
 
-            // Get customer name for filter display
             if (!empty($filters['customer_id'])) {
                 $customer = Customer::find($filters['customer_id']);
                 $filters['customer_name'] = $customer ? $customer->customer_name : '';
             }
 
-            $query = $this->getSalesOutstandingQuery($filters);
+            $query = app(\App\Services\ReportQueryService::class)->buildProfitLossQuery($filters);
             $count = $query->count();
 
             if ($count > self::PDF_MAX_RECORDS) {
                 return $this->pdfExportErrorResponse(
-                    'There are ' . number_format($count) . ' outstanding records. PDF export supports a maximum of ' . number_format(self::PDF_MAX_RECORDS) . ' records.'
+                    'There are ' . number_format($count) . ' sales bills. PDF export supports a maximum of ' . number_format(self::PDF_MAX_RECORDS) . ' records.'
                 );
             }
 
             $sales = $query->get();
 
-            $pdf = app(\App\Services\PdfGenerator::class)->make('exports.sales-outstanding-pdf', [
+            $pdf = app(\App\Services\PdfGenerator::class)->make('exports.profit-loss-report-pdf', [
                 'sales' => $sales,
                 'filters' => $filters,
             ]);
 
-            $filename = 'sales-outstanding-report-' . date('Y-m-d') . '.pdf';
+            $filename = 'profit-loss-report-' . date('Y-m-d') . '.pdf';
             return $pdf->download($filename);
         } catch (\Throwable $e) {
-            Log::error('Sales outstanding PDF export failed: ' . $e->getMessage());
+            Log::error('Profit/Loss PDF export failed: ' . $e->getMessage());
             return $this->pdfExportErrorResponse('An error occurred while generating the PDF.');
         }
     }
 
     /**
-     * Sales Outstanding Report - Excel Export
+     * Profit / Loss Report - Excel Export
      */
-    public function salesOutstandingExcel(Request $request)
+    public function profitLossExcel(Request $request)
     {
-        $filters = $request->only(['customer_id', 'reference', 'aging_range']);
+        $filters = $request->only(['customer_id', 'reference', 'start_date', 'end_date', 'pl_status']);
 
-        $filename = 'sales-outstanding-report-' . date('Y-m-d') . '.xlsx';
-        return Excel::download(new SalesOutstandingExport($filters), $filename);
-    }
-
-    /**
-     * Purchase Outstanding Report - PDF Export
-     */
-    public function purchaseOutstandingPdf(Request $request)
-    {
-        try {
-            $filters = $request->only(['supplier_id', 'reference', 'aging_range']);
-
-            if (!empty($filters['supplier_id'])) {
-                $supplier = Supplier::find($filters['supplier_id']);
-                $filters['supplier_name'] = $supplier ? $supplier->supplier_name : '';
-            }
-
-            $query = $this->getPurchaseOutstandingQuery($filters);
-            $count = $query->count();
-
-            if ($count > self::PDF_MAX_RECORDS) {
-                return $this->pdfExportErrorResponse(
-                    'There are ' . number_format($count) . ' outstanding records. PDF export supports a maximum of ' . number_format(self::PDF_MAX_RECORDS) . ' records.'
-                );
-            }
-
-            $purchases = $query->get();
-
-            $pdf = app(\App\Services\PdfGenerator::class)->make('exports.purchase-outstanding-pdf', [
-                'purchases' => $purchases,
-                'filters' => $filters,
-            ]);
-
-            $filename = 'purchase-outstanding-report-' . date('Y-m-d') . '.pdf';
-            return $pdf->download($filename);
-        } catch (\Throwable $e) {
-            Log::error('Purchase outstanding PDF export failed: ' . $e->getMessage());
-            return $this->pdfExportErrorResponse('An error occurred while generating the PDF.');
-        }
-    }
-
-    /**
-     * Purchase Outstanding Report - Excel Export
-     */
-    public function purchaseOutstandingExcel(Request $request)
-    {
-        $filters = $request->only(['supplier_id', 'reference', 'aging_range']);
-
-        $filename = 'purchase-outstanding-report-' . date('Y-m-d') . '.xlsx';
-        return Excel::download(new PurchaseOutstandingExport($filters), $filename);
-    }
-
-    /**
-     * Build the sales outstanding query with filters
-     */
-    protected function getSalesOutstandingQuery($filters)
-    {
-        return app(\App\Services\ReportQueryService::class)->buildSalesOutstandingQuery($filters);
-    }
-
-    /**
-     * Build the purchase outstanding query with filters
-     */
-    protected function getPurchaseOutstandingQuery($filters)
-    {
-        return app(\App\Services\ReportQueryService::class)->buildPurchaseOutstandingQuery($filters);
+        $filename = 'profit-loss-report-' . date('Y-m-d') . '.xlsx';
+        return Excel::download(new ProfitLossReportExport($filters), $filename);
     }
 
     /**
@@ -278,40 +212,6 @@ class ReportsController extends Controller
             ->getCustomersPaymentCollection($filters);
 
         return view('reports.customers-payment-print', compact('payments', 'filters'));
-    }
-
-    /**
-     * Sales Outstanding Report - Print (all records, browser print)
-     */
-    public function salesOutstandingPrint(Request $request)
-    {
-        $filters = $request->only(['customer_id', 'reference', 'aging_range']);
-
-        if (!empty($filters['customer_id'])) {
-            $customer = Customer::find($filters['customer_id']);
-            $filters['customer_name'] = $customer ? $customer->customer_name : '';
-        }
-
-        $sales = $this->getSalesOutstandingQuery($filters)->get();
-
-        return view('reports.sales-outstanding-print', compact('sales', 'filters'));
-    }
-
-    /**
-     * Purchase Outstanding Report - Print (all records, browser print)
-     */
-    public function purchaseOutstandingPrint(Request $request)
-    {
-        $filters = $request->only(['supplier_id', 'reference', 'aging_range']);
-
-        if (!empty($filters['supplier_id'])) {
-            $supplier = Supplier::find($filters['supplier_id']);
-            $filters['supplier_name'] = $supplier ? $supplier->supplier_name : '';
-        }
-
-        $purchases = $this->getPurchaseOutstandingQuery($filters)->get();
-
-        return view('reports.purchase-outstanding-print', compact('purchases', 'filters'));
     }
 
     /**

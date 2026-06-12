@@ -9,22 +9,16 @@ use Illuminate\Support\Facades\Gate;
 class ReportsController extends Controller
 {
 
-    public function stockReport() {
+    public function reorderReport() {
         abort_if(Gate::denies('access_reports'), 403);
 
         return view('reports::stock.index');
     }
 
-    public function salesOutstandingReport() {
+    public function currentStockReport() {
         abort_if(Gate::denies('access_reports'), 403);
 
-        return view('reports::sales-outstanding.index');
-    }
-
-    public function purchaseOutstandingReport() {
-        abort_if(Gate::denies('access_reports'), 403);
-
-        return view('reports::purchase-outstanding.index');
+        return view('reports::current-stock.index');
     }
 
     public function customersPaymentReport() {

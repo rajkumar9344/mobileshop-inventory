@@ -16,7 +16,7 @@
                 <td>{{ $line->receipt->customer->customer_name ?? '-' }}</td>
                 <td>{{ $line->sale->reference ?? $line->bill_ref ?? '-' }}</td>
                 <td>{{ optional($line->sale->date ? \Carbon\Carbon::parse($line->sale->date) : null)->format('d-m-Y') ?? (optional($line->bill_date)->format('d-m-Y') ?? '-') }}</td>
-                <td class="text-right">{{ number_format($line->bill_amount ?? ($line->sale->overall_net_rate ?? $line->sale->overall_amount ?? $line->sale->total_amount ?? 0), 2) }}</td>
+                <td class="text-right">{{ number_format($line->bill_amount ?? ($line->sale->overall_amount ?? $line->sale->total_amount ?? 0), 2) }}</td>
                 <td class="text-right">{{ number_format($line->payment_amount, 2) }}</td>
                 <td>{{ optional($line->receipt->date ? \Carbon\Carbon::parse($line->receipt->date) : null)->format('d-m-Y') }}</td>
                 <td>{{ $line->receipt->payment_mode ?? '-' }}</td>

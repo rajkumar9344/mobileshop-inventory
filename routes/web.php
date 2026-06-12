@@ -29,15 +29,11 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('reports/reorder-excel', [\App\Http\Controllers\ReportsController::class, 'reorderExcel'])
         ->name('reports.reorder-excel');
 
-    // Sales Outstanding Report exports
-    Route::get('reports/sales-outstanding-pdf', [\App\Http\Controllers\ReportsController::class, 'salesOutstandingPdf'])
-        ->name('reports.sales-outstanding-pdf');
-    Route::get('reports/sales-outstanding-excel', [\App\Http\Controllers\ReportsController::class, 'salesOutstandingExcel'])
-        ->name('reports.sales-outstanding-excel');
-    Route::get('reports/purchase-outstanding-pdf', [\App\Http\Controllers\ReportsController::class, 'purchaseOutstandingPdf'])
-        ->name('reports.purchase-outstanding-pdf');
-    Route::get('reports/purchase-outstanding-excel', [\App\Http\Controllers\ReportsController::class, 'purchaseOutstandingExcel'])
-        ->name('reports.purchase-outstanding-excel');
+    // Profit / Loss Report exports
+    Route::get('reports/profit-loss-pdf', [\App\Http\Controllers\ReportsController::class, 'profitLossPdf'])
+        ->name('reports.profit-loss-pdf');
+    Route::get('reports/profit-loss-excel', [\App\Http\Controllers\ReportsController::class, 'profitLossExcel'])
+        ->name('reports.profit-loss-excel');
 
     // Customers Payment Report exports
     Route::get('reports/customers-payment-pdf', [\App\Http\Controllers\ReportsController::class, 'customersPaymentPdf'])
@@ -46,12 +42,6 @@ Route::group(['middleware' => 'auth'], function () {
         ->name('reports.customers-payment-excel');
     Route::get('reports/customers-payment-print', [\App\Http\Controllers\ReportsController::class, 'customersPaymentPrint'])
         ->name('reports.customers-payment-print');
-
-    // Sales Outstanding print
-    Route::get('reports/sales-outstanding-print', [\App\Http\Controllers\ReportsController::class, 'salesOutstandingPrint'])
-        ->name('reports.sales-outstanding-print');
-    Route::get('reports/purchase-outstanding-print', [\App\Http\Controllers\ReportsController::class, 'purchaseOutstandingPrint'])
-        ->name('reports.purchase-outstanding-print');
 
     // GSTR print
     Route::get('reports/gstr-print', [\App\Http\Controllers\ReportsController::class, 'gstrPrint'])

@@ -34,7 +34,7 @@ class CustomersPaymentExport implements FromCollection, WithMapping, WithHeading
             $saleDate = optional($line->bill_date)->format('d-m-Y');
         }
 
-        $billAmount = $line->bill_amount ?? ($line->sale->overall_net_rate ?? $line->sale->overall_amount ?? $line->sale->total_amount ?? 0);
+        $billAmount = $line->bill_amount ?? ($line->sale->overall_amount ?? $line->sale->total_amount ?? 0);
         $receivedAmount = $line->payment_amount;
         $receivedDate = !empty($line->receipt->date) ? \Carbon\Carbon::parse($line->receipt->date)->format('d-m-Y') : '';
         $paymentMode = $line->receipt->payment_mode ?? '-';

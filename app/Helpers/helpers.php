@@ -18,9 +18,12 @@ if (!function_exists('format_currency')) {
 
         $settings = settings();
         $position = $settings->default_currency_position;
-        $symbol = $show_symbol ? $settings->currency->symbol : '';
-        $decimal_separator = $settings->currency->decimal_separator;
-        $thousand_separator = $settings->currency->thousand_separator;
+        // Currency relation can be null if the default currency row was deleted/recreated —
+        // fall back to sane defaults instead of crashing every page that formats money
+        $currency = $settings->currency;
+        $symbol = $show_symbol ? ($currency->symbol ?? '₹') : '';
+        $decimal_separator = $currency->decimal_separator ?? '.';
+        $thousand_separator = $currency->thousand_separator ?? ',';
 
         // Convert currency symbols to HTML entities for PDF compatibility
         $currency_entities = [

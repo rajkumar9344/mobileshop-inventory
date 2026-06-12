@@ -875,15 +875,8 @@ class PurchaseController extends Controller
                 'overall_quantity' => $request->overall_quantity ?? 0,
                 'overall_gross_amount' => $request->overall_gross_amount ?? 0,
                 'overall_taxable_amount' => $request->overall_taxable_amount ?? 0,
-                'overall_cgst' => $request->overall_cgst ?? 0,
-                'overall_sgst' => $request->overall_sgst ?? 0,
-                'overall_igst' => $request->overall_igst ?? 0,
                 'overall_tax_amount' => $request->overall_tax_amount ?? 0,
-                'overall_tcs_percent' => $request->overall_tcs_percent ?? 0,
                 'overall_amount' => $request->overall_amount ?? 0,
-                'overall_other' => $request->overall_other ?? 0,
-                'overall_adj' => $request->overall_adj ?? 0,
-                'overall_net_rate' => $request->overall_net_rate ?? 0,
                 'purchase_type' => $request->purchase_type ?? 1,
             ]);
 

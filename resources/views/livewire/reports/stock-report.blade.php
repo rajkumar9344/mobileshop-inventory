@@ -77,7 +77,7 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0">Purchase Order Report</h5>
+                        <h5 class="mb-0">Reorder Report</h5>
                         <div>
                             <a href="{{ route('reports.reorder-excel', [
                                 'category_id' => $category_id,

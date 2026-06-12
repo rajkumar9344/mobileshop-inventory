@@ -90,6 +90,12 @@ class CurrencyController extends Controller
     public function destroy(Currency $currency) {
         abort_if(Gate::denies('delete_currencies'), 403);
 
+        // Deleting the default currency breaks every page that formats money
+        if ((int) settings()->default_currency_id === (int) $currency->id) {
+            toast('Cannot delete the default currency. Set another currency as default in Settings first.', 'error');
+            return redirect()->route('currencies.index');
+        }
+
         $currency->delete();
 
         toast('Currency Deleted!', 'warning');

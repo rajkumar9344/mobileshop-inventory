@@ -74,106 +74,68 @@ class ReportQueryService
         return $query->orderByDesc('id');
     }
 
-    public function buildSalesOutstandingQuery(array $filters): Builder
+    /**
+     * Profit / Loss per sales bill.
+     *
+     * Profit = bill total WITHOUT VAT − sum of purchase rate (products.product_cost)
+     * × quantity for every product on that bill. All amounts are stored in
+     * minor units (paise); the SELECT below keeps them in paise — divide by 100
+     * for display.
+     *
+     * Selected computed columns (paise): amount_incl_vat, amount_excl_vat,
+     * purchase_total, profit_amount.
+     */
+    public function buildProfitLossQuery(array $filters): Builder
     {
-        $today = Carbon::today();
+        // Per-bill purchase cost: sum of (quantity × product purchase rate).
+        // LEFT JOIN products so details whose product was deleted count as 0
+        // instead of silently dropping the whole row.
+        $purchaseTotals = \Illuminate\Support\Facades\DB::table('sales_details as sd')
+            ->leftJoin('products as p', 'p.id', '=', 'sd.product_id')
+            ->select('sd.sale_id', \Illuminate\Support\Facades\DB::raw('SUM(sd.quantity * COALESCE(p.product_cost, 0)) as purchase_total'))
+            ->groupBy('sd.sale_id');
+
+        $inclVat = 'COALESCE(sales.overall_amount, sales.total_amount, 0)';
+        $exclVat = $inclVat . ' - COALESCE(sales.overall_tax_amount, sales.tax_amount, 0)';
+        $profit  = '(' . $exclVat . ') - COALESCE(pt.purchase_total, 0)';
 
         $query = Sale::query()
-            ->whereIn('payment_status', ['Unpaid', 'Pending', 'Partial', 'Partially Paid'])
-            ->where('status', '!=', 'Draft')
+            ->where('sales.status', '!=', 'Draft')
+            ->leftJoinSub($purchaseTotals, 'pt', 'pt.sale_id', '=', 'sales.id')
+            ->select(
+                'sales.*',
+                \Illuminate\Support\Facades\DB::raw($inclVat . ' as amount_incl_vat'),
+                \Illuminate\Support\Facades\DB::raw($exclVat . ' as amount_excl_vat'),
+                \Illuminate\Support\Facades\DB::raw('COALESCE(pt.purchase_total, 0) as purchase_total'),
+                \Illuminate\Support\Facades\DB::raw($profit . ' as profit_amount')
+            )
             ->with('customer:id,customer_name');
 
         if (!empty($filters['customer_id'])) {
-            $query->where('customer_id', $filters['customer_id']);
+            $query->where('sales.customer_id', $filters['customer_id']);
         }
 
         if (!empty($filters['reference'])) {
-            $query->where('reference', 'like', '%' . $filters['reference'] . '%');
+            $query->where('sales.reference', 'like', '%' . $filters['reference'] . '%');
         }
 
-        if (!empty($filters['aging_range'])) {
-            $range = $filters['aging_range'];
-            switch ($range) {
-                case '1-10':
-                    $query->whereDate('date', '>=', $today->copy()->subDays(10))
-                          ->whereDate('date', '<=', $today);
-                    break;
-                case '10-20':
-                    $query->whereDate('date', '>=', $today->copy()->subDays(20))
-                          ->whereDate('date', '<', $today->copy()->subDays(10));
-                    break;
-                case '20-30':
-                    $query->whereDate('date', '>=', $today->copy()->subDays(30))
-                          ->whereDate('date', '<', $today->copy()->subDays(20));
-                    break;
-                case '30-60':
-                    $query->whereDate('date', '>=', $today->copy()->subDays(60))
-                          ->whereDate('date', '<', $today->copy()->subDays(30));
-                    break;
-                case '60-90':
-                    $query->whereDate('date', '>=', $today->copy()->subDays(90))
-                          ->whereDate('date', '<', $today->copy()->subDays(60));
-                    break;
-                case '90+':
-                    $query->whereDate('date', '<', $today->copy()->subDays(90));
-                    break;
+        if (!empty($filters['start_date'])) {
+            $query->whereDate('sales.date', '>=', $filters['start_date']);
+        }
+
+        if (!empty($filters['end_date'])) {
+            $query->whereDate('sales.date', '<=', $filters['end_date']);
+        }
+
+        if (!empty($filters['pl_status'])) {
+            if ($filters['pl_status'] === 'profit') {
+                $query->whereRaw($profit . ' >= 0');
+            } elseif ($filters['pl_status'] === 'loss') {
+                $query->whereRaw($profit . ' < 0');
             }
         }
 
-        $query->orderBy('date', 'asc');
-
-        return $query;
-    }
-
-    public function buildPurchaseOutstandingQuery(array $filters): Builder
-    {
-        $today = Carbon::today();
-
-        $query = Purchase::query()
-            ->where('status', '!=', 'Draft')
-            ->where('due_amount', '>', 0)
-            ->with('supplier:id,supplier_name');
-
-        if (!empty($filters['supplier_id'])) {
-            $query->where('supplier_id', $filters['supplier_id']);
-        }
-
-        if (!empty($filters['reference'])) {
-            $query->where('reference', 'like', '%' . $filters['reference'] . '%');
-        }
-
-        if (!empty($filters['aging_range'])) {
-            $range = $filters['aging_range'];
-            switch ($range) {
-                case '1-10':
-                    $query->whereDate('date', '>=', $today->copy()->subDays(10))
-                          ->whereDate('date', '<=', $today);
-                    break;
-                case '10-20':
-                    $query->whereDate('date', '>=', $today->copy()->subDays(20))
-                          ->whereDate('date', '<', $today->copy()->subDays(10));
-                    break;
-                case '20-30':
-                    $query->whereDate('date', '>=', $today->copy()->subDays(30))
-                          ->whereDate('date', '<', $today->copy()->subDays(20));
-                    break;
-                case '30-60':
-                    $query->whereDate('date', '>=', $today->copy()->subDays(60))
-                          ->whereDate('date', '<', $today->copy()->subDays(30));
-                    break;
-                case '60-90':
-                    $query->whereDate('date', '>=', $today->copy()->subDays(90))
-                          ->whereDate('date', '<', $today->copy()->subDays(60));
-                    break;
-                case '90+':
-                    $query->whereDate('date', '<', $today->copy()->subDays(90));
-                    break;
-            }
-        }
-
-        $query->orderBy('date', 'asc');
-
-        return $query;
+        return $query->orderByDesc('sales.date')->orderByDesc('sales.id');
     }
 
     public function buildReorderQuery(array $filters): Builder
@@ -233,7 +195,7 @@ class ReportQueryService
     public function buildCustomersPaymentQuery(array $filters): Builder
     {
         $query = SalesReceiptLine::with([
-            'sale:id,reference,date,overall_amount,total_amount,overall_net_rate',
+            'sale:id,reference,date,overall_amount,total_amount',
             'receipt:id,date,payment_mode,customer_id',
             'receipt.customer:id,customer_name'
         ])->where('payment_amount', '>', 0);
