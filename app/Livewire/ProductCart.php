@@ -618,10 +618,10 @@ class ProductCart extends Component
             $base_rate   = $rate;
             $tax_percent = 5.0;
         } elseif (in_array($this->cart_instance, ['sale', 'sale_edit'])) {
-            // Sale: unit price and VAT% are manually entered (BRD) — start at zero so inputs show blank
+            // Sale (BRD): unit price is manually entered (blank); VAT% defaults to 5%.
             $base_rate   = 0.0;
             $rate        = 0.0;
-            $tax_percent = 0.0;
+            $tax_percent = 5.0;
         } else {
             // Default: use MRP (price-with-tax) as base_rate
             $base_rate = $mrp;

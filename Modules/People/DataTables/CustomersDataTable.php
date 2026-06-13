@@ -48,10 +48,10 @@ class CustomersDataTable extends DataTable
         // If a DataTable global search is present, restrict the overall_open_balance
         // aggregation to customers matching the search as well as existing date filters.
 
-        $overall_open_balance_q = DB::table('customers as c')
-            ->whereExists(function($q) {
-                $q->select(DB::raw(1))->from('sales as s')->whereRaw('s.customer_id = c.id');
-            });
+        // Sum opening_balance for ALL customers in the filtered list (the list left-joins
+        // sales, so customers without any sale are still shown). Restricting this to
+        // customers-with-sales made the total understate the real open balance.
+        $overall_open_balance_q = DB::table('customers as c');
 
         // apply created_at range on customers (alias `c`)
         QueryFilters::applyDateFilters($overall_open_balance_q, $start, $end, $year, $month, 'c.created_at');

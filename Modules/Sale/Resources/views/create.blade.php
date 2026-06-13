@@ -65,15 +65,9 @@
                                 </div>
                             </div>
                             <div class="form-row mt-2 mb-3">
-                                <div class="col-md-2 pr-1">
-                                    <label for="bill_type" class="mb-1">Bill Type <span class="text-danger">*</span></label>
-                                    <select class="form-control" name="bill_type" id="bill_type" required>
-                                        @foreach(\Modules\Sale\Entities\Sale::$billTypes as $code => $label)
-                                            <option value="{{ $code }}" {{ $code === \Modules\Sale\Entities\Sale::BILL_CASH ? 'selected' : '' }}>{{ $label }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                               
+                                {{-- Bill Type removed from UI; kept as hidden 'Cash' so payment logic stays intact --}}
+                                <input type="hidden" name="bill_type" id="bill_type" value="{{ \Modules\Sale\Entities\Sale::BILL_CASH }}">
+
                                 <div class="col-md-2 pr-1">
                                     <label for="opening_balance" class="mb-1">Balance <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="opening_balance" id="opening_balance" maxlength="15" pattern="^-?\d+(?:\.\d{1,2})?$|^-?\d+(?:,\d{1,2})?$" placeholder="0.00" required readonly oninput="this.value = this.value.replace(/[^0-9.\-]/g,'').replace(/(?!^)-/g,'').slice(0,15)">

@@ -24,6 +24,24 @@ trait HasPdfExport
         return $this->dompdfPdf();
     }
 
+    /**
+     * Strip HTML from exported cell values so the PDF shows plain text
+     * (e.g. status/payment badges and "Draft" markup) instead of raw <span> tags.
+     */
+    protected function getDataForPrint(): array
+    {
+        $data = parent::getDataForPrint();
+
+        return array_map(function ($row) {
+            return array_map(function ($cell) {
+                if (is_string($cell)) {
+                    return trim(html_entity_decode(strip_tags($cell), ENT_QUOTES | ENT_HTML5));
+                }
+                return $cell;
+            }, $row);
+        }, $data);
+    }
+
     protected function dompdfPdf()
     {
         try {

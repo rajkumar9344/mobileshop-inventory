@@ -68,7 +68,6 @@
                                             <tr><th>Excess Amount</th><td>{{ number_format($supplier->excess_amount ?? 0, 2, '.', '') }}</td></tr>
                                             <tr><th>Credit Limit</th><td>{{ $supplier->credit_limit }}</td></tr>
                                             <tr><th>VAT %</th><td>{{ $supplier->tax_percent }}</td></tr>
-                                            <tr><th>Due Days</th><td>{{ $supplier->due_days ?? 0 }}</td></tr>
                                             <tr><th>Remarks</th><td>{{ $supplier->remarks }}</td></tr>
                                         </table>
                                     </div>

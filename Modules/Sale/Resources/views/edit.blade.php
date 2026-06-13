@@ -62,14 +62,9 @@
                                     </div>
                                 </div>
                                 <div class="form-row mt-2 mb-3">
-                                    <div class="col-md-2 pr-1">
-                                        <label for="bill_type" class="mb-1">Bill Type @if($sale->status !== 'Draft') <span class="text-danger">*</span> @endif</label>
-                                        <select class="form-control" name="bill_type" id="bill_type" {{ $isReadOnly ? 'disabled' : ($sale->status === 'Draft' ? '' : 'required') }}>
-                                            @foreach(\Modules\Sale\Entities\Sale::$billTypes as $code => $label)
-                                                <option value="{{ $code }}" {{ old('bill_type', $sale->bill_type) == $code ? 'selected' : '' }}>{{ $label }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
+                                    {{-- Bill Type removed from UI; kept as hidden value so payment logic stays intact --}}
+                                    <input type="hidden" name="bill_type" id="bill_type" value="{{ old('bill_type', $sale->bill_type ?: \Modules\Sale\Entities\Sale::BILL_CASH) }}">
+
                                     <div class="col-md-2 pr-1">
                                         <label for="opening_balance" class="mb-1">Balance @if($sale->status !== 'Draft') <span class="text-danger">*</span> @endif</label>
                                             <input type="text" class="form-control" name="opening_balance" id="opening_balance" maxlength="15" pattern="^-?\d+(?:\.\d{1,2})?$|^-?\d+(?:,\d{1,2})?$" value="{{ number_format($sale->balance ?? 0, 2, '.', '') }}" placeholder="0.00" {{ $isReadOnly ? 'disabled' : ($sale->status === 'Draft' ? '' : 'required') }} readonly oninput="this.value = this.value.replace(/[^0-9.\-]/g,'').replace(/(?!^)-/g,'').slice(0,15)">

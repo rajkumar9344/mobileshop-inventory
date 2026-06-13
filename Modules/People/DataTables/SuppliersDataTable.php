@@ -39,14 +39,10 @@ class SuppliersDataTable extends DataTable
             DB::raw('COALESCE(SUM(suppliers.excess_amount),0) as overall_excess')
         )->first();
 
-        // Compute overall_open_balance using suppliers that match the same
-        // created_at date filters. We keep the WHERE EXISTS to ensure the
-        // supplier has purchases, but apply the date-range against the
-        // supplier's `created_at` so the UI filters by supplier creation.
-        $overall_open_balance_q = DB::table('suppliers as s')
-            ->whereExists(function($q) {
-                $q->select(DB::raw(1))->from('purchases as p')->whereRaw('p.supplier_id = s.id');
-            });
+        // Sum open_balance for ALL suppliers in the filtered list (the list left-joins
+        // purchases, so suppliers without any purchase are still shown). Restricting this
+        // to suppliers-with-purchases made the total understate the real open balance.
+        $overall_open_balance_q = DB::table('suppliers as s');
 
         // apply created_at range on suppliers (alias `s`)
         QueryFilters::applyDateFilters($overall_open_balance_q, $start, $end, null, null, 's.created_at');

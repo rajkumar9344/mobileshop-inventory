@@ -1120,9 +1120,11 @@ class SalesReceiptController extends Controller
         $appliedTotal = 0;
         $appliedDiscount = 0;
         if ($paymentAmount > 0 || $discountAmount > 0) {
-            // Persist paid and discount separately and recompute due/status
+            // Persist paid amount and recompute due/status.
+            // NOTE: sales.discount_amount was removed — do NOT write it (the save would
+            // fail with "Unknown column" and the sale would never update, leaving the
+            // bill unpaid and reappearing in later receipts).
             $sale->paid_amount = $paidAfter;
-            $sale->discount_amount = $discountAfter;
             $sale->due_amount = $newDue;
             $postDiscountBase = ($billAmount - $discountAfter);
             if ($sale->due_amount == $postDiscountBase) {

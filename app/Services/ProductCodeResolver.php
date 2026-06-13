@@ -35,7 +35,9 @@ class ProductCodeResolver
 
     public function resolve(int $productId, $code)
     {
-        if (empty($code)) return null;
+        // product_code_id is NOT NULL in the detail tables, so never return null for a
+        // product that has any code — fall back to its first code when none is given/matched.
+        if (empty($code)) return $this->firstCodeId($productId);
         $c = trim((string) $code);
 
         // check cache
@@ -71,6 +73,18 @@ class ProductCodeResolver
 
         // last-resort LIKE
         $id = ProductCode::where('product_id', $productId)->where('code', 'like', "%{$c}%")->value('id');
-        return $id ?: null;
+        return $id ?: $this->firstCodeId($productId);
+    }
+
+    /**
+     * First/any product code id for a product (from cache, else DB). Null only when
+     * the product genuinely has no codes at all.
+     */
+    private function firstCodeId(int $productId)
+    {
+        if (!empty($this->cache[$productId]['byCode'])) {
+            return reset($this->cache[$productId]['byCode']);
+        }
+        return ProductCode::where('product_id', $productId)->value('id');
     }
 }

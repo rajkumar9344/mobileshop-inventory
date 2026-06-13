@@ -113,15 +113,6 @@
                             <div class="form-row">
                                 <div class="col-lg-3">
                                     <div class="form-group">
-                                        <label>Due Days <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="due_days" maxlength="3"
-                                            inputmode="numeric" value="{{ old('due_days', $supplier->due_days ?? 0) }}" required
-                                            oninput="this.value = this.value.replace(/[^0-9]/g,'').slice(0,3)">
-                                        @error('due_days')<small class="text-danger">{{ $message }}</small>@enderror
-                                    </div>
-                                </div>
-                                <div class="col-lg-3">
-                                    <div class="form-group">
                                         <label>Open Balance</label>
                                         <x-currency-input id="open_balance_display" hiddenName="open_balance" class="form-control"
                                             hiddenId="open_balance_raw" display="{{ old('open_balance', $supplier->open_balance) }}" maxlength="20" />

@@ -43,7 +43,7 @@ class UpdateSupplierRequest extends FormRequest
             'credit_limit'   => 'nullable|numeric',
             'excess_amount'  => 'nullable|numeric',
             'tax_percent'    => 'nullable|numeric|min:0|max:100',
-            'due_days'       => 'required|integer|min:0|max:999',
+            'due_days'       => 'nullable|integer|min:0|max:999',
             'status'         => 'required|in:active,inactive',
             'remarks'        => 'nullable|string|max:200',
         ];

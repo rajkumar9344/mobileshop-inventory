@@ -88,7 +88,11 @@
                                     }
                                 });
                             } else {
-                                alert('An error occurred while creating category.');
+                                // Surface the real server error so the cause is visible (permission, 500, etc.)
+                                var msg = (xhr.responseJSON && (xhr.responseJSON.message || xhr.responseJSON.error))
+                                    ? (xhr.responseJSON.message || xhr.responseJSON.error)
+                                    : ('Unable to create brand (HTTP ' + xhr.status + ').');
+                                alert(msg);
                             }
                         }
                     });
