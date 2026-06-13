@@ -50,7 +50,7 @@
                                             <tr><th>Customer Code</th><td>{{ $customer->customer_code }}</td></tr>
                                             <tr><th>Customer Email</th><td>{{ $customer->customer_email }}</td></tr>
                                             <tr><th>Customer Phone</th><td>{{ $customer->customer_phone }}</td></tr>
-                                            <tr><th>VAT ID</th><td>{{ $customer->vat_id }}</td></tr>
+                                            <tr><th>VAT ID / TRN</th><td>{{ $customer->vat_id }}</td></tr>
                                             <tr><th>City</th><td>{{ $customer->city }}</td></tr>
                                             <tr><th>Area</th><td>{{ $customer->area }}</td></tr>
                                             <tr><th>State</th><td>{{ $customer->state }}</td></tr>

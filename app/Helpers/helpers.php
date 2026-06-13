@@ -2,11 +2,9 @@
 
 if (!function_exists('settings')) {
     function settings() {
-        $settings = cache()->remember('settings', 24*60, function () {
+        return cache()->remember('settings', 24*60, function () {
             return \Modules\Setting\Entities\Setting::firstOrFail();
         });
-
-        return $settings;
     }
 }
 
@@ -21,7 +19,7 @@ if (!function_exists('format_currency')) {
         // Currency relation can be null if the default currency row was deleted/recreated —
         // fall back to sane defaults instead of crashing every page that formats money
         $currency = $settings->currency;
-        $symbol = $show_symbol ? ($currency->symbol ?? '₹') : '';
+        $symbol = $show_symbol ? ($currency->symbol ?? 'AED') : '';
         $decimal_separator = $currency->decimal_separator ?? '.';
         $thousand_separator = $currency->thousand_separator ?? ',';
 

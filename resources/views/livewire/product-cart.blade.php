@@ -236,14 +236,14 @@
                     <th class="align-middle text-center col-small">M/N/L</th>
                     @endif
                     <th class="align-middle text-center col-amount">MRP</th>
-                    <th class="align-middle text-center col-percent">Tax %</th>
+                    <th class="align-middle text-center col-percent">VAT %</th>
                     <th class="align-middle text-center col-amount">Rate before Discount</th>
                     <th class="align-middle text-center col-small">Quantity</th>
                     <th class="align-middle text-center col-small">Unit</th>
-                    <th class="align-middle text-center col-amount">@if(in_array($cart_instance, ['sale','sale_edit','sale_return','quotation','quotation_edit','sale_view','sale_return_view','quotation_view']) || $isPurchaseType4) Total @else Total (without GST) @endif</th>
-                    <th class="align-middle text-center col-percent">GST %</th>
+                    <th class="align-middle text-center col-amount">@if(in_array($cart_instance, ['sale','sale_edit','sale_return','quotation','quotation_edit','sale_view','sale_return_view','quotation_view']) || $isPurchaseType4) Total @else Total (without VAT) @endif</th>
+                    <th class="align-middle text-center col-percent">VAT %</th>
                     @unless(in_array($cart_instance, ['sale','sale_edit','sale_return','quotation','quotation_edit','sale_view','sale_return_view','quotation_view']) || $isPurchaseType4)
-                    <th class="align-middle text-center col-amount">Amount (including GST)</th>
+                    <th class="align-middle text-center col-amount">Amount (including VAT)</th>
                     @endunless
                     @unless($isReadOnly)
                     <th class="align-middle text-center col-small">Action</th>
@@ -257,7 +257,7 @@
                                 $_mrp_val              = (float)($mrp[$cart_item->id] ?? $cart_item->options->mrp ?? 0);
                                 // Tax % (col 7): used only for Rate before Discount = MRP / (1 + tax%)
                                 $_tax_pct              = (float)($tax_percent_edit[$cart_item->id] ?? $cart_item->options->tax_percent ?? 0);
-                                // GST % (last col): used for Tax Amount and Amount incl. GST
+                                // VAT % (last col): used for Tax Amount and Amount incl. VAT
                                 $_gst_pct              = (float)($gst_percent[$cart_item->id] ?? $cart_item->options->gst_percent ?? $_tax_pct);
                                 // For sale/sale_return/quotation: allow user override via rate property if set, else derive from MRP.
                                 // This matches purchase/purchase_return logic and ensures editable fields don't revert on blur.
@@ -301,8 +301,8 @@
 
                                 // Net Rate = rate_after_pct_discount − cash_discount (all pre-tax)
                                 $_net_rate             = round($_rate_after_pct - $_cash_discount_total, 2);
-                                $_total_without_gst    = round($_net_rate * $cart_item->qty, 2);
-                                $_tax_amount_display   = round($_total_without_gst * $_gst_pct / 100, 2);
+                                $_total_without_vat    = round($_net_rate * $cart_item->qty, 2);
+                                $_tax_amount_display   = round($_total_without_vat * $_gst_pct / 100, 2);
                             @endphp
                             @php
                                 // Compare against product ID (integer) — deterministic, matches updateValidity()
@@ -448,7 +448,7 @@
                                         wireModel="{{ 'rate.'.$cart_item->id }}"
                                         class="form-control form-control-sm autosize"
                                         display="{{ format_currency(in_array($cart_instance, ['sale', 'sale_edit', 'sale_return', 'quotation', 'quotation_edit', 'sale_view', 'sale_return_view', 'quotation_view']) ? $_rate_before_discount : ($rate[$cart_item->id] ?? $_rate_before_discount ?? 0), true, false) }}"
-                                        title="Rate before Discount = MRP / (1 + Tax%/100)."
+                                        title="Rate before Discount = MRP / (1 + VAT%/100)."
                                         wire:key="rate-{{ $cart_item->id }}"
                                         :disabled="$isReadOnly"
                                     />
@@ -466,15 +466,15 @@
                                     {{-- Total (pre-tax) = pre-tax Net Rate × Qty. For sale flows this column is labelled 'Total' and represents the line total. --}}
                                     <input type="text"
                                            class="form-control form-control-sm autosize full-autosize"
-                                           value="{{ format_currency($_total_without_gst, true, false) }}"
+                                           value="{{ format_currency($_total_without_vat, true, false) }}"
                                            readonly
                                            maxlength="15"
-                                           title="{{ format_currency($_total_without_gst, true, false) }}"
+                                           title="{{ format_currency($_total_without_vat, true, false) }}"
                                            >
                                 </td>
 
                                 <td class="align-middle text-center small-field numeric col-percent">
-                                    {{-- GST % editable; computed Tax Amount shown below --}}
+                                    {{-- VAT % editable; computed Tax Amount shown below --}}
                                     <input type="number"
                                            wire:model.lazy="gst_percent.{{ $cart_item->id }}"
                                            class="form-control form-control-sm autosize"
@@ -485,7 +485,7 @@
                                            value="{{ $gst_percent[$cart_item->id] ?? $cart_item->options->gst_percent ?? $cart_item->options->tax_percent ?? 0 }}"
                                            {{ $isReadOnly ? 'readonly' : '' }}>
                                     @if($_tax_amount_display > 0)
-                                        <small class="text-muted d-block mt-1" title="Tax Amount = Total (w/o GST) × {{ $_gst_pct }}%">
+                                        <small class="text-muted d-block mt-1" title="Tax Amount = Total (w/o VAT) × {{ $_gst_pct }}%">
                                             {{ format_currency($_tax_amount_display, true, false) }}
                                         </small>
                                     @endif
@@ -493,9 +493,9 @@
 
                                 @unless(in_array($cart_instance, ['sale','sale_edit','sale_return','quotation','quotation_edit','sale_view','sale_return_view','quotation_view']) || $isPurchaseType4)
                                 <td class="align-middle text-center">
-                                    {{-- Amount incl. GST = Total (w/o GST) + Tax Amount, computed from blade vars --}}
-                                    @php $_amount_incl_gst = $_total_without_gst + $_tax_amount_display; @endphp
-                                    <div class="truncate" title="{{ format_currency($_amount_incl_gst, true, false) }}">{{ format_currency($_amount_incl_gst, true, false) }}</div>
+                                    {{-- Amount incl. VAT = Total (w/o VAT) + Tax Amount, computed from blade vars --}}
+                                    @php $_amount_incl_vat = $_total_without_vat + $_tax_amount_display; @endphp
+                                    <div class="truncate" title="{{ format_currency($_amount_incl_vat, true, false) }}">{{ format_currency($_amount_incl_vat, true, false) }}</div>
                                 </td>
                                 @endunless
 

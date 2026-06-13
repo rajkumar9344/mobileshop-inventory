@@ -22,7 +22,7 @@ class StoreProductRequest extends FormRequest
             'alternative_number' => ['nullable', 'string', 'max:50', 'unique:products,alternative_number'],
             'product_unit' => ['required', 'string', 'max:20'],
             'product_quantity' => ['required', 'integer', 'min:0', 'max:9999'],
-            'product_cost' => ['nullable', 'numeric', 'regex:/^\d{1,7}(\.\d{1,2})?$/'],
+            'product_cost' => ['required', 'numeric', 'regex:/^\d{1,7}(\.\d{1,2})?$/'],
             'product_price' => ['nullable', 'numeric', 'regex:/^\d{1,7}(\.\d{1,2})?$/'],
             'buy_price' => ['nullable', 'numeric', 'regex:/^\d{1,7}(\.\d{1,2})?$/'],
             'list_price' => ['nullable', 'numeric', 'regex:/^\d{1,7}(\.\d{1,2})?$/'],

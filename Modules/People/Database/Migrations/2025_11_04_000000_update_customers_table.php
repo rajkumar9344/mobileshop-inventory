@@ -33,7 +33,7 @@ return new class extends Migration
 
             // Fields required by BRD: make not nullable / defaults
             if (Schema::hasColumn('customers', 'state')) {
-                DB::statement("ALTER TABLE `customers` MODIFY `state` VARCHAR(30) NOT NULL");
+                DB::statement("ALTER TABLE `customers` MODIFY `state` VARCHAR(30) NULL");
             }
 
             if (Schema::hasColumn('customers', 'area')) {

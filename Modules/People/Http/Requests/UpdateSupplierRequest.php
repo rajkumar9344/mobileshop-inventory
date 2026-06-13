@@ -36,7 +36,7 @@ class UpdateSupplierRequest extends FormRequest
             'supplier_phone' => ['required', 'string', 'max:10', 'regex:/^[0-9]+$/', Rule::unique('suppliers', 'supplier_phone')->ignore($supplierId)],
             'supplier_email' => ['nullable', 'email:rfc,strict', 'max:50', 'lowercase', Rule::unique('suppliers', 'supplier_email')->ignore($supplierId)],
             'area'           => 'required|string|max:30',
-            'state'          => 'required|string|max:30',
+            'state'          => 'nullable|string|max:30',
             'city'           => 'nullable|string|max:30',
             'address'        => 'nullable|string|max:200',
             'open_balance'   => 'nullable|numeric',

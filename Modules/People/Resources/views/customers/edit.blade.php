@@ -70,10 +70,10 @@
                                 </div>
                                 <div class="col-lg-4">
                                     <div class="form-group">
-                                        <label for="vat_id">VAT ID</label>
-                                        <input type="text" class="form-control" name="vat_id" maxlength="20"
+                                        <label for="vat_id">VAT ID / TRN <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" name="vat_id" maxlength="20" required
                                             value="{{ $customer->vat_id }}"
-                                            oninput="this.value = this.value.replace(/[^A-Za-z0-9]/g,'').slice(0,20)">
+                                            oninput="this.value = this.value.replace(/[^0-9]/g,'').slice(0,20)">
                                         @error('vat_id')<small class="text-danger">{{ $message }}</small>@enderror
                                     </div>
                                 </div>
@@ -82,8 +82,8 @@
                             <div class="form-row">
                                 <div class="col-lg-4">
                                     <div class="form-group">
-                                        <label for="state">State <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="state" maxlength="30" required value="{{ $customer->state }}">
+                                        <label for="state">State</label>
+                                        <input type="text" class="form-control" name="state" maxlength="30" value="{{ $customer->state }}">
                                         @error('state')<small class="text-danger">{{ $message }}</small>@enderror
                                     </div>
                                 </div>

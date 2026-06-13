@@ -96,7 +96,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="product_order_tax">Tax (%)</label>
-                                        <input type="number" class="form-control" name="product_order_tax" value="{{ old('product_order_tax') }}" min="0" max="99" oninput="this.value = this.value.replace(/[^0-9]/g,'').slice(0,2)">
+                                        <input type="number" class="form-control" name="product_order_tax" value="{{ old('product_order_tax', 5) }}" min="0" max="99" oninput="this.value = this.value.replace(/[^0-9]/g,'').slice(0,2)">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -166,8 +166,8 @@
                             <div class="form-row">
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="product_cost">Purchase Rate (Net Rate)</label>
-                                        <x-currency-input id="product_cost" name="product_cost" class="form-control" :display="old('product_cost')" aria-label="Purchase Rate" maxlength="15" />
+                                        <label for="product_cost">Purchase Rate (Net Rate) <span class="text-danger">*</span></label>
+                                        <x-currency-input id="product_cost" name="product_cost" class="form-control" :display="old('product_cost')" aria-label="Purchase Rate" maxlength="13" required />
                                     </div>
                                 </div>
                                 <div class="col-md-4">

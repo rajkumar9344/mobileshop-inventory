@@ -70,8 +70,8 @@
                                 </div>
                                 <div class="col-lg-4">
                                     <div class="form-group">
-                                        <label>State <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="state" required maxlength="30">
+                                        <label>State</label>
+                                        <input type="text" class="form-control" name="state" maxlength="30">
                                         @error('state')<small class="text-danger">{{ $message }}</small>@enderror
                                     </div>
                                 </div>

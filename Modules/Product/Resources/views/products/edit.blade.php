@@ -162,8 +162,8 @@
                             <div class="form-row">
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="product_cost">Purchase Rate (Net Rate)</label>
-                                        <x-currency-input id="product_cost" name="product_cost" class="form-control" :display="old('product_cost', (isset($product) && $product->product_cost !== null) ? number_format($product->product_cost, 2, '.', '') : '')" aria-label="Purchase Rate" maxlength="15" />
+                                        <label for="product_cost">Purchase Rate (Net Rate) <span class="text-danger">*</span></label>
+                                        <x-currency-input id="product_cost" name="product_cost" class="form-control" :display="old('product_cost', (isset($product) && $product->product_cost !== null) ? number_format($product->product_cost, 2, '.', '') : '')" aria-label="Purchase Rate" maxlength="13" required />
                                     </div>
                                 </div>
                                 <div class="col-md-4">
