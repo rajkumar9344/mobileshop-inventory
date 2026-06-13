@@ -24,19 +24,14 @@ class SaleDetails extends Model
         'product_code',
         'product_code_id',
         'quantity',
-        'price',
         'category',
         'mrp',
         'rate',
         'tax_percentage',
         'tax_amount',
-        'discount_amount',
-        'discount_type',
-        'unit_price',
         'sub_total',
-        'product_discount_amount',
-        'product_discount_type',
-        'product_tax_amount'
+        'product_tax_amount',
+        'purchase_rate',
     ];
 
     protected $with = ['product', 'productCode'];
@@ -73,14 +68,6 @@ class SaleDetails extends Model
         return $this->belongsTo(Sale::class, 'sale_id', 'id');
     }
 
-    public function getPriceAttribute($value) {
-        return $value / 100;
-    }
-
-    public function getUnitPriceAttribute($value) {
-        return $value / 100;
-    }
-
     public function getSubTotalAttribute($value) {
         return $value / 100;
     }
@@ -105,18 +92,12 @@ class SaleDetails extends Model
         return $value / 100;
     }
 
-    public function getDiscountAmountAttribute($value) {
-        return $value / 100;
-    }
-
-
-    public function setPriceAttribute($value) { $this->attributes['price'] = $this->toMinor($value); }
-    public function setUnitPriceAttribute($value) { $this->attributes['unit_price'] = $this->toMinor($value); }
     public function setSubTotalAttribute($value) { $this->attributes['sub_total'] = $this->toMinor($value); }
-    public function setProductDiscountAmountAttribute($value) { $this->attributes['product_discount_amount'] = $this->toMinor($value); }
     public function setProductTaxAmountAttribute($value) { $this->attributes['product_tax_amount'] = $this->toMinor($value); }
     public function setMrpAttribute($value) { $this->attributes['mrp'] = $this->toMinor($value); }
     public function setRateAttribute($value) { $this->attributes['rate'] = $this->toMinor($value); }
     public function setTaxAmountAttribute($value) { $this->attributes['tax_amount'] = $this->toMinor($value); }
-    public function setDiscountAmountAttribute($value) { $this->attributes['discount_amount'] = $this->toMinor($value); }
+
+    public function getPurchaseRateAttribute($value) { return $value / 100; }
+    public function setPurchaseRateAttribute($value) { $this->attributes['purchase_rate'] = $this->toMinor($value); }
 }

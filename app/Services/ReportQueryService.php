@@ -96,7 +96,7 @@ class ReportQueryService
             ->groupBy('sd.sale_id');
 
         $inclVat = 'COALESCE(sales.overall_amount, sales.total_amount, 0)';
-        $exclVat = $inclVat . ' - COALESCE(sales.overall_tax_amount, sales.tax_amount, 0)';
+        $exclVat = $inclVat . ' - COALESCE(sales.overall_tax_amount, 0)';
         $profit  = '(' . $exclVat . ') - COALESCE(pt.purchase_total, 0)';
 
         $query = Sale::query()

@@ -213,7 +213,10 @@
              style="display:none;"></div>
         
         <div class="table-responsive position-relative">
-            @php $isPurchaseType4 = in_array($cart_instance, ['purchase','purchase_edit','purchase_return','purchase_view','purchase_return_view']) && $purchase_type == 4; @endphp
+            @php
+                $isPurchaseType4 = in_array($cart_instance, ['purchase','purchase_edit','purchase_return','purchase_view','purchase_return_view']) && $purchase_type == 4;
+                $isSaleGroup = in_array($cart_instance, ['sale','sale_edit','sale_return','quotation','quotation_edit','sale_view','sale_return_view','quotation_view']);
+            @endphp
             <div wire:loading.flex class="col-12 position-absolute justify-content-center align-items-center cart-loading-overlay">
                 <div class="spinner-border text-primary" role="status">
                     <span class="sr-only">Loading...</span>
@@ -231,20 +234,31 @@
                     @else
                         Stock
                     @endif
-                </th>
+                    </th>
+                    @if($isSaleGroup)
+                    <th class="align-middle text-center col-amount">Purchase Rate</th>
+                    <th class="align-middle text-center col-small">Quantity</th>
+                    <th class="align-middle text-center col-small">Unit</th>
+                    <th class="align-middle text-center col-amount">Unit Price (AED)</th>
+                    <th class="align-middle text-center col-amount">Amount (AED)</th>
+                    <th class="align-middle text-center col-percent">VAT %</th>
+                    <th class="align-middle text-center col-amount">VAT Amount</th>
+                    <th class="align-middle text-center col-amount">Total Amount</th>
+                    @else
                     @if(in_array($cart_instance, ['purchase','purchase_edit','purchase_return']))
                     <th class="align-middle text-center col-small">M/N/L</th>
                     @endif
                     <th class="align-middle text-center col-amount">MRP</th>
                     <th class="align-middle text-center col-percent">VAT %</th>
-                    <th class="align-middle text-center col-amount">Rate before Discount</th>
+                    <th class="align-middle text-center col-amount">Rate</th>
                     <th class="align-middle text-center col-small">Quantity</th>
                     <th class="align-middle text-center col-small">Unit</th>
-                    <th class="align-middle text-center col-amount">@if(in_array($cart_instance, ['sale','sale_edit','sale_return','quotation','quotation_edit','sale_view','sale_return_view','quotation_view']) || $isPurchaseType4) Total @else Total (without VAT) @endif</th>
+                    <th class="align-middle text-center col-amount">@if($isPurchaseType4) Total @else Total (without VAT) @endif</th>
                     <th class="align-middle text-center col-percent">VAT %</th>
-                    @unless(in_array($cart_instance, ['sale','sale_edit','sale_return','quotation','quotation_edit','sale_view','sale_return_view','quotation_view']) || $isPurchaseType4)
+                    @unless($isPurchaseType4)
                     <th class="align-middle text-center col-amount">Amount (including VAT)</th>
                     @endunless
+                    @endif
                     @unless($isReadOnly)
                     <th class="align-middle text-center col-small">Action</th>
                     @endunless
@@ -279,28 +293,8 @@
                                 // Rounded value used for display only
                                 $_rate_before_discount = round($_rate_before_discount_precise, 2);
 
-                                $_item_discount_val    = (float)($item_discount[$cart_item->id] ?? $cart_item->options->product_discount_percent ?? $cart_item->options->discount ?? 0);
-
-                                // Rate after Discount % (first column)
-                                // For sale / sale_return / quotation apply percent discount on MRP
-                                if (in_array($cart_instance, ['sale', 'sale_edit', 'sale_return', 'quotation', 'quotation_edit', 'sale_view', 'sale_return_view', 'quotation_view'])) {
-                                    $_rate_after_pct = $_mrp_val * (1 - $_item_discount_val / 100);
-                                } else {
-                                    $_rate_after_pct = $_rate_before_discount_precise * (1 - $_item_discount_val / 100);
-                                }
-
-                                // Cash discount: percent-based + fixed amount (mirrors getEffectiveCashDiscountAmount)
-                                $_cash_disc_pct        = (float)($cash_discount_percent[$cart_item->id] ?? $cart_item->options->cash_discount_percent ?? 0);
-                                $_cash_disc_amt        = (float)($cash_discount_amount[$cart_item->id] ?? $cart_item->options->cash_discount_amount ?? 0);
-
-                                // intermediate rate after applying cash percentage only (second column preview)
-                                $_rate_after_cash_pct  = round($_rate_after_pct - ($_cash_disc_pct > 0 ? $_rate_after_pct * $_cash_disc_pct / 100 : 0), 2);
-
-                                // total cash discount amount (percent + fixed)
-                                $_cash_discount_total  = ($_cash_disc_pct > 0 ? $_rate_after_pct * $_cash_disc_pct / 100 : 0) + $_cash_disc_amt;
-
-                                // Net Rate = rate_after_pct_discount − cash_discount (all pre-tax)
-                                $_net_rate             = round($_rate_after_pct - $_cash_discount_total, 2);
+                                // Discounts removed from all transaction modules — net rate is the rate as entered.
+                                $_net_rate             = $_rate_before_discount;
                                 $_total_without_vat    = round($_net_rate * $cart_item->qty, 2);
                                 $_tax_amount_display   = round($_total_without_vat * $_gst_pct / 100, 2);
                             @endphp
@@ -313,35 +307,22 @@
                                 data-product-id="{{ $cart_item->id }}"
                                 class="{{ $_isInvalidRow ? 'table-danger invalid-row' : '' }}">
                                 <td class="align-middle product-name col-product-name">
-                                    @if(!$isReadOnly && str_contains(strtolower($cart_item->name), 'silicon'))
+                                    @if(!$isReadOnly)
                                         <input type="text"
                                             class="form-control form-control-sm"
                                             wire:model.blur="custom_product_names.{{ $cart_item->rowId }}"
                                             placeholder="{{ $cart_item->name }}"
-                                            title="You can customise the product name for this item">
+                                            title="You can edit the product name for this item">
                                     @else
                                         {{ $cart_item->name }}
                                     @endif
                                 </td>
 
                                 <td class="align-middle text-center product-code col-product-code">
-                                    @php
-                                        $_avail_codes = $product_codes[$cart_item->id] ?? [];
-                                    @endphp
-                                    @if(count($_avail_codes) > 1 && !$isReadOnly)
-                                        <select wire:model.live="selected_code.{{ $cart_item->id }}"
-                                                    class="form-control form-control-sm autosize">
-                                            @foreach($_avail_codes as $_c)
-                                                <option value="{{ $_c }}" {{ ($selected_code[$cart_item->id] ?? $cart_item->options->code) === $_c ? 'selected' : '' }}>
-                                                    {{ $_c }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    @else
-                                        <span class="badge badge-success">
-                                            {{ $selected_code[$cart_item->id] ?? $cart_item->options->code }}
-                                        </span>
-                                    @endif
+                                    {{-- Product code is read-only (only the product name is editable). --}}
+                                    <span class="badge badge-success">
+                                        {{ $selected_code[$cart_item->id] ?? $cart_item->options->code }}
+                                    </span>
                                 </td>
 
                                 <td class="align-middle text-center">
@@ -407,6 +388,59 @@
                                     <span class="badge badge-info">{{ $cart_item->options->stock }}</span>
                                 </td>
 
+                                @if($isSaleGroup)
+                                @php
+                                    $_purchase_rate = (float)($cart_item->options->product_cost ?? 0);
+                                    $_unit_price    = $_rate_before_discount;
+                                    $_sale_amount   = round($_unit_price * $cart_item->qty, 2);
+                                    $_vat_amount    = round($_sale_amount * $_gst_pct / 100, 2);
+                                    $_sale_total    = round($_sale_amount + $_vat_amount, 2);
+                                @endphp
+                                <td class="align-middle text-center col-amount">
+                                    <input type="text" class="form-control form-control-sm autosize"
+                                           value="{{ format_currency($_purchase_rate, true, false) }}" readonly>
+                                </td>
+                                <td class="align-middle text-center col-small">
+                                    @include('livewire.includes.product-cart-quantity')
+                                </td>
+                                <td class="align-middle text-center">
+                                    {{ $cart_item->options->unit }}
+                                </td>
+                                <td class="align-middle text-center col-amount">
+                                    <x-currency-input
+                                        id="{{ 'rate_'.$cart_item->id }}"
+                                        wireModel="{{ 'rate.'.$cart_item->id }}"
+                                        class="form-control form-control-sm autosize"
+                                        display="{{ ($_unit_price > 0 || !in_array($cart_instance, ['sale','sale_edit'])) ? format_currency($_unit_price, true, false) : '' }}"
+                                        maxlength="15"
+                                        wire:key="rate-{{ $cart_item->id }}"
+                                        :disabled="$isReadOnly"
+                                    />
+                                </td>
+                                <td class="align-middle text-center amount-col col-amount">
+                                    <input type="text" class="form-control form-control-sm autosize full-autosize"
+                                           value="{{ format_currency($_sale_amount, true, false) }}"
+                                           readonly maxlength="15" title="{{ format_currency($_sale_amount, true, false) }}">
+                                </td>
+                                <td class="align-middle text-center small-field numeric col-percent">
+                                    <input type="number"
+                                           wire:model.lazy="gst_percent.{{ $cart_item->id }}"
+                                           class="form-control form-control-sm autosize"
+                                           step="0.01" min="0" max="100" maxlength="5"
+                                           value="{{ (in_array($cart_instance, ['sale','sale_edit']) && $_gst_pct == 0) ? '' : $_gst_pct }}"
+                                           {{ $isReadOnly ? 'readonly' : '' }}>
+                                </td>
+                                <td class="align-middle text-center amount-col col-amount">
+                                    <input type="text" class="form-control form-control-sm autosize full-autosize"
+                                           value="{{ format_currency($_vat_amount, true, false) }}"
+                                           readonly maxlength="15" title="{{ format_currency($_vat_amount, true, false) }}">
+                                </td>
+                                <td class="align-middle text-center amount-col col-amount">
+                                    <input type="text" class="form-control form-control-sm autosize full-autosize"
+                                           value="{{ format_currency($_sale_total, true, false) }}"
+                                           readonly maxlength="15" title="{{ format_currency($_sale_total, true, false) }}">
+                                </td>
+                                @else
                                 @if(in_array($cart_instance, ['purchase','purchase_edit','purchase_return']))
                                 <td class="align-middle text-center col-small">
                                     <select wire:model.lazy="rate_type.{{ $cart_item->id }}"
@@ -418,7 +452,6 @@
                                     </select>
                                 </td>
                                 @endif
-
                                 <td class="align-middle text-center col-amount">
                                     <x-currency-input
                                         id="{{ 'mrp_'.$cart_item->id }}"
@@ -429,59 +462,43 @@
                                         :disabled="$isReadOnly"
                                     />
                                 </td>
-
                                 <td class="align-middle text-center small-field numeric col-percent">
                                     <input type="number"
                                            wire:model.lazy="tax_percent_edit.{{ $cart_item->id }}"
                                            class="form-control form-control-sm autosize"
-                                           step="0.01"
-                                           min="0"
-                                           max="100"
-                                           maxlength="6"
+                                           step="0.01" min="0" max="100" maxlength="6"
                                            value="{{ $tax_percent_edit[$cart_item->id] ?? $cart_item->options->tax_percent ?? 0 }}"
                                            {{ $isReadOnly ? 'readonly' : '' }}>
                                 </td>
-
                                 <td class="align-middle text-center col-amount">
                                     <x-currency-input
                                         id="{{ 'rate_'.$cart_item->id }}"
                                         wireModel="{{ 'rate.'.$cart_item->id }}"
                                         class="form-control form-control-sm autosize"
-                                        display="{{ format_currency(in_array($cart_instance, ['sale', 'sale_edit', 'sale_return', 'quotation', 'quotation_edit', 'sale_view', 'sale_return_view', 'quotation_view']) ? $_rate_before_discount : ($rate[$cart_item->id] ?? $_rate_before_discount ?? 0), true, false) }}"
-                                        title="Rate before Discount = MRP / (1 + VAT%/100)."
+                                        display="{{ format_currency($rate[$cart_item->id] ?? $_rate_before_discount ?? 0, true, false) }}"
+                                        title="Rate (pre-VAT) = MRP / (1 + VAT%/100)."
                                         wire:key="rate-{{ $cart_item->id }}"
                                         :disabled="$isReadOnly"
                                     />
                                 </td>
-
                                 <td class="align-middle text-center col-small">
                                     @include('livewire.includes.product-cart-quantity')
                                 </td>
-
                                 <td class="align-middle text-center">
                                     {{ $cart_item->options->unit }}
                                 </td>
-
                                 <td class="align-middle text-center amount-col col-amount">
-                                    {{-- Total (pre-tax) = pre-tax Net Rate × Qty. For sale flows this column is labelled 'Total' and represents the line total. --}}
                                     <input type="text"
                                            class="form-control form-control-sm autosize full-autosize"
                                            value="{{ format_currency($_total_without_vat, true, false) }}"
-                                           readonly
-                                           maxlength="15"
-                                           title="{{ format_currency($_total_without_vat, true, false) }}"
-                                           >
+                                           readonly maxlength="15"
+                                           title="{{ format_currency($_total_without_vat, true, false) }}">
                                 </td>
-
                                 <td class="align-middle text-center small-field numeric col-percent">
-                                    {{-- VAT % editable; computed Tax Amount shown below --}}
                                     <input type="number"
                                            wire:model.lazy="gst_percent.{{ $cart_item->id }}"
                                            class="form-control form-control-sm autosize"
-                                           step="0.01"
-                                           min="0"
-                                           max="100"
-                                           maxlength="6"
+                                           step="0.01" min="0" max="100" maxlength="6"
                                            value="{{ $gst_percent[$cart_item->id] ?? $cart_item->options->gst_percent ?? $cart_item->options->tax_percent ?? 0 }}"
                                            {{ $isReadOnly ? 'readonly' : '' }}>
                                     @if($_tax_amount_display > 0)
@@ -490,14 +507,13 @@
                                         </small>
                                     @endif
                                 </td>
-
-                                @unless(in_array($cart_instance, ['sale','sale_edit','sale_return','quotation','quotation_edit','sale_view','sale_return_view','quotation_view']) || $isPurchaseType4)
+                                @unless($isPurchaseType4)
                                 <td class="align-middle text-center">
-                                    {{-- Amount incl. VAT = Total (w/o VAT) + Tax Amount, computed from blade vars --}}
                                     @php $_amount_incl_vat = $_total_without_vat + $_tax_amount_display; @endphp
                                     <div class="truncate" title="{{ format_currency($_amount_incl_vat, true, false) }}">{{ format_currency($_amount_incl_vat, true, false) }}</div>
                                 </td>
                                 @endunless
+                                @endif
 
                                 @unless($isReadOnly)
                                 <td class="align-middle text-center">
@@ -515,8 +531,8 @@
                                 if (in_array($cart_instance, ['purchase', 'purchase_edit', 'purchase_return', 'purchase_view', 'purchase_return_view'])) {
                                     $colspan = $isPurchaseType4 ? 17 : 18;
                                 } elseif (in_array($cart_instance, ['sale', 'sale_edit', 'sale_return', 'quotation', 'quotation_edit', 'sale_view', 'sale_return_view', 'quotation_view'])) {
-                                    // removed HSN, Discount%, Additional Discount%, Cash Discount, Net Rate (per-row) columns
-                                    $colspan = 11;
+                                    // 12 content cols (Purchase Rate, Qty, Unit, Unit Price, Amount, VAT%, VAT Amount, Total Amount + 4 fixed) + 1 Action
+                                    $colspan = 13;
                                 } else {
                                     $colspan = 17;
                                 }
@@ -755,12 +771,12 @@
                 <input type="text" class="form-control" name="overall_taxable_amount" id="overall_taxable_amount" value="{{ format_currency($this->overall_calculations['overall_taxable_amount'], true, false) }}" readonly>
             </div>
             <div class="col-md-2 pr-1">
-                <label for="overall_tax_amount">Tax Amount</label>
+                <label for="overall_tax_amount">{{ $isSaleGroup ? 'VAT Amount' : 'Tax Amount' }}</label>
                 <input type="text" class="form-control" name="overall_tax_amount" id="overall_tax_amount" value="{{ format_currency($this->overall_calculations['overall_tax_amount'], true, false) }}" readonly>
             </div>
             <div class="col-md-2 pr-1">
-                <label for="overall_amount">Total Amount</label>
-                <input type="text" class="form-control" name="overall_amount" id="overall_amount" value="{{ format_currency(in_array($cart_instance, ['sale','sale_edit','sale_return','quotation','quotation_edit','sale_view','sale_return_view','quotation_view']) ? round($this->overall_calculations['overall_amount'] ?? 0, 0) : ($this->overall_calculations['overall_amount'] ?? 0), true, false) }}" readonly>
+                <label for="overall_amount">{{ $isSaleGroup ? 'Grand Total' : 'Total Amount' }}</label>
+                <input type="text" class="form-control" name="overall_amount" id="overall_amount" value="{{ format_currency($this->overall_calculations['overall_amount'] ?? 0, true, false) }}" readonly>
             </div>
         </div>
     </div>

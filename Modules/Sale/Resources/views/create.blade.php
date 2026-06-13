@@ -83,6 +83,10 @@
                                     <input type="text" class="form-control" id="excess_amount_display" readonly value="0.00">
                                     <input type="hidden" name="excess_amount" id="excess_amount" value="0.00">
                                 </div>
+                                <div class="col-md-2 pr-1">
+                                    <label for="vat_id_display" class="mb-1">VAT ID / TRN</label>
+                                    <input type="text" class="form-control" id="vat_id_display" readonly placeholder="—">
+                                </div>
                             </div>
                             </div>
                             <livewire:search-product/>
@@ -144,7 +148,6 @@
                                         <div id="paid_amount_error" class="text-danger small" style="display:none;">Amount Received cannot be more than Net Rate.</div>
                                     </div>
                                 </div>
-                                <input type="hidden" name="discount_amount" id="discount_amount_hidden" value="0">
                                 <div class="col-lg-3">
                                     <div class="form-group">
                                         <label for="balance">Balance</label>
@@ -162,10 +165,6 @@
                                 <!-- Settled checkbox removed: settled logic handled in receipts module -->
                             </div>
 
-                            <!-- Hidden required fields -->
-                            <input type="hidden" name="tax_percentage" id="hidden_tax_percentage" value="0">
-                            <input type="hidden" name="discount_percentage" id="hidden_discount_percentage" value="0">
-                            <input type="hidden" name="shipping_amount" id="hidden_shipping_amount" value="0">
                             <input type="hidden" name="total_amount" id="hidden_total_amount" value="0">
                             <input type="hidden" name="status" value="Pending">
 
@@ -570,10 +569,6 @@
 
         // Function to update hidden fields with current values
         function updateHiddenFields() {
-            // Set required form fields with default values
-            document.getElementById('hidden_tax_percentage').value = '0';
-            document.getElementById('hidden_discount_percentage').value = '0';
-            document.getElementById('hidden_shipping_amount').value = '0';
             // Get current cart total dynamically. Prefer dataset.raw from the
             // visible overall_amount (used by the central currency widget),
             // then fall back to hidden_overall_amount, then table text.
@@ -818,6 +813,7 @@
                         // Only set Balance field from open balance and preserve bill type default
                         $('#area').val(res.area || '');
                         $('#opening_balance').val(res.opening_balance !== undefined ? res.opening_balance : '0.00');
+                        $('#vat_id_display').val(res.vat_id || '');
                         // Outstanding message: only overdue outstanding (same as report)
                         if (res.has_overdue_outstanding === true) {
                             $('#outstanding-warning').removeClass('d-none');
@@ -848,6 +844,7 @@
                     // reset if fail (preserve bill_type instead of clearing it)
                     $('#area,#opening_balance,#phone,#customer_discount_percent').val('');
                     $('#excess_amount_display,#excess_amount').val('0.00');
+                    $('#vat_id_display').val('');
                     $('#outstanding-warning').addClass('d-none');
                 });
             });

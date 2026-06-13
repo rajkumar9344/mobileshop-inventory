@@ -24,8 +24,8 @@ class ProductCart extends Component
     public $has_invalid_quantity = false;
     public $invalid_row_ids = [];
     public $validation_message = '';
-    public $discount_type;
-    public $item_discount;
+    public $discount_type = [];
+    public $item_discount = [];
     public $unit_price;
     public $cash_discount_percent = [];
     public $cash_discount_amount = [];
@@ -236,6 +236,14 @@ class ProductCart extends Component
                 // This preserves user-entered values (e.g. type-3 custom rate different from MRP).
                 if ($detailsByProduct->has($cart_item->id) && $detailsByProduct->get($cart_item->id)->rate_before_discount !== null) {
                     $this->rate[$cart_item->id] = (float) $detailsByProduct->get($cart_item->id)->rate_before_discount;
+                } elseif (in_array($this->cart_instance, ['sale', 'sale_edit', 'sale_view', 'sale_return', 'sale_return_view', 'quotation', 'quotation_edit', 'quotation_view'])) {
+                    // Sale / Sale Return / Quotation: the user-entered Unit Price lives in the cart options. options is a
+                    // Gloudemans CartItemOptions (a Collection) — a (array) cast mangles its keys,
+                    // so read via has()/get(). Without this the value is lost and the rate falls
+                    // back to mrp/(1+tax%) (e.g. 250 → 238.1) on the edit/view page.
+                    $storedRbd = $cart_item->options->has('rate_before_discount') ? $cart_item->options->get('rate_before_discount') : null;
+                    $storedRt  = $cart_item->options->has('rate') ? $cart_item->options->get('rate') : null;
+                    $this->rate[$cart_item->id] = (float) ($storedRbd ?? $storedRt ?? $original_mrp);
                 } else {
                     // Use the stored rate_before_discount if available (including explicit zero),
                     // else fallback to stored rate (including zero), else fallback to MRP-derived calculation.
@@ -286,10 +294,8 @@ class ProductCart extends Component
                 $this->product_codes[$cart_item->id] = $allCodes;
                 $this->selected_code[$cart_item->id] = $savedCode ?? ($allCodes[0] ?? '');
 
-                // Pre-populate editable name for silicon products in edit mode
-                if (str_contains(strtolower($cart_item->name), 'silicon')) {
-                    $this->custom_product_names[$cart_item->rowId] = $cart_item->name;
-                }
+                // Pre-populate the editable product name for every item in edit mode
+                $this->custom_product_names[$cart_item->rowId] = $cart_item->name;
             }
         } else {
             $this->purchase_type = 1;
@@ -603,6 +609,11 @@ class ProductCart extends Component
             // Type-3 purchases: Rate Before Discount should show MRP directly.
             $base_rate = $mrp;
             $rate = (float) $base_rate;
+        } elseif (in_array($this->cart_instance, ['sale', 'sale_edit'])) {
+            // Sale: unit price and VAT% are manually entered (BRD) — start at zero so inputs show blank
+            $base_rate   = 0.0;
+            $rate        = 0.0;
+            $tax_percent = 0.0;
         } else {
             // Default: use MRP (price-with-tax) as base_rate
             $base_rate = $mrp;
@@ -620,8 +631,10 @@ class ProductCart extends Component
             return;
         }
 
-        // Prefer to keep the product master MRP (if provided) as the displayed MRP.
-        $display_mrp = array_key_exists('mrp', $fullProduct) && $fullProduct['mrp'] !== null ? (float)$fullProduct['mrp'] : (float)$base_rate;
+        // Sale: mrp starts at 0 (unit price is user-entered); other instances keep product MRP.
+        $display_mrp = in_array($this->cart_instance, ['sale', 'sale_edit'])
+            ? 0.0
+            : (array_key_exists('mrp', $fullProduct) && $fullProduct['mrp'] !== null ? (float)$fullProduct['mrp'] : (float)$base_rate);
 
         $newCartItem = $cart->add([
             'id'      => $fullProduct['id'],
@@ -650,12 +663,12 @@ class ProductCart extends Component
                 'cash_discount_percent' => $this->customer_discount_percent,
                 // rate_before_discount and rate_type: when purchase_type==4 prefer product_cost (rate already set above)
                 'rate_before_discount'  => (float)$rate,
-                'rate_type'             => ($this->purchase_type == 4 ? 'N' : 'M')
+                'rate_type'             => ($this->purchase_type == 4 ? 'N' : 'M'),
+                'product_cost'          => (float)($fullProduct['product_cost'] ?? 0)
             ]
         ]);
-        if (str_contains(strtolower($fullProduct['product_name']), 'silicon')) {
-            $this->custom_product_names[$newCartItem->rowId] = $fullProduct['product_name'];
-        }
+        // Allow the product name to be edited for every added item
+        $this->custom_product_names[$newCartItem->rowId] = $fullProduct['product_name'];
 
         $this->check_quantity[$fullProduct['id']] = $stock;
         $this->quantity[$fullProduct['id']] = $initialQty;
@@ -800,9 +813,16 @@ class ProductCart extends Component
             $value = (float)$value;
             $this->rate[$id] = $value;
 
-            // Persist rate_before_discount to cart options; MRP is NOT auto-recalculated
+            // Persist rate_before_discount to cart options
             $opts = $cart_item->options->toArray();
             $opts['rate_before_discount'] = $value;
+            // For sale-group instances: keep mrp in sync with the user-entered unit price so
+            // the overall totals AND the saved rate (CartItemCalculator reads options->mrp)
+            // match the per-row Amount display.
+            if (in_array($this->cart_instance, ['sale', 'sale_edit', 'sale_return', 'sale_return_view', 'quotation', 'quotation_edit', 'quotation_view'])) {
+                $opts['mrp'] = $value;
+                $this->mrp[$id] = $value;
+            }
             $this->cart()->update($cart_item->rowId, ['options' => $opts]);
             $this->invalidateCartCache();
 
@@ -888,11 +908,12 @@ class ProductCart extends Component
         $base_mrp = floatval($cart_item->options->mrp ?? $cart_item->price);
 
         // ── All calculations in pre-tax space ────────────────────────────────
-        // Blade and Excel formula: net_rate(pre-tax) = rate_before_dis×(1-dis%/100) - cash_discount
-        // Then:  final_price_with_tax = net_rate × (1 + tax%)
+        // Discounts removed from all transaction modules:
+        //   net_rate(pre-tax) = rate (as entered)
+        //   final_price_with_tax = net_rate × (1 + VAT%)
         // ─────────────────────────────────────────────────────────────────────
 
-        // Pre-tax base rate (Rate before Discount column):
+        // Pre-tax base rate (Rate column):
         // Treat an explicit rate of 0 as an explicit user value and DO NOT
         // fall back to a previously stored value or MRP-derived rate.
         $hasExplicitRate = is_array($this->rate) ? array_key_exists($product_id, $this->rate) : isset($this->rate[$product_id]);
@@ -904,20 +925,8 @@ class ProductCart extends Component
             $rate_before_discount = ($tax_percent > 0 ? $base_mrp / (1 + $tax_percent / 100) : $base_mrp);
         }
 
-        // Apply Dis% to the pre-tax rate
-        $dis_discount_percent = floatval($this->item_discount[$product_id] ?? 0);
-        $dis_discount_type    = $this->discount_type[$product_id] ?? 'percentage';
-        $dis_discount_amount  = 0;
-        if ($dis_discount_type == 'percentage' && $dis_discount_percent > 0) {
-            $dis_discount_amount = $rate_before_discount * ($dis_discount_percent / 100);
-        } elseif ($dis_discount_type == 'fixed' && $dis_discount_percent > 0) {
-            $dis_discount_amount = $dis_discount_percent;
-        }
-        $rate_after_pct_discount = max(0.0, $rate_before_discount - $dis_discount_amount);
-
-        // Cash discount is also a pre-tax deduction (matches blade)
-        $cash_discount = $this->getEffectiveCashDiscountAmount($product_id, $rate_after_pct_discount);
-        $net_rate_pre_tax = max(0.0, $rate_after_pct_discount - $cash_discount);
+        // No discounts — net pre-tax rate is the rate as entered.
+        $net_rate_pre_tax = max(0.0, $rate_before_discount);
 
         // Convert pre-tax net rate to final price-with-tax using GST % (independent column)
         $final_price_with_tax = $net_rate_pre_tax * (1 + ($gst_pct / 100));
@@ -942,11 +951,13 @@ class ProductCart extends Component
                 'product_tax_per_unit'  => (float)$tax_amount_per_unit,
                 'unit_price'            => (float)$final_price_with_tax,
                 'gst_percent'           => $gst_pct,
-                'cash_discount_percent' => $this->cash_discount_percent[$product_id] ?? 0,
-                'cash_discount_amount'  => $this->cash_discount_amount[$product_id] ?? 0,
-                'product_discount'      => $dis_discount_amount,
-                'product_discount_type' => $dis_discount_type,
-                'product_discount_percent' => ($dis_discount_type == 'percentage' ? $this->item_discount[$product_id] : null),
+                // Discounts removed: keep zero-effect, non-null defaults so legacy
+                // return/quotation detail tables (NOT NULL columns) still persist cleanly.
+                'cash_discount_percent' => 0,
+                'cash_discount_amount'  => 0,
+                'product_discount'      => 0,
+                'product_discount_type' => 'percentage',
+                'product_discount_percent' => 0,
                 'rate_before_discount'  => (float)$rate_before_discount,
                 'rate'                  => (float)$final_rate,
                 'amount'                => (float)$sub_total,
@@ -1369,27 +1380,9 @@ class ProductCart extends Component
                 $_rate_before_discount_precise = (($_tax_pct > 0) ? ($_mrp_val / (1 + $_tax_pct / 100)) : $_mrp_val);
             }
 
-            // Discount %
-            $_item_discount_val = (float) ($this->item_discount[$id]
-                ?? $item->options->product_discount_percent
-                ?? $item->options->discount
-                ?? 0);
-
-            // For sale / sale_return / quotation apply percent discount on MRP (matches blade)
-            if (in_array($this->cart_instance, ['sale', 'sale_edit', 'sale_return', 'quotation', 'quotation_edit', 'sale_view', 'sale_return_view', 'quotation_view'])) {
-                $_rate_after_pct = $_mrp_val * (1 - $_item_discount_val / 100);
-            } else {
-                $_rate_after_pct = $_rate_before_discount_precise * (1 - $_item_discount_val / 100);
-            }
-
-            // Cash discount (percent-based + fixed amount) — mirrors getEffectiveCashDiscountAmount
-            $_cash_disc_pct = (float) ($this->cash_discount_percent[$id] ?? $item->options->cash_discount_percent ?? 0);
-            $_cash_disc_amt = (float) ($this->cash_discount_amount[$id]  ?? $item->options->cash_discount_amount  ?? 0);
-            $_cash_discount_total = ($_cash_disc_pct > 0 ? $_rate_after_pct * $_cash_disc_pct / 100 : 0) + $_cash_disc_amt;
-
-            // Net Rate (pre-tax) — round to 2 dp FIRST (mirrors blade) so per-row and overall totals match.
-            // Without this, 59.995 × 5 = 299.975 → rounds to 299.98 instead of the displayed 300.00.
-            $_net_rate = round(max(0.0, $_rate_after_pct - $_cash_discount_total), 2);
+            // Discounts removed from all transaction modules — net rate is the rate as entered.
+            // Round to 2 dp FIRST (mirrors blade) so per-row and overall totals match.
+            $_net_rate = round(max(0.0, $_rate_before_discount_precise), 2);
 
             // Per-row totals (same rounding as blade)
             $_total_without_gst  = round($_net_rate * $qty, 2);
@@ -1412,8 +1405,8 @@ class ProductCart extends Component
         if (in_array($this->cart_instance, ['sale', 'sale_edit', 'sale_return', 'quotation', 'quotation_edit', 'sale_view', 'sale_return_view', 'quotation_view'])) {
             $overall_gross_amount   = round($overall_mrp_amount, 2); // sum of MRPs
             $overall_taxable_amount = $overall_total_without_gst;   // pre-tax total
-            // Amount for sale flows is the taxable (pre-tax) total, not incl. GST
-            $overall_amount = round($overall_taxable_amount, 2);
+            // Grand Total for sale flows = taxable + VAT
+            $overall_amount = round($overall_total_without_gst + $overall_tax_amount, 2);
         } else {
             // Type 4 purchase/purchase_return mode: use pre-tax total (GST column hidden)
             $isPurchaseType4 = $this->isPurchaseCartInstance(true)

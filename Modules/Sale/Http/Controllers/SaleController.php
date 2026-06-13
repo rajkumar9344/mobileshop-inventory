@@ -82,7 +82,7 @@ class SaleController extends Controller
         if ($searchFilter) {
             $term = trim($searchFilter);
             $base->where(function($q) use ($term) {
-                $q->where('customer_name', 'like', "%{$term}%")
+                $q->whereHas('customer', fn($c) => $c->where('customer_name', 'like', "%{$term}%"))
                   ->orWhere('reference', 'like', "%{$term}%")
                   ->orWhere('area', 'like', "%{$term}%");
             });
@@ -109,7 +109,7 @@ class SaleController extends Controller
         $totals['overall_balance'] = $base->sum(DB::raw('COALESCE(due_amount,0)')) / 100;
 
         $totals['overall_received_amount'] = $base->sum(DB::raw('COALESCE(paid_amount,0)')) / 100;
-        $totals['overall_tax_amount'] = $base->sum(DB::raw('COALESCE(overall_tax_amount, tax_amount,0)')) / 100;
+        $totals['overall_tax_amount'] = $base->sum(DB::raw('COALESCE(overall_tax_amount,0)')) / 100;
 
         return response()->json($totals);
     }
@@ -181,29 +181,15 @@ class SaleController extends Controller
 
                 // Use calculated values, fallback to request values only if calculated is 0
                 $base_total = $overall_amount > 0 ? $overall_amount : ($request->overall_amount ?? $request->total_amount ?? 0);
-                $submitted_discount = 0;
-                if (isset($request->discount_amount) && is_numeric($request->discount_amount) && (float)$request->discount_amount > 0) {
-                    $submitted_discount = (float) $request->discount_amount;
-                }
-                // The `total_amount` represents the bill's canonical amount (do not reduce by
-                // the global discount here). Keep discounts stored separately in
-                // `discount_amount` so reports/ledgers can show discounts independently.
-                $total_amount = $base_total;
-                // Round total as customer-payable whole rupee
-                $total_amount = round($total_amount, 0);
+                $total_amount = round($base_total, 2);
 
                 $saleData = [
                     'date' => $request->date ?? now()->format('Y-m-d'),
                     'customer_id' => $request->customer_id,
-                    'customer_name' => $request->customer_id ? (Customer::find($request->customer_id)->customer_name ?? 'Draft Customer') : 'Draft Customer',
                     'area' => $request->area,
                     'balance' => $request->opening_balance ?? 0,
                     'bill_type' => $request->bill_type ?? 'Cash',
                     'phone_no' => $request->phone,
-                    'discount_type' => $request->discount_type,
-                    'tax_percentage' => $request->tax_percentage ?? 0,
-                    'discount_percentage' => $request->discount_percentage ?? 0,
-                    'shipping_amount' => $request->shipping_amount ?? 0,
                     'paid_amount' => 0,
                     'total_amount' => $total_amount ?? 0,
                     'due_amount' => $total_amount ?? 0,
@@ -211,8 +197,6 @@ class SaleController extends Controller
                     'payment_status' => 'Unpaid',
                     'payment_method' => $request->payment_method,
                     'note' => $request->note,
-                    'tax_amount' => $overall_tax_amount,
-                    'discount_amount' => ($submitted_discount ?? 0),
                     'overall_nos' => $overall_nos,
                     'overall_quantity' => $overall_quantity,
                     'overall_gross_amount' => $overall_gross_amount,
@@ -250,27 +234,25 @@ class SaleController extends Controller
                         ?? optional($product->category)->category_name
                         ?? optional($product->category)->name;
                     $pcId = $resolver->resolve($cart_item->id, $options->code ?? null);
+                    $_sale_gst_pct       = (float)($options->gst_percent ?? $vals['tax_percent']);
+                    $_sale_purchase_rate = (float)($options->product_cost ?? 0);
+                    $_sale_tax_amt       = round($vals['sub_total'] * $_sale_gst_pct / 100, 2);
 
                     SaleDetails::create([
-                        'sale_id'                  => $sale->id,
-                        'product_id'               => $cart_item->id,
-                        'product_name'             => $cart_item->name,
-                        'product_code'             => $options->code,
-                        'product_code_id'          => $pcId,
-                        'mrp'                      => $vals['mrp'],
-                        'rate'                     => $vals['rate'],
-                        'tax_percentage'           => $vals['tax_percent'],
-                        'tax_amount'               => $vals['tax_amount'],
-                        'discount_amount'          => $vals['discount_amount'],
-                        'discount_type'            => $options->product_discount_type,
-                        'category'                 => $categoryName,
-                        'quantity'                 => $cart_item->qty,
-                        'price'                    => (float) $cart_item->price,
-                        'unit_price'               => $vals['unit_price'],
-                        'sub_total'                => $vals['sub_total'],
-                        'product_discount_amount'  => $vals['discount_amount'],
-                        'product_discount_type'    => $options->product_discount_type,
-                        'product_tax_amount'       => $vals['tax_amount'],
+                        'sale_id'          => $sale->id,
+                        'product_id'       => $cart_item->id,
+                        'product_name'     => $cart_item->name,
+                        'product_code'     => $options->code,
+                        'product_code_id'  => $pcId,
+                        'mrp'              => $vals['mrp'],
+                        'rate'             => $vals['rate'],
+                        'tax_percentage'   => $_sale_gst_pct,
+                        'tax_amount'       => $_sale_tax_amt,
+                        'category'         => $categoryName,
+                        'quantity'         => $cart_item->qty,
+                        'sub_total'        => $vals['sub_total'],
+                        'product_tax_amount' => $_sale_tax_amt,
+                        'purchase_rate'    => $_sale_purchase_rate,
                     ]);
                 }
             });
@@ -343,27 +325,7 @@ class SaleController extends Controller
             $rawOverallNet = $request->overall_amount ?? $request->total_amount ?? 0;
             $base_total = floatval(str_replace([',', settings()->currency->symbol], '', (string) $rawOverallNet));
 
-            // Prefer an explicit discount_amount submitted via the form (global discount).
-            // If not present, fall back to any cart-level discount value.
-            // Do NOT infer a discount by reconciling the posted net-rate with the cart total.
-            $submitted_discount = 0;
-            if (isset($request->discount_amount) && is_numeric(str_replace(',', '', (string)$request->discount_amount)) && (float)str_replace(',', '', (string)$request->discount_amount) > 0) {
-                // Use explicit discount input when provided (numeric)
-                $submitted_discount = (float) str_replace(',', '', (string)$request->discount_amount);
-            } else {
-                // Try cart-level discount first
-                $cartDiscount = (float) $cart->discount();
-                if ($cartDiscount > 0) {
-                    $submitted_discount = $cartDiscount;
-                }
-            }
-
-            // The `total_amount` represents the canonical bill amount (do not reduce by
-            // the global discount here). Discounts are recorded separately in
-            // `discount_amount` so they don't alter the bill's original total.
-            $total_amount = $base_total;
-            // Round customer-payable amounts to whole-rupee (nearest)
-            $total_amount = round($total_amount, 0);
+            $total_amount = round($base_total, 2);
 
             // Prevent saving empty drafts
             if ($total_amount <= 0 && $isDraft) {
@@ -375,8 +337,7 @@ class SaleController extends Controller
 
             // Coerce paid_amount to numeric (may be posted as masked/display string)
             $paidNumeric = floatval(str_replace([',', settings()->currency->symbol], '', (string) ($request->paid_amount ?? 0)));
-            // Subtract submitted global discount from due amount so customer's balance reflects discounts
-            $due_amount = $total_amount - $paidNumeric - ($submitted_discount ?? 0);
+            $due_amount = $total_amount - $paidNumeric;
 
             // Handle payment status calculation
             if ($isDraft) {
@@ -406,15 +367,10 @@ class SaleController extends Controller
             $saleData = [
                 'date' => $request->date,
                 'customer_id' => $request->customer_id,
-                'customer_name' => $request->customer_id ? Customer::findOrFail($request->customer_id)->customer_name : 'Draft Customer',
                 'area' => $request->area,
                 'balance' => $request->opening_balance ?? 0,
                 'bill_type' => $request->bill_type ?? 'Cash',
                 'phone_no' => $request->phone,
-                'discount_type' => $request->discount_type,
-                'tax_percentage' => $request->tax_percentage ?? 0,
-                'discount_percentage' => $request->discount_percentage ?? 0,
-                'shipping_amount' => $request->shipping_amount ?? 0,
                 'paid_amount' => $initialPaid,
                 'total_amount' => $total_amount ?? 0,
                 'due_amount' => $initialDue,
@@ -422,16 +378,12 @@ class SaleController extends Controller
                 'payment_status' => $payment_status,
                 'payment_method' => $request->payment_method,
                 'note' => $request->note,
-                'tax_amount' => $cart->tax(),
-                // Persist the submitted global discount (in paise). If none, this will be 0.
-                'discount_amount' => ($submitted_discount ?? 0),
-                // Overall Calculations
-                'overall_nos'      => $request->overall_nos      ?? $cart->content()->count(),
-                'overall_quantity'  => $request->overall_quantity  ?? $cart->content()->sum('qty'),
-                'overall_gross_amount' => ($request->overall_gross_amount ?? $cart->total()),
-                'overall_taxable_amount' => ($request->overall_taxable_amount ?? ($cart->total() - $cart->tax())),
-                'overall_tax_amount' => ($request->overall_tax_amount ?? $cart->tax()),
-                'overall_amount' => ($request->overall_amount ?? $total_amount),
+                'overall_nos'           => $request->overall_nos ?? $cart->content()->count(),
+                'overall_quantity'      => $request->overall_quantity ?? $cart->content()->sum('qty'),
+                'overall_gross_amount'  => $request->overall_gross_amount ?? $cart->total(),
+                'overall_taxable_amount' => $request->overall_taxable_amount ?? ($cart->total() - $cart->tax()),
+                'overall_tax_amount'    => $request->overall_tax_amount ?? $cart->tax(),
+                'overall_amount'        => $request->overall_amount ?? $total_amount,
             ];
             
             // Check if we're updating an existing draft (from auto-save)
@@ -473,27 +425,25 @@ class SaleController extends Controller
                     ?? optional($product->category)->category_name
                     ?? optional($product->category)->name;
                 $pcId = $resolver->resolve($cart_item->id, $options->code ?? null);
+                $_sale_gst_pct       = (float)($options->gst_percent ?? $vals['tax_percent']);
+                $_sale_purchase_rate = (float)($options->product_cost ?? 0);
+                $_sale_tax_amt       = round($vals['sub_total'] * $_sale_gst_pct / 100, 2);
 
                 SaleDetails::create([
-                    'sale_id'                  => $sale->id,
-                    'product_id'               => $cart_item->id,
-                    'product_name'             => $cart_item->name,
-                    'product_code'             => $options->code,
-                    'product_code_id'          => $pcId,
-                    'mrp'                      => $vals['mrp'],
-                    'rate'                     => $vals['rate'],
-                    'tax_percentage'           => $vals['tax_percent'],
-                    'tax_amount'               => $vals['tax_amount'],
-                    'discount_amount'          => $vals['discount_amount'],
-                    'discount_type'            => $options->product_discount_type,
-                    'category'                 => $categoryName,
-                    'quantity'                 => $cart_item->qty,
-                    'price'                    => (float) $cart_item->price,
-                    'unit_price'               => $vals['unit_price'],
-                    'sub_total'                => $vals['sub_total'],
-                    'product_discount_amount'  => $vals['discount_amount'],
-                    'product_discount_type'    => $options->product_discount_type,
-                    'product_tax_amount'       => $vals['tax_amount'],
+                    'sale_id'            => $sale->id,
+                    'product_id'         => $cart_item->id,
+                    'product_name'       => $cart_item->name,
+                    'product_code'       => $options->code,
+                    'product_code_id'    => $pcId,
+                    'mrp'                => $vals['mrp'],
+                    'rate'               => $vals['rate'],
+                    'tax_percentage'     => $_sale_gst_pct,
+                    'tax_amount'         => $_sale_tax_amt,
+                    'category'           => $categoryName,
+                    'quantity'           => $cart_item->qty,
+                    'sub_total'          => $vals['sub_total'],
+                    'product_tax_amount' => $_sale_tax_amt,
+                    'purchase_rate'      => $_sale_purchase_rate,
                 ]);
 
                 // Only decrement product quantity for non-draft sales
@@ -586,7 +536,7 @@ class SaleController extends Controller
                         $receipt = SalesReceipt::create([
                             'date' => $sale->date ?? now()->format('Y-m-d'),
                             'customer_id' => $sale->customer_id,
-                            'particular' => $sale->customer_name ?? ('Sale '.$sale->reference),
+                            'particular' => ($sale->customer->customer_name ?? null) ?? ('Sale '.$sale->reference),
                             'payment_mode' => $sale->payment_method ?? null,
                             'total_amount' => $request->paid_amount ?? 0,
                             'total_discount' => 0,
@@ -737,22 +687,6 @@ class SaleController extends Controller
 
             // Prefer an explicit discount_amount submitted via the form (global discount).
             // If not present, fall back to any cart-level discount value.
-            // Do NOT infer a discount by reconciling the posted net-rate with the cart total.
-            $submitted_discount = 0;
-            if (isset($request->discount_amount) && is_numeric(str_replace(',', '', (string)$request->discount_amount)) && (float)str_replace(',', '', (string)$request->discount_amount) > 0) {
-                // Use explicit discount input when provided (numeric)
-                $submitted_discount = (float) str_replace(',', '', (string)$request->discount_amount);
-            } else {
-                // Try cart-level discount first
-                $cartDiscount = (float) $cart->discount();
-                if ($cartDiscount > 0) {
-                    $submitted_discount = $cartDiscount;
-                }
-            }
-
-            // The `total_amount` represents the canonical bill amount. Do not reduce
-            // it by `discount_amount` here — discounts are stored separately so
-            // reports and ledgers can display them independently.
             $total_amount = $base_total;
 
             $prevStatus = $sale->payment_status;
@@ -772,8 +706,7 @@ class SaleController extends Controller
             // Effective paid/due on the sale should reflect only applied payments. If the payment is not
             // being applied now, keep the existing sale paid amount.
             $effectivePaid = $shouldApplyReq ? $paidNumeric : ($sale->paid_amount ?? 0);
-            // Include submitted global discount when calculating effective due so listing shows correct balance
-            $effectiveDue = $total_amount - $effectivePaid - ($submitted_discount ?? 0);
+            $effectiveDue = $total_amount - $effectivePaid;
 
             if ($effectiveDue == $total_amount) {
                 $payment_status = 'Unpaid';
@@ -818,15 +751,10 @@ class SaleController extends Controller
                 'date' => $request->date,
                 'reference' => $reference,
                 'customer_id' => $request->customer_id,
-                'customer_name' => $request->customer_id ? Customer::findOrFail($request->customer_id)->customer_name : 'Draft Customer',
                 'area' => $request->area,
                 'balance' => ($request->opening_balance ?? 0),
                 'bill_type' => $request->bill_type,
                 'phone_no' => $request->phone,
-                'discount_type' => $request->discount_type,
-                'tax_percentage' => $request->tax_percentage,
-                'discount_percentage' => $request->discount_percentage,
-                'shipping_amount' => ($request->shipping_amount ?? 0),
                 'paid_amount' => $effectivePaid,
                 'total_amount' => $total_amount,
                 'due_amount' => $effectiveDue,
@@ -834,14 +762,12 @@ class SaleController extends Controller
                 'payment_status' => $payment_status,
                 'payment_method' => $request->payment_method,
                 'note' => $request->note,
-                'tax_amount' => $cart->tax(),
-                'discount_amount' => ($submitted_discount ?? 0),
-                'overall_nos' => $request->overall_nos ?? 0,
-                'overall_quantity' => ($request->overall_quantity ?? 0),
-                'overall_gross_amount' => ($request->overall_gross_amount ?? 0),
-                'overall_taxable_amount' => ($request->overall_taxable_amount ?? 0),
-                'overall_tax_amount' => ($request->overall_tax_amount ?? 0),
-                'overall_amount' => ($request->overall_amount ?? 0),
+                'overall_nos'            => $request->overall_nos ?? 0,
+                'overall_quantity'       => $request->overall_quantity ?? 0,
+                'overall_gross_amount'   => $request->overall_gross_amount ?? 0,
+                'overall_taxable_amount' => $request->overall_taxable_amount ?? 0,
+                'overall_tax_amount'     => $request->overall_tax_amount ?? 0,
+                'overall_amount'         => $request->overall_amount ?? 0,
             ]);
 
             // Reconcile customer opening_balance for change in outstanding due.
@@ -969,27 +895,25 @@ class SaleController extends Controller
                     ?? optional($product->category)->category_name
                     ?? optional($product->category)->name;
                 $pcId = $resolver->resolve($cart_item->id, $options->code ?? null);
+                $_sale_gst_pct       = (float)($options->gst_percent ?? $vals['tax_percent']);
+                $_sale_purchase_rate = (float)($options->product_cost ?? 0);
+                $_sale_tax_amt       = round($vals['sub_total'] * $_sale_gst_pct / 100, 2);
 
                 SaleDetails::create([
-                    'sale_id'                  => $sale->id,
-                    'product_id'               => $cart_item->id,
-                    'product_name'             => $cart_item->name,
-                    'product_code'             => $options->code,
-                    'product_code_id'          => $pcId,
-                    'mrp'                      => $vals['mrp'],
-                    'rate'                     => $vals['rate'],
-                    'tax_percentage'           => $vals['tax_percent'],
-                    'tax_amount'               => $vals['tax_amount'],
-                    'discount_amount'          => $vals['discount_amount'],
-                    'discount_type'            => $options->product_discount_type,
-                    'category'                 => $categoryName,
-                    'quantity'                 => $cart_item->qty,
-                    'price'                    => (float) $cart_item->price,
-                    'unit_price'               => $vals['unit_price'],
-                    'sub_total'                => $vals['sub_total'],
-                    'product_discount_amount'  => $vals['discount_amount'],
-                    'product_discount_type'    => $options->product_discount_type,
-                    'product_tax_amount'       => $vals['tax_amount'],
+                    'sale_id'            => $sale->id,
+                    'product_id'         => $cart_item->id,
+                    'product_name'       => $cart_item->name,
+                    'product_code'       => $options->code,
+                    'product_code_id'    => $pcId,
+                    'mrp'                => $vals['mrp'],
+                    'rate'               => $vals['rate'],
+                    'tax_percentage'     => $_sale_gst_pct,
+                    'tax_amount'         => $_sale_tax_amt,
+                    'category'           => $categoryName,
+                    'quantity'           => $cart_item->qty,
+                    'sub_total'          => $vals['sub_total'],
+                    'product_tax_amount' => $_sale_tax_amt,
+                    'purchase_rate'      => $_sale_purchase_rate,
                 ]);
 
                 // Only decrement product quantity for non-draft sales
@@ -1032,41 +956,29 @@ class SaleController extends Controller
             $mrp = $sale_detail->mrp ?? ($product->mrp ?? 0);
             $rate = $sale_detail->rate ?? ($taxPercent ? $mrp / (1 + ($taxPercent / 100)) : $mrp);
 
-            $price = $sale_detail->price; // rupees (accessor)
-            $product_discount_amount = $sale_detail->product_discount_amount;
-            $product_discount_type = $sale_detail->product_discount_type;
-
-            // Use stored discount_percent directly from database; fall back to calculation for old records
-            $stored_percent = $sale_detail->discount_percent ?? null;
-            if ($product_discount_type === 'percentage' && $stored_percent !== null && $stored_percent > 0) {
-                $discount_percent = (float) $stored_percent;
-            } elseif ($product_discount_type === 'percentage' && !empty($rate) && $rate > 0) {
-                // Backward compatibility: calculate from amount for old records
-                $discount_percent = round(($product_discount_amount / $rate) * 100, 4);
-            } else {
-                $discount_percent = 0;
-            }
-
             $cart->add([
                 'id'      => $sale_detail->product_id,
                 'name'    => $sale_detail->product_name,
                 'qty'     => $sale_detail->quantity,
-                'price'   => $sale_detail->price,
+                'price'   => $mrp,
                 'weight'  => 1,
                 'options' => [
-                    'product_discount'       => $product_discount_amount,
-                    'product_discount_type'  => $product_discount_type,
-                    'product_discount_percent' => $discount_percent,
-                    'sub_total'              => $sale_detail->sub_total,
-                    'code'                   => ($sale_detail->productCode->code ?? $sale_detail->product_code),
-                    'stock'                  => $product->product_quantity ?? null,
-                    'unit'                   => $product->product_unit ?? 'Nos',
-                    'product_tax'            => $sale_detail->product_tax_amount,
-                    'unit_price'             => $sale_detail->unit_price,
-                    'category'               => $sale_detail->category ?: optional($product->category)->category_name,
-                    'tax_percent'            => $taxPercent,
-                    'mrp'                    => $mrp,
-                    'rate'                   => round($rate, 2),
+                    'product_discount'         => 0,
+                    'product_discount_type'    => null,
+                    'product_discount_percent' => 0,
+                    'sub_total'                => $sale_detail->sub_total,
+                    'code'                     => ($sale_detail->productCode->code ?? $sale_detail->product_code),
+                    'stock'                    => $product->product_quantity ?? null,
+                    'unit'                     => $product->product_unit ?? 'Nos',
+                    'product_tax'              => $sale_detail->product_tax_amount,
+                    'unit_price'               => $mrp,
+                    'category'                 => $sale_detail->category ?: optional($product->category)->category_name,
+                    'tax_percent'              => $taxPercent,
+                    'gst_percent'              => $taxPercent,
+                    'mrp'                      => $mrp,
+                    'rate'                     => round($mrp, 2),
+                    'rate_before_discount'     => $mrp,
+                    'product_cost'             => (float)($product->product_cost ?? 0),
                 ]
             ]);
         }

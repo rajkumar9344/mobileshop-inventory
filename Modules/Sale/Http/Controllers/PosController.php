@@ -37,8 +37,7 @@ class PosController extends Controller
         try {
             // Credit Limit Check - do this BEFORE the transaction so lock update is saved
             $customer = Customer::findOrFail($request->customer_id);
-            // Include any submitted discount when computing due amount for credit checks
-            $dueAmount = floatval($request->total_amount ?? 0) - floatval($request->paid_amount ?? 0) - floatval($request->discount_amount ?? 0);
+            $dueAmount = floatval($request->total_amount ?? 0) - floatval($request->paid_amount ?? 0);
             $potentialBalance = ($customer->opening_balance ?? 0) + $dueAmount;
             
             // Only enforce credit limit if one is set (> 0)
@@ -50,10 +49,8 @@ class PosController extends Controller
 
             DB::transaction(function () use ($request, &$shouldDispatch, &$dispatchSaleId, $customer) {
 
-            // Subtract discount from due so status reflects discounts
-            $due_amount = $request->total_amount - $request->paid_amount - ($request->discount_amount ?? 0);
-
-            $payable = $request->total_amount - ($request->discount_amount ?? 0);
+            $due_amount = $request->total_amount - $request->paid_amount;
+            $payable = $request->total_amount;
 
             if ($due_amount == $payable) {
                 $payment_status = 'Unpaid';
@@ -66,16 +63,11 @@ class PosController extends Controller
             $sale = Sale::createWithRetry([
                 'date' => now()->format('Y-m-d'),
                 'customer_id' => $request->customer_id,
-                'customer_name' => Customer::findOrFail($request->customer_id)->customer_name,
                 'area' => $customer->area ?? '',
                 'balance' => $customer->opening_balance,
                 'bill_type' => 'Cash',
                 'days' => 0,
                 'phone_no' => $customer->phone_no ?? '',
-                'discount_type' => null,
-                'tax_percentage' => 0, // No longer using percentage
-                'discount_percentage' => 0, // No longer using percentage
-                'shipping_amount' => $request->shipping_amount,
                 'paid_amount' => $request->paid_amount,
                 'total_amount' => $request->total_amount,
                 'due_amount' => $due_amount,
@@ -83,8 +75,6 @@ class PosController extends Controller
                 'payment_status' => $payment_status,
                 'payment_method' => $request->payment_method,
                 'note' => $request->note,
-                'tax_amount' => ($request->tax_amount ?? 0), // Store the tax amount
-                'discount_amount' => ($request->discount_amount ?? 0), // Pass rupee; model will convert
                 'overall_nos' => 0,
                 'overall_quantity' => 0,
                 'overall_gross_amount' => 0,
@@ -93,16 +83,13 @@ class PosController extends Controller
                 'overall_amount' => 0,
             ]);            foreach (Cart::instance('sale')->content() as $cart_item) {
                 SaleDetails::create([
-                    'sale_id' => $sale->id,
-                    'product_id' => $cart_item->id,
-                    'product_name' => $cart_item->name,
-                    'product_code' => $cart_item->options->code,
-                    'quantity' => $cart_item->qty,
-                    'price' => $cart_item->price,
-                    'unit_price' => $cart_item->options->unit_price,
-                    'sub_total' => $cart_item->options->sub_total,
-                    'product_discount_amount' => $cart_item->options->product_discount,
-                    'product_discount_type' => $cart_item->options->product_discount_type,
+                    'sale_id'            => $sale->id,
+                    'product_id'         => $cart_item->id,
+                    'product_name'       => $cart_item->name,
+                    'product_code'       => $cart_item->options->code,
+                    'quantity'           => $cart_item->qty,
+                    'rate'               => $cart_item->price,
+                    'sub_total'          => $cart_item->options->sub_total,
                     'product_tax_amount' => $cart_item->options->product_tax,
                 ]);
 
@@ -166,7 +153,7 @@ class PosController extends Controller
 
         $totalAmount = floatval($request->total_amount ?? 0);
         $paidAmount = floatval($request->paid_amount ?? 0);
-        $dueAmount = $totalAmount - $paidAmount - floatval($request->discount_amount ?? 0);
+        $dueAmount = $totalAmount - $paidAmount;
         $potentialBalance = ($customer->opening_balance ?? 0) + $dueAmount;
 
         // Only enforce credit limit if one is set (> 0)

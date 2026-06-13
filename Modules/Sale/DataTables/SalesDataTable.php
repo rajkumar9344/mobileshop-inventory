@@ -14,11 +14,14 @@ class SalesDataTable extends DataTable
     public function dataTable($query) {
         $dt = datatables()
             ->eloquent($query)
+            ->addColumn('customer_name', function ($data) {
+                return $data->customer->customer_name ?? '';
+            })
             ->addColumn('payment_method', function ($data) {
                 return $data->payment_method ?? ($data->payment_mode ?? '');
             })
             ->addColumn('overall_tax_amount', function ($data) {
-                return format_currency($data->overall_tax_amount ?? $data->tax_amount ?? 0);
+                return format_currency($data->overall_tax_amount ?? 0);
             })
             ->addColumn('overall_amount', function ($data) {
                 return format_currency($data->overall_amount ?: $data->total_amount ?: 0);
@@ -60,7 +63,7 @@ class SalesDataTable extends DataTable
             $dt->filter(function ($q) use ($searchValue) {
                 $q->where(function ($sub) use ($searchValue) {
                     $sub->orWhere('reference', 'like', "%{$searchValue}%")
-                        ->orWhere('customer_name', 'like', "%{$searchValue}%")
+                        ->orWhereHas('customer', fn($c) => $c->where('customer_name', 'like', "%{$searchValue}%"))
                         ->orWhere('area', 'like', "%{$searchValue}%")
                         ->orWhere('payment_method', 'like', "%{$searchValue}%");
                 });
@@ -193,7 +196,7 @@ class SalesDataTable extends DataTable
                 ->title('Bill Ref Date')
                 ->className('text-center align-middle'),
 
-            Column::make('customer_name')
+            Column::computed('customer_name')
                 ->title('Customer Name')
                 ->className('text-center align-middle'),
 

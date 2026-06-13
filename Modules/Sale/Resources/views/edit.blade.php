@@ -79,6 +79,11 @@
                                             <input type="text" class="form-control" id="excess_amount_display" readonly value="{{ $sale->customer_id ? number_format($sale->customer->excess_amount ?? 0, 2, '.', '') : '0.00' }}">
                                             <input type="hidden" name="excess_amount" id="excess_amount" value="{{ $sale->customer_id ? $sale->customer->excess_amount ?? 0 : 0 }}">
                                         </div>
+                                        <div class="col-md-2 pr-1">
+                                            <label for="vat_id_display" class="mb-1">VAT ID / TRN</label>
+                                            <input type="text" class="form-control" id="vat_id_display" readonly
+                                                value="{{ $sale->customer_id ? ($sale->customer->vat_id ?? '') : '' }}" placeholder="—">
+                                        </div>
                                         <!-- Discount Type removed per request -->
                                 </div>
                             </div>
@@ -130,7 +135,6 @@
                                         <div id="paid_amount_error" class="text-danger small" style="display:none;">Amount Received cannot be more than Net Rate.</div>
                                     </div>
                                 </div>
-                                <input type="hidden" name="discount_amount" id="discount_amount_hidden" value="0">
                                 <div class="col-lg-3">
                                     <div class="form-group">
                                         <label for="balance">Balance</label>
@@ -149,10 +153,6 @@
                                 <!-- Settled checkbox removed: settled logic handled in receipts module -->
                             </div>
 
-                            <!-- Hidden required fields -->
-                            <input type="hidden" name="tax_percentage" id="hidden_tax_percentage" value="{{ old('tax_percentage', $sale->tax_percentage ?? 0) }}">
-                            <input type="hidden" name="discount_percentage" id="hidden_discount_percentage" value="{{ old('discount_percentage', $sale->discount_percentage ?? 0) }}">
-                            <input type="hidden" name="shipping_amount" id="hidden_shipping_amount" value="{{ old('shipping_amount', $sale->shipping_amount ?? 0) }}">
                             <input type="hidden" name="total_amount" id="hidden_total_amount" value="{{ old('total_amount', $sale->total_amount ?? 0) }}">
 
                             <!-- Hidden fields for Overall Calculations (backup - actual values come from Livewire component) -->
@@ -290,10 +290,6 @@
             })();
 
             function updateHiddenFields(){
-                document.getElementById('hidden_tax_percentage').value = document.getElementById('hidden_tax_percentage').value || '0';
-                document.getElementById('hidden_discount_percentage').value = document.getElementById('hidden_discount_percentage').value || '0';
-                document.getElementById('hidden_shipping_amount').value = document.getElementById('hidden_shipping_amount').value || '0';
-
                 // Get current cart total dynamically (support masked / formatted inputs)
                 var cartTotal = 0;
                 var $overall = $('#overall_amount');
@@ -393,6 +389,7 @@
                     if (!id) {
                         $('#area,#opening_balance,#phone').val('');
                         $('#customer_discount_percent').val(0);
+                        $('#vat_id_display').val('');
                         return;
                     }
                     var url = '/customers/' + id + '/json';
@@ -419,11 +416,13 @@
                         if (res.cash_discount !== undefined) {
                             $('#customer_discount_percent').val(res.cash_discount);
                         }
+                        $('#vat_id_display').val(res.vat_id || '');
                         setTimeout(function(){ updateBalance(); }, 100);
                     }).fail(function(){
                         $('#area,#opening_balance,#phone').val('');
                         $('#customer_discount_percent').val(0);
                         $('#excess_amount,#excess_amount_display').val('0.00');
+                        $('#vat_id_display').val('');
                     });
                 });
             }

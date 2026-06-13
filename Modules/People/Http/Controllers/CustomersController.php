@@ -141,7 +141,7 @@ class CustomersController extends Controller
 
         // Return only the fields needed by the sale form
         $payload = $customer->only([
-            'id', 'customer_name', 'customer_phone', 'area', 'opening_balance', 'lock', 'credit_limit', 'excess_amount', 'outstanding'
+            'id', 'customer_name', 'customer_phone', 'area', 'opening_balance', 'lock', 'credit_limit', 'excess_amount', 'outstanding', 'vat_id'
         ]);
 
         $payload['has_overdue_outstanding'] = $hasOverdueOutstanding;

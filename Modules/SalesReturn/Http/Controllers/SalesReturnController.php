@@ -53,7 +53,7 @@ class SalesReturnController extends Controller
             $cart = Cart::instance('sale_return');
 
             // Round overall payable to nearest whole rupee for customer-facing amounts
-            $total_amount = round(floatval(str_replace([',', settings()->currency->symbol], '', (string)($request->total_amount ?? 0))), 0);
+            $total_amount = round(floatval(str_replace([',', settings()->currency->symbol], '', (string)($request->total_amount ?? 0))), 2);
             $paid_amount = $request->paid_amount ?? 0;
             $payment_method = $request->payment_method ?? null;
 
@@ -108,6 +108,9 @@ class SalesReturnController extends Controller
                 $vals     = CartItemCalculator::compute($cart_item, $product);
 
                 $pcId = $resolver->resolve($cart_item->id, $options->code ?? null);
+                // VAT% comes from the BRD VAT% input (gst_percent).
+                $_sr_gst_pct = (float)($options->gst_percent ?? $vals['tax_percent']);
+                $_sr_tax_amt = round($vals['sub_total'] * $_sr_gst_pct / 100, 2);
 
                 SaleReturnDetail::create([
                     'sale_return_id'           => $sale_return->id,
@@ -119,11 +122,11 @@ class SalesReturnController extends Controller
                     'unit'                     => $options->unit ?? null,
                     'mrp'                      => $vals['mrp'],
                     'rate'                     => $vals['rate'],
-                    'tax_percent'              => is_numeric($vals['tax_percent']) ? intval($vals['tax_percent']) : null,
-                    'product_tax_amount'       => $vals['tax_amount'],
-                    'tax_amount'               => $vals['tax_amount'],
+                    'tax_percent'              => intval($_sr_gst_pct),
+                    'product_tax_amount'       => $_sr_tax_amt,
+                    'tax_amount'               => $_sr_tax_amt,
                     'product_discount_amount'  => $vals['discount_amount'],
-                    'product_discount_type'    => $options->product_discount_type ?? null,
+                    'product_discount_type'    => $options->product_discount_type ?? 'percentage',
                     'quantity'                 => $cart_item->qty,
                     'price'                    => $cart_item->price,
                     'unit_price'               => $vals['unit_price'],
@@ -225,7 +228,7 @@ class SalesReturnController extends Controller
 
         // Batch-load all products in one query to avoid N+1
         $productIds = $sale_return_details->pluck('product_id')->all();
-        $products   = Product::whereIn('id', $productIds)->get(['id', 'product_quantity'])->keyBy('id');
+        $products   = Product::whereIn('id', $productIds)->get(['id', 'product_quantity', 'product_cost'])->keyBy('id');
 
         Cart::instance($instance)->destroy();
         $cart = Cart::instance($instance);
@@ -264,11 +267,14 @@ class SalesReturnController extends Controller
                     'unit_price'               => $sale_return_detail->unit_price,
                     'mrp'                      => $mrp,
                     'rate'                     => $sale_return_detail->rate !== null ? $sale_return_detail->rate : null,
+                    'rate_before_discount'     => $sale_return_detail->rate ?? $mrp,
                     'tax_percent'              => $sale_return_detail->tax_percent,
+                    'gst_percent'              => $sale_return_detail->tax_percent,
                     'category'                 => $sale_return_detail->category ?? '-',
                     'unit'                     => $sale_return_detail->unit ?? 'Nos',
                     'tax_amount'               => $sale_return_detail->tax_amount ?? $sale_return_detail->product_tax_amount,
                     'amount'                   => $sale_return_detail->amount ?? $sale_return_detail->sub_total,
+                    'product_cost'             => (float)($product?->product_cost ?? 0),
                 ]
             ]);
         }
@@ -360,6 +366,9 @@ class SalesReturnController extends Controller
                 $vals     = CartItemCalculator::compute($cart_item, $product);
 
                 $pcId = $resolver->resolve($cart_item->id, $options->code ?? null);
+                // VAT% comes from the BRD VAT% input (gst_percent).
+                $_sr_gst_pct = (float)($options->gst_percent ?? $vals['tax_percent']);
+                $_sr_tax_amt = round($vals['sub_total'] * $_sr_gst_pct / 100, 2);
 
                 SaleReturnDetail::create([
                     'sale_return_id'           => $sale_return->id,
@@ -371,11 +380,11 @@ class SalesReturnController extends Controller
                     'unit'                     => $options->unit ?? null,
                     'mrp'                      => $vals['mrp'],
                     'rate'                     => $vals['rate'],
-                    'tax_percent'              => is_numeric($vals['tax_percent']) ? intval($vals['tax_percent']) : null,
-                    'product_tax_amount'       => $vals['tax_amount'],
-                    'tax_amount'               => $vals['tax_amount'],
+                    'tax_percent'              => intval($_sr_gst_pct),
+                    'product_tax_amount'       => $_sr_tax_amt,
+                    'tax_amount'               => $_sr_tax_amt,
                     'product_discount_amount'  => $vals['discount_amount'],
-                    'product_discount_type'    => $options->product_discount_type ?? null,
+                    'product_discount_type'    => $options->product_discount_type ?? 'percentage',
                     'quantity'                 => $cart_item->qty,
                     'price'                    => $cart_item->price,
                     'unit_price'               => $vals['unit_price'],

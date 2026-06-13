@@ -38,8 +38,7 @@ class CustomersDataTable extends DataTable
             // Exclude sales with status = "Draft"
             DB::raw("COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.total_amount ELSE 0 END),0) as overall_total"),
             DB::raw("COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.paid_amount ELSE 0 END),0) as overall_paid"),
-            DB::raw("COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.discount_amount ELSE 0 END),0) as overall_discount"),
-            DB::raw("COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.total_amount ELSE 0 END),0) - COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.paid_amount ELSE 0 END),0) - COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.discount_amount ELSE 0 END),0) as overall_balance"),
+            DB::raw("COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.total_amount ELSE 0 END),0) - COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.paid_amount ELSE 0 END),0) as overall_balance"),
             DB::raw('COALESCE(SUM(customers.excess_amount),0) as overall_excess')
         )->first();
 
@@ -70,9 +69,6 @@ class CustomersDataTable extends DataTable
             ->addColumn('paid_amount', function ($data) {
                 return format_currency( ($data->paid_amount ?? 0) / 100 );
             })
-            ->addColumn('discount_amount', function ($data) {
-                return format_currency( ($data->discount_amount ?? 0) / 100 );
-            })
             ->addColumn('balance_amount', function ($data) {
                 return format_currency( ($data->balance_amount ?? 0) / 100 );
             })
@@ -92,7 +88,6 @@ class CustomersDataTable extends DataTable
                     'customers_count' => $summary->customers_count ?? 0,
                     'overall_total' => format_currency( ($summary->overall_total ?? 0) / 100 ),
                     'overall_paid' => format_currency( ($summary->overall_paid ?? 0) / 100 ),
-                    'overall_discount' => format_currency( ($summary->overall_discount ?? 0) / 100 ),
                     'overall_balance' => format_currency( ($summary->overall_balance ?? 0) / 100 ),
                     'overall_open_balance' => format_currency( ($overall_open_balance ?? 0) ),
                     'overall_excess' => format_currency( ($summary->overall_excess ?? 0) ),
@@ -132,8 +127,7 @@ class CustomersDataTable extends DataTable
             ->select(array_merge($customerCols, [
                 DB::raw("COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.total_amount ELSE 0 END), 0) as total_amount"),
                 DB::raw("COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.paid_amount ELSE 0 END), 0) as paid_amount"),
-                DB::raw("COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.discount_amount ELSE 0 END), 0) as discount_amount"),
-                DB::raw("(COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.total_amount ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.paid_amount ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.discount_amount ELSE 0 END), 0)) as balance_amount")
+                DB::raw("(COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.total_amount ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.paid_amount ELSE 0 END), 0)) as balance_amount")
             ]))
             ->groupBy($customerCols);
 

@@ -22,7 +22,7 @@ class UpdateQuotationRequest extends FormRequest
             'customer_id' => 'required_if:customer_type,existing|nullable|numeric',
             'customer_name' => 'required_if:customer_type,new|string|max:255',
             'contact_phone' => 'nullable|string|max:50',
-            'contact_email' => 'nullable|email|max:255',
+            'contact_email' => 'nullable|email:rfc,strict|max:255',
             'contact_address' => 'nullable|string|max:1000',
             'reference' => 'required|string|max:255',
             'tax_percentage' => 'required|integer|min:0|max:100',

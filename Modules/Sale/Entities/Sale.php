@@ -189,10 +189,6 @@ class Sale extends Model
         return $query->where('status', 'Draft');
     }
 
-    public function getShippingAmountAttribute($value) {
-        return $value / 100;
-    }
-
     public function getPaidAmountAttribute($value) {
         return $value / 100;
     }
@@ -205,14 +201,6 @@ class Sale extends Model
         return $value / 100;
     }
 
-
-    public function getTaxAmountAttribute($value) {
-        return $value / 100;
-    }
-
-    public function getDiscountAmountAttribute($value) {
-        return $value / 100;
-    }
 
     public function getOverallQuantityAttribute($value) {
         return $value / 100;
@@ -283,11 +271,6 @@ class Sale extends Model
         $this->attributes['balance'] = $this->toMinor($value);
     }
 
-    public function setShippingAmountAttribute($value)
-    {
-        $this->attributes['shipping_amount'] = $this->toMinor($value);
-    }
-
     public function setPaidAmountAttribute($value)
     {
         $this->attributes['paid_amount'] = $this->toMinor($value);
@@ -301,16 +284,6 @@ class Sale extends Model
     public function setDueAmountAttribute($value)
     {
         $this->attributes['due_amount'] = $this->toMinor($value);
-    }
-
-    public function setTaxAmountAttribute($value)
-    {
-        $this->attributes['tax_amount'] = $this->toMinor($value);
-    }
-
-    public function setDiscountAmountAttribute($value)
-    {
-        $this->attributes['discount_amount'] = $this->toMinor($value);
     }
 
     /* Overall fields */

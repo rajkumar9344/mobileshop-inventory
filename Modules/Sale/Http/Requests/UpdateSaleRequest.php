@@ -23,11 +23,6 @@ class UpdateSaleRequest extends FormRequest
             // allow negative balances (leading minus) as customers can have credits
             'opening_balance' => $isDraft ? 'nullable|regex:/^-?[0-9.,]+$/' : 'required|regex:/^-?[0-9.,]+$/',
             'phone' => ['nullable','string','max:10','regex:/^[0-9]+$/'],
-            'discount_type' => 'nullable|alpha|size:1',
-            'discount_amount' => 'nullable|numeric|lte:overall_amount',
-            'tax_percentage' => $isDraft ? 'nullable|integer|min:0|max:100' : 'required|integer|min:0|max:100',
-            'discount_percentage' => $isDraft ? 'nullable|integer|min:0|max:100' : 'required|integer|min:0|max:100',
-            'shipping_amount' => $isDraft ? 'nullable|numeric' : 'required|numeric',
             'total_amount' => $isDraft ? 'nullable|numeric' : 'required|numeric',
             'status' => 'nullable|string|max:255',
             'payment_method' => 'nullable|string|max:255',
@@ -57,9 +52,7 @@ class UpdateSaleRequest extends FormRequest
         $this->merge($this->normalizeNumericFields([
             'overall_amount',
             'paid_amount',
-            'discount_amount',
             'opening_balance',
-            'shipping_amount',
             'total_amount',
         ]));
     }

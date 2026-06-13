@@ -140,7 +140,7 @@
                             <div class="form-row">
                                 <div class="col-lg-3">
                                     <div class="form-group">
-                                        <label>Tax %</label>
+                                        <label>VAT %</label>
                                         <input type="number" class="form-control" name="tax_percent" min="0" max="100" step="0.01"
                                             oninput="if(this.value.length > 5) this.value = this.value.slice(0, 5);">
                                         @error('tax_percent')<small class="text-danger">{{ $message }}</small>@enderror

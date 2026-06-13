@@ -160,7 +160,7 @@ class QuotationController extends Controller
                     'unit_price' => $vals['unit_price'],
                     'sub_total' => $vals['sub_total'],
                     'product_discount_amount' => $vals['discount_amount'],
-                    'product_discount_type' => $options->product_discount_type,
+                    'product_discount_type' => $options->product_discount_type ?? 'percentage',
                     'discount_percent' => (float) ($options->product_discount_percent ?? 0),
                     'product_tax_amount' => $vals['tax_amount'],
                     'category' => $options->category ?? null,
@@ -336,7 +336,7 @@ class QuotationController extends Controller
                         'unit_price' => $vals['unit_price'],
                         'sub_total' => $vals['sub_total'],
                         'product_discount_amount' => $vals['discount_amount'],
-                        'product_discount_type' => $cart_item->options->product_discount_type ?? null,
+                        'product_discount_type' => $cart_item->options->product_discount_type ?? 'percentage',
                         'discount_percent' => (float) ($cart_item->options->product_discount_percent ?? 0),
                         'product_tax_amount' => $vals['tax_amount'],
                         'category' => $cart_item->options->category ?? null,
@@ -427,8 +427,10 @@ class QuotationController extends Controller
                     'cash_discount_percent' => $quotation_detail->cash_discount_percentage ?? 0,
                     'cash_discount_amount' => $quotation_detail->cash_discount_amount ?? 0,
                     'rate' => $quotation_detail->rate ?? $quotation_detail->unit_price ?? $price,
+                    'rate_before_discount' => $quotation_detail->rate ?? $quotation_detail->unit_price ?? $price,
                     'rate_type' => $quotation_detail->rate_type ?? 'N',
                     'tax_percent' => $quotation_detail->tax_percentage ?? 0,
+                    'gst_percent' => $quotation_detail->tax_percentage ?? 0,
                     'tax_amount' => $quotation_detail->tax_amount ?? 0,
                     'amount' => $quotation_detail->sub_total ?? 0,
                 ]
@@ -492,7 +494,9 @@ class QuotationController extends Controller
                     'hsn' => $quotation_detail->hsn ?? $product?->hsn,
                     'mrp' => $quotation_detail->mrp ?: $product?->mrp,
                     'rate' => $quotation_detail->rate,
+                    'rate_before_discount' => $quotation_detail->rate ?? ($quotation_detail->mrp ?: $product?->mrp),
                     'tax_percent' => $quotation_detail->tax_percentage,
+                    'gst_percent' => $quotation_detail->tax_percentage,
                     'tax_amount' => $quotation_detail->tax_amount,
                     'cash_discount_percent' => $quotation_detail->cash_discount_percentage,
                     'cash_discount_amount' => $quotation_detail->cash_discount_amount,
@@ -631,7 +635,7 @@ class QuotationController extends Controller
                         'unit_price' => $vals['unit_price'],
                         'sub_total' => $vals['sub_total'],
                         'product_discount_amount' => $vals['discount_amount'],
-                        'product_discount_type' => $cart_item->options->product_discount_type ?? null,
+                        'product_discount_type' => $cart_item->options->product_discount_type ?? 'percentage',
                         'discount_percent' => (float) ($cart_item->options->product_discount_percent ?? 0),
                         'product_tax_amount' => $vals['tax_amount'],
                         'category' => $cart_item->options->category ?? null,
@@ -717,8 +721,13 @@ class QuotationController extends Controller
     {
         $vals = CartItemCalculator::compute($cart_item, $product);
 
+        // VAT% comes from the BRD VAT% input (gst_percent), not the legacy tax_percent.
+        $gstPct = (float) ($cart_item->options->gst_percent ?? $vals['tax_percent']);
+        $vals['tax_percent']     = $gstPct;
+        $vals['tax_amount']      = round($vals['sub_total'] * $gstPct / 100, 2);
+
         // Add aliases matching QuotationDetails column names
-        $vals['tax_percentage']          = $vals['tax_percent'];
+        $vals['tax_percentage']          = $gstPct;
         $vals['cash_discount_percentage'] = $vals['cash_discount_percent'];
 
         return $vals;
@@ -756,12 +765,12 @@ class QuotationController extends Controller
         }
 
         $total_amount = $base_total - $submitted_discount;
-        // Round customer-payable totals to nearest whole rupee
-        $total_amount = round($total_amount, 0);
+        // Keep 2 decimals so the list/grand total matches the cart (e.g. 787.50, not 788).
+        $total_amount = round($total_amount, 2);
 
         // Ensure overall_net_rate is numeric before passing to round()
         $rawOverallNet2 = $request->overall_net_rate ?? $total_amount;
-        $overall_net_rate = round(floatval(str_replace([',', settings()->currency->symbol], '', (string)$rawOverallNet2)), 0);
+        $overall_net_rate = round(floatval(str_replace([',', settings()->currency->symbol], '', (string)$rawOverallNet2)), 2);
 
         return [
             'overall_nos' => $overall_nos,

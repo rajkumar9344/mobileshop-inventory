@@ -22,7 +22,7 @@
             {{-- Left: customer --}}
             <td style="width:48%; vertical-align:top; padding:10px 12px; border-right:1px solid #000;">
                 <div style="margin-bottom:5px;">Bill to:</div>
-                <div style="font-weight:700; font-size:11px;">{{ $customer->customer_name ?? $sale->customer_name ?? '' }}</div>
+                <div style="font-weight:700; font-size:11px;">{{ $customer->customer_name ?? '' }}</div>
                 @if(!empty($customer->address ?? ''))
                     <div style="margin-top:3px;">{{ $customer->address }}</div>
                 @endif
@@ -155,18 +155,14 @@
         @endforeach
 
         @php
-            $finalDiscount = $sale->discount_amount ?? 0;
-            $displayGrand  = $total_grand - $finalDiscount;
-            // Totals rows in the grid: Total, VAT, Grand Total + optional Discount
-            $totalsRows   = 3 + ($finalDiscount > 0 ? 1 : 0);
-            $vatLabel     = 'VAT ' . ($vat_pct_label ?: '0%');
+            $vatLabel = 'VAT ' . ($vat_pct_label ?: '0%');
         @endphp
 
         {{-- Totals as a continuation of the grid: words cell spans left, amounts fill right columns --}}
         <tr>
-            <td colspan="5" rowspan="{{ $totalsRows }}" style="border:1px solid #000; padding:7px 6px; vertical-align:top;">
+            <td colspan="5" rowspan="3" style="border:1px solid #000; padding:7px 6px; vertical-align:top;">
                 <div>Total in Words:</div>
-                <div style="font-weight:700; margin-top:4px;">{{ trim(($currencyCode ? $currencyCode . ' ' : '') . number_to_words($displayGrand)) }}</div>
+                <div style="font-weight:700; margin-top:4px;">{{ trim(($currencyCode ? $currencyCode . ' ' : '') . number_to_words($total_grand)) }}</div>
             </td>
             <td colspan="2" style="border:1px solid #000; padding:6px 4px; text-align:right; font-weight:700;">Total</td>
             <td style="border:1px solid #000; padding:6px 4px; text-align:right; font-weight:700;">{{ $currency($total_subtotal) }}</td>
@@ -175,15 +171,9 @@
             <td colspan="2" style="border:1px solid #000; padding:6px 4px; text-align:right; font-weight:700;">{{ $vatLabel }}</td>
             <td style="border:1px solid #000; padding:6px 4px; text-align:right; font-weight:700;">{{ $currency($total_tax) }}</td>
         </tr>
-        @if($finalDiscount > 0)
-        <tr>
-            <td colspan="2" style="border:1px solid #000; padding:6px 4px; text-align:right; font-weight:700;">Discount</td>
-            <td style="border:1px solid #000; padding:6px 4px; text-align:right; font-weight:700;">-{{ $currency($finalDiscount) }}</td>
-        </tr>
-        @endif
         <tr>
             <td colspan="2" style="border:1px solid #000; padding:6px 4px; text-align:right; font-weight:700;">Grand Total{{ $currencyCode ? ' (' . $currencyCode . ')' : '' }}</td>
-            <td style="border:1px solid #000; padding:6px 4px; text-align:right; font-weight:700;">{{ $currency($displayGrand) }}</td>
+            <td style="border:1px solid #000; padding:6px 4px; text-align:right; font-weight:700;">{{ $currency($total_grand) }}</td>
         </tr>
         </tbody>
     </table>
