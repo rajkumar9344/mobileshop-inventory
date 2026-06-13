@@ -201,9 +201,55 @@ class PurchasesReceiptController extends Controller
         return response()->json(['results' => $results]);
     }
 
+    /**
+     * Return the references of any not-settled receipts for a supplier.
+     * A receipt is "not settled" when it has at least one line with is_settled = false.
+     */
+    protected function supplierUnsettledReceipts($supplierId, $excludeReceiptId = null): array
+    {
+        if (empty($supplierId)) return [];
+
+        $query = PurchasesReceipt::where('supplier_id', $supplierId)
+            ->whereHas('lines', function ($l) {
+                $l->where('is_settled', false);
+            });
+
+        if ($excludeReceiptId) {
+            $query->where('id', '!=', $excludeReceiptId);
+        }
+
+        return $query->orderBy('id')->pluck('reference')->filter()->values()->all();
+    }
+
+    /**
+     * AJAX: check whether the selected supplier has not-settled receipts.
+     */
+    public function unsettledCheck(Request $request)
+    {
+        abort_if(!auth()->check(), 401);
+
+        $refs = $this->supplierUnsettledReceipts($request->get('supplier_id'));
+
+        return response()->json([
+            'has_unsettled' => count($refs) > 0,
+            'references'    => $refs,
+        ]);
+    }
+
     public function store(StorePurchasesReceiptRequest $request) {
         abort_if(Gate::denies('create_purchases_receipts'), 403);
         $data = $request->validated();
+
+        // Block: supplier must have no not-settled receipts before creating a new one.
+        $unsettled = $this->supplierUnsettledReceipts($data['supplier_id'] ?? null);
+        if (!empty($unsettled)) {
+            $msg = 'This supplier has not-settled receipt(s): ' . implode(', ', $unsettled)
+                 . '. Please settle them before creating a new receipt.';
+            if ($request->wantsJson() || $request->expectsJson()) {
+                return response()->json(['errors' => ['supplier_id' => [$msg]]], 422);
+            }
+            return redirect()->back()->withInput()->withErrors(['supplier_id' => $msg]);
+        }
 
         // Additional per-line business validation: ensure payment + discount <= purchase due
         $errors = [];

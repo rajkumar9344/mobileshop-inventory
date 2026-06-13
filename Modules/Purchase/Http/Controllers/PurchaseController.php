@@ -262,7 +262,7 @@ class PurchaseController extends Controller
                 $discountPercent = (float) ($cart_item->options->product_discount_percent ?? 0);
                 $cashDiscountPercent = (float) ($cart_item->options->cash_discount_percent ?? 0);
                 $cashDiscountAmount = (float) ($cart_item->options->cash_discount_amount ?? 0);
-                $taxPercent = (float) ($cart_item->options->tax_percent ?? 0);
+                $taxPercent = (float) ($cart_item->options->gst_percent ?? $cart_item->options->tax_percent ?? 0);
                 $qty = $cart_item->qty;
 
                 if ($_rateBeforeDiscount !== null) {
@@ -295,7 +295,7 @@ class PurchaseController extends Controller
                     // Persist computed values (so DB matches UI calculations)
                     'rate' => $computedRate,
                     'rate_type' => $cart_item->options->rate_type ?? 'N',
-                    'tax_percent' => $cart_item->options->tax_percent ?? 0,
+                    'tax_percent' => $taxPercent,
                     'tax_amount' => $computedTaxAmount,
                     'amount' => $computedAmount,
                     'price' => $cart_item->price,
@@ -319,11 +319,10 @@ class PurchaseController extends Controller
                 // Use helper to increment purchase stock
                 $product->addPurchaseStock($cart_item->qty);
 
-                // Update product MRP when the submitted MRP differs from the current product master.
-                // Comparing the DOM-submitted value (always current) against the saved product MRP
-                // is more reliable than the session-based mrp_user_entered flag.
-                if ($_effectiveMrp > 0 && abs($_effectiveMrp - round(floatval($product->mrp ?? 0), 2)) >= 0.005) {
-                    $product->mrp = $_effectiveMrp;
+                // BRD: the entered Purchase Rate updates the product's cost in the Product Master.
+                $newCost = round(floatval($_rateBeforeDiscount ?? 0), 2);
+                if ($newCost > 0 && abs($newCost - round(floatval($product->product_cost ?? 0), 2)) >= 0.005) {
+                    $product->product_cost = $newCost;
                     $product->save();
                 }
 
@@ -573,7 +572,7 @@ class PurchaseController extends Controller
                         $discountPercent = (float) ($cart_item->options->product_discount_percent ?? 0);
                         $cashDiscountPercent = (float) ($cart_item->options->cash_discount_percent ?? 0);
                         $cashDiscountAmount = (float) ($cart_item->options->cash_discount_amount ?? 0);
-                        $taxPercent = (float) ($cart_item->options->tax_percent ?? 0);
+                        $taxPercent = (float) ($cart_item->options->gst_percent ?? $cart_item->options->tax_percent ?? 0);
                         $qty = $cart_item->qty;
 
                         if ($_rateBeforeDiscount !== null) {
@@ -602,7 +601,7 @@ class PurchaseController extends Controller
                         'rate_before_discount' => $_rateBeforeDiscount,
                         'rate' => $computedRate,
                         'rate_type' => $cart_item->options->rate_type ?? 'N',
-                        'tax_percent' => $cart_item->options->tax_percent ?? 0,
+                        'tax_percent' => $taxPercent,
                         'tax_amount' => $computedTaxAmount,
                         'amount' => $computedAmount,
                         'price' => $cart_item->price,
@@ -717,8 +716,10 @@ class PurchaseController extends Controller
                         )
                 ),
                 'tax_percent' => $purchase_detail->tax_percent ?? ($product->product_order_tax ?? 0),
+                'gst_percent' => $purchase_detail->tax_percent ?? ($product->product_order_tax ?? 0),
                 'tax_amount' => $purchase_detail->tax_amount ?? $purchase_detail->product_tax_amount,
                 'amount' => $purchase_detail->amount ?? $purchase_detail->sub_total,
+                'product_cost' => (float)($product->product_cost ?? 0),
                 'rate_type' => $purchase_detail->rate_type ?? 'N'
             ];
 
@@ -903,7 +904,7 @@ class PurchaseController extends Controller
                 $discountPercent = (float) ($cart_item->options->product_discount_percent ?? 0);
                 $cashDiscountPercent = (float) ($cart_item->options->cash_discount_percent ?? 0);
                 $cashDiscountAmount = (float) ($cart_item->options->cash_discount_amount ?? 0);
-                $taxPercent = (float) ($cart_item->options->tax_percent ?? 0);
+                $taxPercent = (float) ($cart_item->options->gst_percent ?? $cart_item->options->tax_percent ?? 0);
                 $qty = $cart_item->qty;
 
                 if ($_rateBeforeDiscount !== null) {
@@ -932,7 +933,7 @@ class PurchaseController extends Controller
                     'rate_before_discount' => $_rateBeforeDiscount,
                     'rate' => $computedRate,
                     'rate_type' => $cart_item->options->rate_type ?? 'N',
-                    'tax_percent' => $cart_item->options->tax_percent ?? 0,
+                    'tax_percent' => $taxPercent,
                     'tax_amount' => $computedTaxAmount,
                     'amount' => $computedAmount,
                     'price' => $cart_item->price,
@@ -957,11 +958,10 @@ class PurchaseController extends Controller
                     // Use helper to increment purchase stock
                     $product->addPurchaseStock($cart_item->qty);
 
-                    // Update product MRP when the submitted MRP differs from the current product master.
-                    // Comparing the DOM-submitted value (always current) against the saved product MRP
-                    // is more reliable than the session-based mrp_user_entered flag.
-                    if ($_effectiveMrp > 0 && abs($_effectiveMrp - round(floatval($product->mrp ?? 0), 2)) >= 0.005) {
-                        $product->mrp = $_effectiveMrp;
+                    // BRD: the entered Purchase Rate updates the product's cost in the Product Master.
+                    $newCost = round(floatval($_rateBeforeDiscount ?? 0), 2);
+                    if ($newCost > 0 && abs($newCost - round(floatval($product->product_cost ?? 0), 2)) >= 0.005) {
+                        $product->product_cost = $newCost;
                         $product->save();
                     }
 

@@ -74,6 +74,25 @@ class ProductCart extends Component
     const CACHE_DURATION = 30; // Cache duration in seconds
     private const PURCHASE_EDITABLE_INSTANCES = ['purchase', 'purchase_edit', 'purchase_return'];
     private const PURCHASE_ALL_INSTANCES = ['purchase', 'purchase_edit', 'purchase_return', 'purchase_view', 'purchase_return_view'];
+    // Sale-related flows (sale, sale return, quotation) — share the BRD "sale group" layout.
+    private const SALE_GROUP_INSTANCES = ['sale', 'sale_edit', 'sale_view', 'sale_return', 'sale_return_view', 'quotation', 'quotation_edit', 'quotation_view'];
+
+    /**
+     * True when the current cart instance is a sale-related flow (sale / sale return / quotation).
+     * Single source of truth — use instead of hand-copied in_array() lists.
+     */
+    public function isSaleGroup(): bool
+    {
+        return in_array($this->cart_instance, self::SALE_GROUP_INSTANCES, true);
+    }
+
+    /**
+     * True when the current cart instance is a purchase flow (purchase / purchase return).
+     */
+    public function isPurchaseGroup(): bool
+    {
+        return in_array($this->cart_instance, self::PURCHASE_ALL_INSTANCES, true);
+    }
 
     /**
      * Return the shopping cart instance for the configured cart_instance.
@@ -591,24 +610,13 @@ class ProductCart extends Component
         $mrp = $fullProduct['mrp'] ?? $fullProduct['product_price'] ?? 0;
         $tax_percent = $fullProduct['product_order_tax'] ?? 0;
 
-        // New products default rate depends on purchase type: normally MRP,
-        // but when purchase_type == 4 prefer product_cost (purchase rate).
-        if ($this->isPurchaseCartInstance() && $this->purchase_type == 4) {
-            // For Type-4 purchases prefer explicit product_cost. If missing, do NOT derive
-            // the rate from MRP — leave as zero so UI shows empty/zero rate (consistent with edit path).
-            if (isset($fullProduct['product_cost'])) {
-                // product_cost is treated as pre-tax purchase rate; set base_rate (price-with-tax) accordingly
-                $rate = (float) $fullProduct['product_cost'];
-                $base_rate = $rate * (1 + ($tax_percent / 100));
-            } else {
-                // No product_cost available — do not calculate from MRP for Type-4
-                $rate = 0.0;
-                $base_rate = 0.0;
-            }
-        } elseif ($this->isPurchaseCartInstance() && $this->purchase_type == 3) {
-            // Type-3 purchases: Rate Before Discount should show MRP directly.
-            $base_rate = $mrp;
-            $rate = (float) $base_rate;
+        // New product default rate by context (Purchase Bill Type removed — single path).
+        if ($this->isPurchaseGroup()) {
+            // Purchase / Purchase Return (BRD): Purchase Rate pre-fills with the product's
+            // cost and VAT defaults to 5%. Both are editable.
+            $rate        = (float) ($fullProduct['product_cost'] ?? 0);
+            $base_rate   = $rate;
+            $tax_percent = 5.0;
         } elseif (in_array($this->cart_instance, ['sale', 'sale_edit'])) {
             // Sale: unit price and VAT% are manually entered (BRD) — start at zero so inputs show blank
             $base_rate   = 0.0;

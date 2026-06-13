@@ -7,6 +7,8 @@ Route::group(['middleware' => ['web', 'auth']], function() {
     // are not captured by the resource's {sales_receipt} parameter.
     Route::get('sales-receipts/sales/search', 'Modules\\SalesReceipt\\Http\\Controllers\\SalesReceiptController@searchSales')->name('salesreceipts.sales.search');
     Route::get('sales-receipts/customers', 'Modules\\SalesReceipt\\Http\\Controllers\\SalesReceiptController@customers')->name('salesreceipts.customers');
+    // Check whether a customer has any not-settled receipts (blocks creating new ones)
+    Route::get('sales-receipts/unsettled-check', 'Modules\\SalesReceipt\\Http\\Controllers\\SalesReceiptController@unsettledCheck')->name('salesreceipts.unsettled-check');
     Route::get('sales-receipts/totals', 'Modules\\SalesReceipt\\Http\\Controllers\\SalesReceiptController@totals')->name('salesreceipts.totals');
     // Toggle settlement for a receipt line (cheque clearance)
     Route::post('sales-receipts/{receipt}/lines/{line}/settle', 'Modules\SalesReceipt\Http\Controllers\SalesReceiptController@toggleSettle')->name('salesreceipts.lines.settle');

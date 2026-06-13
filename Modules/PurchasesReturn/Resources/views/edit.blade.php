@@ -75,15 +75,6 @@
                                     <label for="excess_amount" class="mb-1">Excess</label>
                                     <input type="text" class="form-control" name="excess_amount" id="excess_amount" maxlength="15" readonly placeholder="0.00" value="{{ old('excess_amount', $purchase_return->excess_amount ?? '0.00') }}">
                                 </div>
-                                <div class="col-md-3 pr-1">
-                                    <label for="purchase_type" class="mb-1">Type</label>
-                                    <select class="form-control" name="purchase_type" id="purchase_type" onchange="Livewire.dispatch('purchaseTypeChanged', {type: this.value})" @if($isReadOnly) disabled @endif>
-                                        <option value="1" {{ ($purchase_return->purchase_type ?? 1) == 1 ? 'selected' : '' }}>Type 1</option>
-                                        <option value="2" {{ ($purchase_return->purchase_type ?? 1) == 2 ? 'selected' : '' }}>Type 2</option>
-                                        <option value="3" {{ ($purchase_return->purchase_type ?? 1) == 3 ? 'selected' : '' }}>Type 3</option>
-                                        <option value="4" {{ ($purchase_return->purchase_type ?? 1) == 4 ? 'selected' : '' }}>Type 4</option>
-                                    </select>
-                                </div>
                             </div>
 
                             @unless($isReadOnly)

@@ -74,15 +74,6 @@
                                     <label for="excess_amount" class="mb-1">Excess</label>
                                     <input type="text" class="form-control" name="excess_amount" id="excess_amount" maxlength="15" readonly placeholder="0.00" value="0.00">
                                 </div>
-                                <div class="col-md-3 pr-1">
-                                    <label for="purchase_type" class="mb-1">Type</label>
-                                    <select class="form-control" name="purchase_type" id="purchase_type" onchange="Livewire.dispatch('purchaseTypeChanged', {type: this.value})">
-                                        <option value="1">Type 1</option>
-                                        <option value="2">Type 2</option>
-                                        <option value="3">Type 3</option>
-                                        <option value="4">Type 4</option>
-                                    </select>
-                                </div>
                             </div>
 
                             <div class="mb-3">

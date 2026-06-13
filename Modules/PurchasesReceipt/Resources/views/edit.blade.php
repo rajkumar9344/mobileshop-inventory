@@ -169,7 +169,6 @@
                                     <th>Paid Amount</th>
                                     <th>Balance Amount</th>
                                     <th>Payment Amount</th>
-                                    <th>Discount Amount</th>
                                     <th>Final Balance</th>
                                     <th></th>
                                 </tr>
@@ -187,13 +186,6 @@
                                             <input type="hidden" id="lines_{{ $loop->index }}_payment_raw" name="lines[{{ $loop->index }}][payment_amount]" class="payment-amount" value="{{ number_format($line->payment_amount, 2, '.', '') }}">
                                             @if($errors->has("lines.{$loop->index}.payment_amount"))
                                                 <small class="text-danger">{{ $errors->first("lines.{$loop->index}.payment_amount") }}</small>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <input type="text" class="form-control currency-input discount-amount-display" data-target="#lines_{{ $loop->index }}_discount_raw" inputmode="decimal" maxlength="15" value="{{ number_format($line->discount_amount, 2, '.', '') }}" @if($isReadOnly) disabled readonly @endif>
-                                            <input type="hidden" id="lines_{{ $loop->index }}_discount_raw" name="lines[{{ $loop->index }}][discount_amount]" class="discount-amount" value="{{ number_format($line->discount_amount, 2, '.', '') }}">
-                                            @if($errors->has("lines.{$loop->index}.discount_amount"))
-                                                <small class="text-danger">{{ $errors->first("lines.{$loop->index}.discount_amount") }}</small>
                                             @endif
                                         </td>
                                         <td class="final-balance">{{ number_format($line->final_balance, 2, '.', '') }}</td>
@@ -528,24 +520,6 @@ $(function(){
         }).val('');
         tr.append($('<td>').append(paymentDisplay).append(paymentRaw));
 
-        // discount amount: visible display + hidden raw
-        var discountDisplay = $('<input>', {
-            type: 'text',
-            'class': 'form-control currency-input discount-amount-display',
-            'data-target': '#lines_' + idx + '_discount_raw',
-            inputmode: 'decimal',
-            maxlength: 15,
-            value: (p.discount_amount !== undefined ? parseFloat(p.discount_amount).toFixed(2) : '0.00'),
-            placeholder: '0.00'
-        });
-        var discountRaw = $('<input>', {
-            type: 'hidden',
-            id: 'lines_' + idx + '_discount_raw',
-            name: 'lines[' + idx + '][discount_amount]',
-            'class': 'discount-amount'
-        }).val((p.discount_amount !== undefined ? parseFloat(p.discount_amount).toFixed(2) : '0.00'));
-        tr.append($('<td>').append(discountDisplay).append(discountRaw));
-
         tr.append($('<td class="final-balance">').text(p.due_amount));
 
         // settled hidden input - will be set automatically based on amount calculation
@@ -619,9 +593,6 @@ $(function(){
             var paymentRaw = $('<input>', { type: 'hidden', id: 'lines_'+idx+'_payment_raw', name: 'lines['+idx+'][payment_amount]', 'class': 'payment-amount' }).val(openingPayment.toFixed(2));
             tr.append($('<td>').append(paymentDisplay).append(paymentRaw));
 
-            var discountDisplay = $('<input>', { type: 'text', 'class': 'form-control currency-input discount-amount-display', 'data-target': '#lines_'+idx+'_discount_raw', inputmode: 'decimal', maxlength: 15, value: '0.00' });
-            var discountRaw = $('<input>', { type: 'hidden', id: 'lines_'+idx+'_discount_raw', name: 'lines['+idx+'][discount_amount]', 'class': 'discount-amount' }).val('0.00');
-            tr.append($('<td>').append(discountDisplay).append(discountRaw));
             // Final balance for opening-row is zero (not a bill)
             tr.append($('<td class="final-balance">').text((0).toFixed(2)));
             tr.append($('<td>').html('<button type="button" class="btn btn-sm btn-danger remove-row">Remove</button>'));

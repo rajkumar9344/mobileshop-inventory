@@ -184,9 +184,55 @@ class SalesReceiptController extends Controller
         return response()->json(['results' => $results]);
     }
 
+    /**
+     * Return the references of any not-settled receipts for a customer.
+     * A receipt is "not settled" when it has at least one line with is_settled = false.
+     */
+    protected function customerUnsettledReceipts($customerId, $excludeReceiptId = null): array
+    {
+        if (empty($customerId)) return [];
+
+        $query = SalesReceipt::where('customer_id', $customerId)
+            ->whereHas('lines', function ($l) {
+                $l->where('is_settled', false);
+            });
+
+        if ($excludeReceiptId) {
+            $query->where('id', '!=', $excludeReceiptId);
+        }
+
+        return $query->orderBy('id')->pluck('reference')->filter()->values()->all();
+    }
+
+    /**
+     * AJAX: check whether the selected customer has not-settled receipts.
+     */
+    public function unsettledCheck(Request $request)
+    {
+        abort_if(!auth()->check(), 401);
+
+        $refs = $this->customerUnsettledReceipts($request->get('customer_id'));
+
+        return response()->json([
+            'has_unsettled' => count($refs) > 0,
+            'references'    => $refs,
+        ]);
+    }
+
     public function store(StoreSalesReceiptRequest $request) {
         abort_if(Gate::denies('create_sales_receipts'), 403);
         $data = $request->validated();
+
+        // Block: customer must have no not-settled receipts before creating a new one.
+        $unsettled = $this->customerUnsettledReceipts($data['customer_id'] ?? null);
+        if (!empty($unsettled)) {
+            $msg = 'This customer has not-settled receipt(s): ' . implode(', ', $unsettled)
+                 . '. Please settle them before creating a new receipt.';
+            if ($request->wantsJson() || $request->expectsJson()) {
+                return response()->json(['errors' => ['customer_id' => [$msg]]], 422);
+            }
+            return redirect()->back()->withInput()->withErrors(['customer_id' => $msg]);
+        }
 
         // Additional per-line business validation: ensure payment + discount <= sale due
         $errors = [];

@@ -29,7 +29,6 @@
                     <th style="border:1px solid #000; padding:4px; width:80px;">Bill Date</th>
                     <th style="border:1px solid #000; padding:4px; width:80px;">Bill Amount</th>
                     <th style="border:1px solid #000; padding:4px; width:80px;">Payment</th>
-                    <th style="border:1px solid #000; padding:4px; width:80px;">Discount</th>
                     <th style="border:1px solid #000; padding:4px; width:80px; border-right:0;">Balance</th>
                 </tr>
             </thead>
@@ -47,7 +46,6 @@
                         <td style="border:1px solid #000; padding:6px; text-align:center;">{{ $line->bill_date }}</td>
                         <td style="border:1px solid #000; padding:6px; text-align:right;">{{ format_currency($line->bill_amount) }}</td>
                         <td style="border:1px solid #000; padding:6px; text-align:right;">{{ format_currency($line->payment_amount) }}</td>
-                        <td style="border:1px solid #000; padding:6px; text-align:right;">{{ format_currency($line->discount_amount) }}</td>
                         <td style="border:1px solid #000; padding:6px; text-align:right; border-right:0;">{{ format_currency($line->final_balance) }}</td>
                     </tr>
                 @endforeach
@@ -59,7 +57,6 @@
                 <td style="padding:4px;" colspan="2"></td>
                 <td style="padding:4px; text-align:right;">{{ format_currency($total_bill) }}</td>
                 <td style="padding:4px; text-align:right;">{{ format_currency($total_payment) }}</td>
-                <td style="padding:4px; text-align:right;">{{ format_currency($total_discount) }}</td>
                 <td style="padding:4px; text-align:right;">{{ format_currency($total_balance) }}</td>
             </tr>
         </table>

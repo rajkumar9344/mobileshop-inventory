@@ -41,22 +41,13 @@ class PurchaseDataTable extends DataTable
             ->addColumn('balance_amount', function ($data) {
                 return format_currency($data->due_amount ?? 0);
             })
-            ->addColumn('payment_status', function ($data) {
-                $status = $data->payment_status ?? 'Unpaid';
-                $class = match($status) {
-                    'Paid'    => 'badge-success',
-                    'Partial' => 'badge-warning',
-                    default   => 'badge-danger',
-                };
-                return '<span class="badge ' . $class . '">' . $status . '</span>';
-            })
             ->addColumn('status', function ($data) {
                 return $data->status_badge;
             })
             ->addColumn('action', function ($data) {
                 return view('purchase::partials.actions', compact('data'));
             })
-            ->rawColumns(['reference', 'payment_status', 'status', 'action']);
+            ->rawColumns(['reference', 'status', 'action']);
     }
 
     public function query(Purchase $model) {
@@ -194,10 +185,6 @@ class PurchaseDataTable extends DataTable
             Column::computed('balance_amount')
                 ->title('Balance')
                 ->className('text-end align-middle'),
-
-            Column::computed('payment_status')
-                ->title('Payment')
-                ->className('text-center align-middle'),
 
             Column::computed('status')
                 ->title('Status')

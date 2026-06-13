@@ -135,7 +135,6 @@
                     <th>Paid Amount</th>
                     <th>Balance Amount</th>
                     <th>Payment Amount</th>
-                    <th>Discount Amount</th>
                     <th>Final Balance</th>
                     <th></th>
                 </tr>
@@ -154,13 +153,6 @@
                                 <input type="hidden" name="lines[{{ $i }}][payment_amount]" id="line_{{ $i }}_payment_raw" class="payment-amount" value="{{ number_format($oline['payment_amount'] ?? 0, 2, '.', '') }}">
                                 @if($errors->has("lines.$i.payment_amount"))
                                     <small class="text-danger">{{ $errors->first("lines.$i.payment_amount") }}</small>
-                                @endif
-                            </td>
-                                <td>
-                                <input type="text" id="line_{{ $i }}_discount_display" class="form-control currency-input discount-amount-display" data-target="#line_{{ $i }}_discount_raw" value="{{ number_format($oline['discount_amount'] ?? 0, 2, '.', '') }}" placeholder="0.00" maxlength="15" aria-label="Discount amount">
-                                <input type="hidden" name="lines[{{ $i }}][discount_amount]" id="line_{{ $i }}_discount_raw" class="discount-amount" value="{{ number_format($oline['discount_amount'] ?? 0, 2, '.', '') }}">
-                                @if($errors->has("lines.$i.discount_amount"))
-                                    <small class="text-danger">{{ $errors->first("lines.$i.discount_amount") }}</small>
                                 @endif
                             </td>
                             <td class="final-balance">{{ number_format($oline['final_balance'] ?? 0, 2, '.', '') }}</td>
@@ -256,6 +248,27 @@ $(function(){
     $('#supplier-select').on('select2:select', function(e){
         var id = e.params.data.id;
 
+        // First: block selecting a supplier who has not-settled receipts.
+        $('#unsettled-warning').remove();
+        $.getJSON('{{ route('purchasesreceipts.unsettled-check') }}', { supplier_id: id })
+            .done(function(chk){
+                if (chk && chk.has_unsettled) {
+                    var refs = (chk.references || []).join(', ');
+                    $('#receipt-form').prepend('<div id="unsettled-warning" class="alert alert-danger">This supplier has not-settled receipt(s): <strong>' + refs + '</strong>. Please settle them before creating a new receipt.</div>');
+                    $('#receipt-form').find('button[type=submit]').prop('disabled', true);
+                    $('#available-bills-table tbody').empty();
+                    $('#bills-table tbody').empty();
+                    $('#area,#opening_balance,#excess_amount').val('');
+                    $('#apply_to_opening_container').hide();
+                    return;
+                }
+                $('#receipt-form').find('button[type=submit]').prop('disabled', false);
+                loadSupplierBills(id);
+            })
+            .fail(function(){ loadSupplierBills(id); });
+    });
+
+    function loadSupplierBills(id){
         // clear previously listed available bills and show spinner
         $('#available-bills-table tbody').empty();
         availableBillsMap = {};
@@ -307,13 +320,15 @@ $(function(){
         }).always(function(){
             $('#available-bills .loading-spinner').hide();
         });
-    });
+    }
 
     // hide apply-to-opening until supplier selected and bills loaded
     $('#apply_to_opening_container').hide();
 
     // when supplier cleared, hide the apply-to-opening control and remove opening rows
     $('#supplier-select').on('select2:clear', function(){
+        $('#unsettled-warning').remove();
+        $('#receipt-form').find('button[type=submit]').prop('disabled', false);
         $('#apply_to_opening_container').hide();
         $('#apply_to_opening').prop('checked', false);
         $('#bills-table tbody tr.opening-row').remove();
@@ -343,13 +358,6 @@ $(function(){
         var $payDisplay = $('<input>', { type: 'text', id: payDisplayId, 'class': 'form-control currency-input payment-amount-display', inputmode: 'decimal', maxlength: 15, placeholder: '0.00', 'data-target': '#' + payRawId, value: '' });
         var $payRaw = $('<input>', { type: 'hidden', name: 'lines[' + idx + '][payment_amount]', id: payRawId, 'class': 'payment-amount', value: '' });
         tr.append($('<td>').append($payDisplay).append($payRaw));
-
-        // discount amount: visible formatted display + hidden raw numeric field
-        var discDisplayId = 'lines_' + idx + '_discount_display';
-        var discRawId = 'lines_' + idx + '_discount_raw';
-        var $discDisplay = $('<input>', { type: 'text', id: discDisplayId, 'class': 'form-control currency-input discount-amount-display', inputmode: 'decimal', maxlength: 15, placeholder: '0.00', 'data-target': '#' + discRawId, value: (p.discount_amount !== undefined ? parseFloat(p.discount_amount).toFixed(2) : '0.00') });
-        var $discRaw = $('<input>', { type: 'hidden', name: 'lines[' + idx + '][discount_amount]', id: discRawId, 'class': 'discount-amount', value: (p.discount_amount !== undefined ? parseFloat(p.discount_amount).toFixed(2) : '0.00') });
-        tr.append($('<td>').append($discDisplay).append($discRaw));
 
         tr.append($('<td class="final-balance">').text(p.due_amount));
 
@@ -401,12 +409,6 @@ $(function(){
             var paymentDisplay = $('<input>', { type: 'text', id: payDispId, 'class': 'form-control currency-input payment-amount-display', 'data-target': '#'+payRawId, inputmode: 'decimal', maxlength: 15, value: '', placeholder: '0.00' });
             var paymentRaw = $('<input>', { type: 'hidden', id: payRawId, name: 'lines['+idx+'][payment_amount]', 'class': 'payment-amount' }).val('');
             tr.append($('<td>').append(paymentDisplay).append(paymentRaw));
-            // discount amount: currency display + hidden raw
-            var discDispId = 'lines_'+idx+'_discount_display';
-            var discRawId = 'lines_'+idx+'_discount_raw';
-            var discountDisplay = $('<input>', { type: 'text', id: discDispId, 'class': 'form-control currency-input discount-amount-display', 'data-target': '#'+discRawId, inputmode: 'decimal', maxlength: 15, value: '0.00', placeholder: '0.00' });
-            var discountRaw = $('<input>', { type: 'hidden', id: discRawId, name: 'lines['+idx+'][discount_amount]', 'class': 'discount-amount' }).val('0.00');
-            tr.append($('<td>').append(discountDisplay).append(discountRaw));
             // Final balance for opening-row is displayed as zero (it's not a bill)
             tr.append($('<td class="final-balance">').text((0).toFixed(2)));
             tr.append($('<td>').html('<button type="button" class="btn btn-sm btn-danger remove-row">Remove</button>'));

@@ -167,7 +167,6 @@
                                     <th>Received Amount</th>
                                     <th>Balance Amount</th>
                                     <th>Payment Amount</th>
-                                    <th>Discount Amount</th>
                                     <th>Final Balance</th>
                                             <th></th>
                                 </tr>
@@ -190,15 +189,6 @@
                                                     <small class="text-danger">{{ $errors->first("lines.$i.payment_amount") }}</small>
                                                 @endif
                                             </td>
-                                            <td>
-                                                {{-- visible formatted discount display --}}
-                                                <input type="text" id="lines_{{ $i }}_discount_display" class="form-control currency-input discount-amount-display" inputmode="decimal" maxlength="15" value="{{ number_format($oline['discount_amount'] ?? 0, 2, '.', '') }}" data-target="#lines_{{ $i }}_discount_raw">
-                                                {{-- hidden raw discount keeps server name --}}
-                                                <input type="hidden" name="lines[{{ $i }}][discount_amount]" id="lines_{{ $i }}_discount_raw" class="discount-amount" value="{{ number_format($oline['discount_amount'] ?? 0, 2, '.', '') }}">
-                                                @if($errors->has("lines.$i.discount_amount"))
-                                                    <small class="text-danger">{{ $errors->first("lines.$i.discount_amount") }}</small>
-                                                @endif
-                                            </td>
                                             <td class="final-balance">{{ number_format($oline['final_balance'] ?? 0, 2, '.', '') }}</td>
                                             <td><button type="button" class="btn btn-sm btn-danger remove-row">Remove</button></td>
                                             <input type="hidden" name="lines[{{ $i }}][sale_id]" value="{{ $oline['sale_id'] ?? '' }}">
@@ -217,12 +207,6 @@
                                                 <input type="text" id="lines_{{ $i }}_payment_display" class="form-control currency-input payment-amount-display" inputmode="decimal" maxlength="15" value="{{ number_format($line->payment_amount, 2, '.', '') }}" data-target="#lines_{{ $i }}_payment_raw" {{ $isReadOnly ? 'disabled' : '' }}>
                                                 {{-- hidden raw payment keeps server name --}}
                                                 <input type="hidden" name="lines[{{ $i }}][payment_amount]" id="lines_{{ $i }}_payment_raw" class="payment-amount" value="{{ number_format($line->payment_amount, 2, '.', '') }}">
-                                            </td>
-                                            <td>
-                                                {{-- visible formatted discount display --}}
-                                                <input type="text" id="lines_{{ $i }}_discount_display" class="form-control currency-input discount-amount-display" inputmode="decimal" maxlength="15" value="{{ number_format($line->discount_amount, 2, '.', '') }}" data-target="#lines_{{ $i }}_discount_raw" {{ $isReadOnly ? 'disabled' : '' }}>
-                                                {{-- hidden raw discount keeps server name --}}
-                                                <input type="hidden" name="lines[{{ $i }}][discount_amount]" id="lines_{{ $i }}_discount_raw" class="discount-amount" value="{{ number_format($line->discount_amount, 2, '.', '') }}">
                                             </td>
                                             <td class="final-balance">{{ number_format($line->final_balance, 2, '.', '') }}</td>
                                             <td>@unless($isReadOnly)<button type="button" class="btn btn-sm btn-danger remove-row">Remove</button>@endunless</td>
@@ -586,11 +570,6 @@ $(function(){
         var $payRaw = $('<input>', { type: 'hidden', name: 'lines[' + idx + '][payment_amount]', id: payRawId, 'class': 'payment-amount', value: '' });
         tr.append($('<td>').append($payDisplay).append($payRaw));
 
-        var discDisplayId = 'lines_' + idx + '_discount_display';
-        var discRawId = 'lines_' + idx + '_discount_raw';
-        var $discDisplay = $('<input>', { type: 'text', id: discDisplayId, 'class': 'form-control currency-input discount-amount-display', inputmode: 'decimal', maxlength: 15, placeholder: '0.00', 'data-target': '#' + discRawId, value: (s.discount_amount !== undefined ? parseFloat(s.discount_amount).toFixed(2) : '0.00') });
-        var $discRaw = $('<input>', { type: 'hidden', name: 'lines[' + idx + '][discount_amount]', id: discRawId, 'class': 'discount-amount', value: (s.discount_amount !== undefined ? parseFloat(s.discount_amount).toFixed(2) : '0.00') });
-        tr.append($('<td>').append($discDisplay).append($discRaw));
     tr.append($('<td class="final-balance">').text(formatAmount(s.due_amount)));
         tr.append($('<td>').html('<button type="button" class="btn btn-sm btn-danger remove-row">Remove</button>'));
         var hidden = $('<input>', { type: 'hidden', name: 'lines[' + idx + '][sale_id]' }).val(s.id);
@@ -646,18 +625,13 @@ $(function(){
             var $payDisplay = $('<input>', { type: 'text', id: payDisplayId, 'class': 'form-control currency-input payment-amount-display', inputmode: 'decimal', maxlength: 15, placeholder: '0.00', 'data-target': '#' + payRawId, value: payDisplayVal });
             var $payRaw = $('<input>', { type: 'hidden', name: 'lines['+idx+'][payment_amount]', id: payRawId, 'class': 'payment-amount', value: payRawVal });
             tr.append($('<td>').append($payDisplay).append($payRaw));
-            var discDisplayId = 'lines_' + idx + '_discount_display';
-            var discRawId = 'lines_' + idx + '_discount_raw';
-            var $discDisplay = $('<input>', { type: 'text', id: discDisplayId, 'class': 'form-control currency-input discount-amount-display', inputmode: 'decimal', maxlength: 15, placeholder: '0.00', 'data-target': '#' + discRawId, value: '0.00' });
-            var $discRaw = $('<input>', { type: 'hidden', name: 'lines['+idx+'][discount_amount]', id: discRawId, 'class': 'discount-amount', value: '0.00' });
-            tr.append($('<td>').append($discDisplay).append($discRaw));
             tr.append($('<td class="final-balance">').text((openingBal - (openingPayment === '' ? 0 : (parseFloat(openingPayment) || 0))).toFixed(2)));
             tr.append($('<td>').html('<button type="button" class="btn btn-sm btn-danger remove-row">Remove</button>'));
             tr.append($('<input>', { type: 'hidden', name: 'lines['+idx+'][sale_id]' }).val(''));
             $('#bills-table tbody').append(tr);
             // initialize currency inputs on newly appended displays and trigger input to recalc row final
             try { if (window.currencyInputInit) window.currencyInputInit(); } catch(e) {}
-            try { $('#' + payDisplayId).trigger('input'); $('#' + discDisplayId).trigger('input'); } catch(e) {}
+            try { $('#' + payDisplayId).trigger('input'); } catch(e) {}
             computeSettlement();
         } else {
             if (!$('#apply_to_opening').is(':checked') || ($('#bills-table tbody tr').length || 0) > 0) {

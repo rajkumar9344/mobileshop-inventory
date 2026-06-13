@@ -111,7 +111,7 @@ class PurchasesReturnController extends Controller
                 $discountPercent = (float) ($cart_item->options->product_discount_percent ?? 0);
                 $cashDiscountPercent = (float) ($cart_item->options->cash_discount_percent ?? 0);
                 $cashDiscountAmount = (float) ($cart_item->options->cash_discount_amount ?? 0);
-                $taxPercent = (float) ($cart_item->options->tax_percent ?? 0);
+                $taxPercent = (float) ($cart_item->options->gst_percent ?? $cart_item->options->tax_percent ?? 0);
                 $qty = $cart_item->qty;
 
                 if ($_rateBeforeDiscount !== null) {
@@ -153,7 +153,7 @@ class PurchasesReturnController extends Controller
                     'rate_before_discount' => $_rateBeforeDiscount,
                     'rate' => $computedRate,
                     'rate_type' => $cart_item->options->rate_type ?? 'N',
-                    'tax_percent' => $cart_item->options->tax_percent ?? 0,
+                    'tax_percent' => $taxPercent,
                     'tax_amount' => $computedTaxAmount,
                     'amount' => $computedAmount,
                 ]);
@@ -279,6 +279,7 @@ class PurchasesReturnController extends Controller
                     'rate'                     => $d->rate ?? $d->unit_price,
                     'rate_type'                => $d->rate_type ?? 'N',
                     'tax_percent'              => $d->tax_percent ?? 0,
+                    'gst_percent'              => $d->tax_percent ?? 0,
                     'tax_amount'               => $d->tax_amount ?? $d->product_tax_amount,
                     'amount'                   => $d->amount ?? $d->sub_total,
                 ]
@@ -385,7 +386,7 @@ class PurchasesReturnController extends Controller
                 $discountPercent = (float) ($cart_item->options->product_discount_percent ?? 0);
                 $cashDiscountPercent = (float) ($cart_item->options->cash_discount_percent ?? 0);
                 $cashDiscountAmount = (float) ($cart_item->options->cash_discount_amount ?? 0);
-                $taxPercent = (float) ($cart_item->options->tax_percent ?? 0);
+                $taxPercent = (float) ($cart_item->options->gst_percent ?? $cart_item->options->tax_percent ?? 0);
                 $qty = $cart_item->qty;
 
                 if ($_rateBeforeDiscount !== null) {
@@ -427,7 +428,7 @@ class PurchasesReturnController extends Controller
                     'rate_before_discount' => $_rateBeforeDiscount,
                     'rate' => $computedRate,
                     'rate_type' => $cart_item->options->rate_type ?? 'N',
-                    'tax_percent' => $cart_item->options->tax_percent ?? 0,
+                    'tax_percent' => $taxPercent,
                     'tax_amount' => $computedTaxAmount,
                     'amount' => $computedAmount,
                 ]);
