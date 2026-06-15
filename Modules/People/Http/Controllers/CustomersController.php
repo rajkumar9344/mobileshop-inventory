@@ -70,6 +70,19 @@ class CustomersController extends Controller
         $totals['overall_open_balance'] = $overall_open_balance_q->sum(DB::raw('COALESCE(c.opening_balance,0)'));
         $totals['overall_excess'] = $overall_open_balance_q->sum(DB::raw('COALESCE(c.excess_amount,0)'));
 
+        // Received also includes amounts applied to Open Balance via receipts (consistent with the list).
+        $overall_opening_received_q = DB::table('sales_receipts as sr')
+            ->join('customers as c', 'c.id', '=', 'sr.customer_id');
+        QueryFilters::applyDateFilters($overall_opening_received_q, $start, $end, $year, $month, 'c.created_at');
+        if (!empty($search)) {
+            $overall_opening_received_q->where(function($w) use ($search) {
+                $w->where('c.customer_name', 'like', "%{$search}%")->orWhere('c.area', 'like', "%{$search}%");
+            });
+        }
+        $overall_opening_received = $overall_opening_received_q->sum('sr.applied_to_customer');
+        $totals['overall_received_amount'] += ($overall_opening_received ?? 0) / 100;
+        $totals['overall_total_balance'] = ($totals['overall_open_balance'] ?? 0) + ($totals['overall_balance'] ?? 0);
+
         return response()->json($totals);
     }
 
@@ -132,6 +145,14 @@ class CustomersController extends Controller
         $payload = $customer->only([
             'id', 'customer_name', 'customer_phone', 'area', 'opening_balance', 'lock', 'credit_limit', 'excess_amount', 'vat_id'
         ]);
+
+        // Three-bucket balance figures for the transaction forms.
+        $payload['open_balance'] = round($customer->open_balance, 2);
+        $payload['bill_balance'] = round($customer->bill_balance, 2);
+        $payload['total_balance'] = round($customer->total_balance, 2);
+        $payload['open_balance_formatted'] = number_format($customer->open_balance, 2, '.', '');
+        $payload['bill_balance_formatted'] = number_format($customer->bill_balance, 2, '.', '');
+        $payload['total_balance_formatted'] = number_format($customer->total_balance, 2, '.', '');
 
         return response()->json($payload);
     }

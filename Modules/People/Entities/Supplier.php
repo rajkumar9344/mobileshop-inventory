@@ -38,4 +38,29 @@ class Supplier extends Model
     protected static function newFactory() {
         return \Modules\People\Database\factories\SupplierFactory::new();
     }
+
+    /* ───────────────────────────────────────────────────────────────────
+     * Three-bucket balance model (mirrors Customer):
+     *   Open Balance  = carried-forward opening amount (stored open_balance).
+     *   Bill Balance  = sum of unpaid dues across non-draft purchases.
+     *   Total Balance = Open + Bill.
+     * due_amount is stored in paise on the purchases table, so divide by 100.
+     * ─────────────────────────────────────────────────────────────────── */
+
+    public function getOpenBalanceValueAttribute(): float
+    {
+        return (float) ($this->open_balance ?? 0);
+    }
+
+    public function getBillBalanceAttribute(): float
+    {
+        return (float) \Modules\Purchase\Entities\Purchase::where('supplier_id', $this->id)
+            ->where('status', '!=', 'Draft')
+            ->sum('due_amount') / 100;
+    }
+
+    public function getTotalBalanceAttribute(): float
+    {
+        return round($this->open_balance_value + $this->bill_balance, 2);
+    }
 }

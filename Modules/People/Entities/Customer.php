@@ -31,4 +31,31 @@ class Customer extends Model
         return number_format($this->opening_balance, 2, '.', '');
     }
 
+    /* ───────────────────────────────────────────────────────────────────
+     * Three-bucket balance model (single source of truth):
+     *   Open Balance  = carried-forward opening amount (stored opening_balance).
+     *                   Only changed by manual edit + "Apply to Open Balance"
+     *                   receipts — NOT by a bill's unpaid amount.
+     *   Bill Balance  = sum of unpaid dues across the customer's non-draft sales.
+     *   Total Balance = Open + Bill.
+     * due_amount is stored in paise on the sales table, so divide by 100.
+     * ─────────────────────────────────────────────────────────────────── */
+
+    public function getOpenBalanceAttribute(): float
+    {
+        return (float) ($this->opening_balance ?? 0);
+    }
+
+    public function getBillBalanceAttribute(): float
+    {
+        return (float) \Modules\Sale\Entities\Sale::where('customer_id', $this->id)
+            ->where('status', '!=', 'Draft')
+            ->sum('due_amount') / 100;
+    }
+
+    public function getTotalBalanceAttribute(): float
+    {
+        return round($this->open_balance + $this->bill_balance, 2);
+    }
+
 }

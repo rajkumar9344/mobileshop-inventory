@@ -54,6 +54,17 @@ class SendSaleEmailController extends Controller
 
         } catch (\Exception $exception) {
             Log::error($exception);
+            // Record the failure on the log so it is visible instead of stuck on 'queued'
+            if (isset($log) && $log instanceof EmailLog) {
+                try {
+                    $log->update([
+                        'status' => 'failed',
+                        'error' => substr($exception->getMessage(), 0, 1000),
+                    ]);
+                } catch (\Throwable $ex) {
+                    Log::error('Failed to update EmailLog: ' . $ex->getMessage());
+                }
+            }
             toast('Something went wrong while sending email!', 'error');
         }
 

@@ -66,8 +66,16 @@
                                 <input type="hidden" name="bill_type" id="bill_type" value="{{ \Modules\Sale\Entities\Sale::BILL_CASH }}">
 
                                 <div class="col-md-2 pr-1">
-                                    <label for="opening_balance" class="mb-1">Balance <span class="text-danger">*</span></label>
+                                    <label for="opening_balance" class="mb-1">Open Balance <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="opening_balance" id="opening_balance" maxlength="15" pattern="^-?\d+(?:\.\d{1,2})?$|^-?\d+(?:,\d{1,2})?$" placeholder="0.00" required readonly oninput="this.value = this.value.replace(/[^0-9.\-]/g,'').replace(/(?!^)-/g,'').slice(0,15)">
+                                </div>
+                                <div class="col-md-2 pr-1">
+                                    <label for="bill_balance_display" class="mb-1">Bill Balance</label>
+                                    <input type="text" class="form-control" id="bill_balance_display" readonly placeholder="0.00">
+                                </div>
+                                <div class="col-md-2 pr-1">
+                                    <label for="total_balance_display" class="mb-1">Total Balance</label>
+                                    <input type="text" class="form-control" id="total_balance_display" readonly placeholder="0.00">
                                 </div>
                                 <div class="col-md-2 pr-1">
                                     <label for="excess_amount_display" class="mb-1">Excess Amount</label>
@@ -804,6 +812,8 @@
                         // Only set Balance field from open balance and preserve bill type default
                         $('#area').val(res.area || '');
                         $('#opening_balance').val(res.opening_balance !== undefined ? res.opening_balance : '0.00');
+                        $('#bill_balance_display').val(res.bill_balance_formatted !== undefined ? res.bill_balance_formatted : '0.00');
+                        $('#total_balance_display').val(res.total_balance_formatted !== undefined ? res.total_balance_formatted : '0.00');
                         $('#vat_id_display').val(res.vat_id || '');
                     // Populate excess amount
                     if (res.excess_amount !== undefined) {
@@ -829,6 +839,7 @@
                     // reset if fail (preserve bill_type instead of clearing it)
                     $('#area,#opening_balance,#phone,#customer_discount_percent').val('');
                     $('#excess_amount_display,#excess_amount').val('0.00');
+                    $('#bill_balance_display,#total_balance_display').val('0.00');
                     $('#vat_id_display').val('');
                 });
             });

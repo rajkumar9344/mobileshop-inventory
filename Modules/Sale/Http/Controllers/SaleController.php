@@ -298,7 +298,8 @@ class SaleController extends Controller
     if (!$isDraft && $request->customer_id) {
         $customer = Customer::findOrFail($request->customer_id);
         $dueAmount = floatval($request->total_amount ?? 0) - floatval($request->paid_amount ?? 0);
-        $potentialBalance = ($customer->opening_balance ?? 0) + $dueAmount;
+        // Potential total owed = current Total Balance (open + existing bills) + this new due.
+        $potentialBalance = ($customer->total_balance ?? 0) + $dueAmount;
 
         // Only enforce credit limit if one is set (> 0)
         $limit = floatval($customer->credit_limit ?? 0);
@@ -468,15 +469,10 @@ class SaleController extends Controller
 
             $cart->destroy();
 
-            // If the sale has any outstanding due, add it to the customer's opening balance
-            // Skip for drafts, as they should not affect balances until completed
-            if (!$isDraft && ($sale->due_amount ?? 0) > 0) {
-                $customer = Customer::lockForUpdate()->find($sale->customer_id);
-                if ($customer) {
-                    $customer->opening_balance = ($customer->opening_balance ?? 0) + ($sale->due_amount ?? 0);
-                    $customer->save();
-                }
-            }
+            // NOTE: A bill's unpaid amount is NOT folded into the customer's Open
+            // Balance. Bill dues live on the sale (due_amount) and surface as the
+            // derived "Bill Balance"; Open Balance is the carried-forward opening
+            // amount only. Total Balance = Open + Bill is computed on read.
 
             // Determine whether the initial payment should be applied immediately.
             // Settled handling has moved to receipts; here we apply the payment whenever
@@ -768,55 +764,11 @@ class SaleController extends Controller
                 'overall_amount'         => $request->overall_amount ?? 0,
             ]);
 
-            // Reconcile customer opening_balance for change in outstanding due.
-            // Skip for drafts without customers
-            if (!$isDraft && $request->customer_id) {
-                try {
-                    $newDue = $effectiveDue;
-                    $newCustomerId = $request->customer_id;
-                    $wasDraft = $oldStatus === 'Draft';
+            // Open Balance is no longer reconciled from bill dues. The bill's
+            // due_amount lives on the sale (updated above) and surfaces as the
+            // derived Bill Balance; Open Balance stays the carried-forward amount.
 
-                    if ($oldCustomerId == $newCustomerId) {
-                        if ($wasDraft) {
-                            // For draft completion, add full newDue since oldDue was never added
-                            $customer = Customer::lockForUpdate()->find($newCustomerId);
-                            if ($customer) {
-                                $customer->opening_balance = ($customer->opening_balance ?? 0) + $newDue;
-                                $customer->save();
-                            }
-                        } else {
-                            // Normal update: add the difference
-                            if (abs($newDue - $oldDue) > 0.0001) {
-                                $customer = Customer::lockForUpdate()->find($newCustomerId);
-                                if ($customer) {
-                                    $customer->opening_balance = ($customer->opening_balance ?? 0) + ($newDue - $oldDue);
-                                    $customer->save();
-                                }
-                            }
-                        }
-                    } else {
-                        // customer changed
-                        $customers = Customer::whereIn('id', [$oldCustomerId, $newCustomerId])->lockForUpdate()->get()->keyBy('id');
-                        if (!$wasDraft && isset($customers[$oldCustomerId])) {
-                            // Only subtract oldDue if the previous sale was not a draft (since drafts don't add to balance)
-                            $c = $customers[$oldCustomerId];
-                            $c->opening_balance = ($c->opening_balance ?? 0) - ($oldDue ?? 0);
-                            $c->save();
-                        }
-                        if (isset($customers[$newCustomerId])) {
-                            // Always add full newDue to the new customer
-                            $c2 = $customers[$newCustomerId];
-                            $c2->opening_balance = ($c2->opening_balance ?? 0) + $newDue;
-                            $c2->save();
-                        }
-                    }
-                } catch (\Exception $e) {
-                    // Do not fail the whole sale update for balance adjust issues; log for investigation.
-                    Log::error('Failed to reconcile customer opening balance on sale update', ['sale_id' => $sale->id, 'error' => $e->getMessage()]);
-                }
-            }
-
-            // After reconciling due amounts, ensure SalePayment rows reflect the sale's paid_amount.
+            // Ensure SalePayment rows reflect the sale's paid_amount.
             // Settled / cheque handling is now the responsibility of the receipts module.
             // Compute desired applied amount in rupees (based on the sale record we just updated)
             $desiredApplied = ($sale->paid_amount ?? 0);
@@ -1006,20 +958,9 @@ class SaleController extends Controller
                     }
                 }
 
-                // Reverse customer balance adjustment for completed sales
-                // Only completed sales (non-drafts) had their due amounts added to customer balance
-                if ($sale->status !== 'Draft' && $sale->customer_id && ($sale->due_amount ?? 0) > 0) {
-                    try {
-                        $customer = Customer::lockForUpdate()->find($sale->customer_id);
-                        if ($customer) {
-                            $customer->opening_balance = ($customer->opening_balance ?? 0) - ($sale->due_amount ?? 0);
-                            $customer->save();
-                        }
-                    } catch (\Exception $e) {
-                        // Log but don't fail the deletion for balance adjust issues
-                        Log::error('Failed to reverse customer opening balance while deleting sale', ['sale_id' => $sale->id, 'error' => $e->getMessage()]);
-                    }
-                }
+                // Open Balance is not touched on delete — the bill's due_amount
+                // disappears with the sale, so the derived Bill Balance updates
+                // automatically.
 
                 // Now delete the sale (will remove sale details if cascade configured)
                 $sale->delete();
@@ -1053,22 +994,23 @@ class SaleController extends Controller
         $paidAmount = floatval($request->paid_amount ?? 0);
         $dueAmount = $totalAmount - $paidAmount;
 
-        // If sale_id is provided (editing an existing sale), subtract the existing sale due
-        // from customer's opening_balance to avoid double-counting the same sale.
+        // Start from the customer's current Total Balance (Open + all bill dues).
+        // When editing a sale, its current due is already inside Total Balance,
+        // so remove it before adding the new due to avoid double-counting.
         $saleId = $request->input('sale_id');
-        $openingBalance = ($customer->opening_balance ?? 0);
+        $baseBalance = (float) $customer->total_balance;
         if ($saleId) {
             try {
                 $existingSale = Sale::find($saleId);
                 if ($existingSale && $existingSale->customer_id == $customerId && ($existingSale->status ?? '') !== 'Draft') {
-                    $openingBalance = $openingBalance - ($existingSale->due_amount ?? 0);
+                    $baseBalance = $baseBalance - ($existingSale->due_amount ?? 0);
                 }
             } catch (\Exception $e) {
-                // ignore and use original opening balance
+                // ignore and use base balance
             }
         }
 
-        $potentialBalance = $openingBalance + $dueAmount;
+        $potentialBalance = $baseBalance + $dueAmount;
 
         $grace = 1000;
         $limit = floatval($customer->credit_limit ?? 0);

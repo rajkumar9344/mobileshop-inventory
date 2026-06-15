@@ -45,8 +45,16 @@
                                     <input type="text" class="form-control" name="area" id="area" maxlength="30" value="{{ $purchase->area }}" placeholder="Area" @if($isReadOnly) disabled @endif>
                                 </div>
                                 <div class="col-md-2 pr-1">
-                                    <label for="balance" class="mb-1">Balance <span class="text-danger">*</span></label>
+                                    <label for="balance" class="mb-1">Open Balance <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="balance" id="balance" maxlength="15" pattern="^\d+(\.\d{1,2})?$|^\d+(,\d{1,2})?$" placeholder="0.00" value="{{ $purchase->balance }}" readonly>
+                                </div>
+                                <div class="col-md-2 pr-1">
+                                    <label for="bill_balance_display" class="mb-1">Bill Balance</label>
+                                    <input type="text" class="form-control" id="bill_balance_display" readonly value="{{ $purchase->supplier_id ? number_format(optional($purchase->supplier)->bill_balance ?? 0, 2, '.', '') : '0.00' }}">
+                                </div>
+                                <div class="col-md-2 pr-1">
+                                    <label for="total_balance_display" class="mb-1">Total Balance</label>
+                                    <input type="text" class="form-control" id="total_balance_display" readonly value="{{ $purchase->supplier_id ? number_format(optional($purchase->supplier)->total_balance ?? 0, 2, '.', '') : '0.00' }}">
                                 </div>
                             </div>
                             <div class="form-row mt-2 mb-3">
@@ -305,6 +313,8 @@
 
                 $.get('/api/suppliers/' + id).done(function(res) {
                     $('#area').val(res.area || '');
+                    $('#bill_balance_display').val(res.bill_balance_formatted !== undefined ? res.bill_balance_formatted : '0.00');
+                    $('#total_balance_display').val(res.total_balance_formatted !== undefined ? res.total_balance_formatted : '0.00');
                 }).fail(function() {
                     $('#area').val('');
                 });

@@ -51,8 +51,16 @@
                                                             <input type="text" id="area" class="form-control" readonly>
                                                         </div>
                                                         <div class="col-md-3">
-                                                            <label>Balance</label>
+                                                            <label>Open Balance</label>
                                                             <input type="text" id="opening_balance" name="opening_balance" class="form-control" readonly>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <label>Bill Balance</label>
+                                                            <input type="text" id="bill_balance_display" class="form-control" readonly placeholder="0.00">
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <label>Total Balance</label>
+                                                            <input type="text" id="total_balance_display" class="form-control" readonly placeholder="0.00">
                                                         </div>
                                                         <div class="col-md-3">
                                                             <label>Excess Amount</label>
@@ -94,7 +102,7 @@
                                                             <div id="apply_to_opening_container" style="display:none">
                                                                 <div class="form-check">
                                                                     <input class="form-check-input" type="checkbox" name="apply_to_opening" id="apply_to_opening" value="1" {{ old('apply_to_opening') ? 'checked' : '' }}>
-                                                                    <label class="form-check-label" for="apply_to_opening">Apply to Opening Balance (use when no bills)</label>
+                                                                    <label class="form-check-label" for="apply_to_opening">Apply to Open Balance</label>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -126,6 +134,7 @@
                                                     </div>
                                                 </div>
 
+        <div class="table-responsive">
         <table class="table table-bordered" id="bills-table">
             <thead>
                 <tr>
@@ -164,6 +173,7 @@
                 @endif
             </tbody>
         </table>
+        </div>
 
                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
@@ -282,6 +292,8 @@ $(function(){
             // populate customer details
             $('#area').val(resp.area || '');
             $('#opening_balance').val(resp.opening_balance_formatted || resp.opening_balance || 0);
+            $('#bill_balance_display').val(resp.bill_balance_formatted !== undefined ? resp.bill_balance_formatted : '0.00');
+            $('#total_balance_display').val(resp.total_balance_formatted !== undefined ? resp.total_balance_formatted : '0.00');
             if (resp.excess_amount_formatted !== undefined) {
                 $('#excess_amount_display').val(resp.excess_amount_formatted);
                 $('#excess_amount').val(resp.excess_amount !== undefined ? resp.excess_amount : '0.00');
@@ -315,8 +327,8 @@ $(function(){
                 $('#available-bills-table tbody').append($tr);
             }
 
-            // Show or hide apply-to-opening checkbox: only show when no bills and customer has an opening balance
-            if ((results || []).length === 0 && parseFloat($('#opening_balance').val() || '0') > 0) {
+            // Show apply-to-opening whenever the customer has an Open Balance (even if bills exist).
+            if (parseFloat($('#opening_balance').val() || '0') > 0) {
                 $('#apply_to_opening_container').show();
             } else {
                 $('#apply_to_opening_container').hide();
@@ -394,40 +406,47 @@ $(function(){
         computeSettlement();
     }
 
-    // Ensure an opening-balance synthetic row is present when the checkbox is checked and there are no bill rows
+    // Ensure an opening-balance row is present when the checkbox is checked. The opening
+    // row can coexist with bill rows so a single receipt settles bills AND Open Balance.
     function ensureOpeningRow() {
-        var rows = $('#bills-table tbody tr').length || 0;
-        if ($('#apply_to_opening').is(':checked') && rows === 0) {
-            var idx = 0;
-            var openingBal = parseFloat($('#opening_balance').val() || '0') || 0;
-            var receiptAmt = parseNumber(($('#receipt_amount_raw').length ? $('#receipt_amount_raw').val() : $('#receipt_amount').val()) || '0');
-            var tr = $('<tr>').addClass('opening-row');
-            tr.append($('<td>').text('Opening Balance'));
-            tr.append($('<td>').text('-'));
-            // For synthetic opening row, keep bill amount stable (do not mirror receipt amount)
-            tr.append($('<td class="bill-amount">').text((0).toFixed(2)));
-            tr.append($('<td class="received-before">').text('0.00'));
-            tr.append($('<td class="balance-before">').text(openingBal.toFixed(2)));
-            var paymentDisplayId = 'line_' + idx + '_payment_display';
-            var paymentRawId = 'line_' + idx + '_payment_raw';
-            // Do not auto-fill payment amount — user should allocate payments manually
-            var paymentDisplay = $('<input>', { type: 'text', id: paymentDisplayId, 'class': 'form-control currency-input payment-amount-display', 'data-target': '#'+paymentRawId, value: '', placeholder: '0.00', maxlength: 15, 'aria-label': 'Payment amount' });
-            var paymentHidden = $('<input>', { type: 'hidden', name: 'lines['+idx+'][payment_amount]', id: paymentRawId, 'class': 'payment-amount', value: '' });
-            tr.append($('<td>').append(paymentDisplay).append(paymentHidden));
-            // initial final balance should be based on the Balance Amount (opening balance), not receipt amount
-            tr.append($('<td class="final-balance">').text(openingBal.toFixed(2)));
-            tr.append($('<td>').html('<button type="button" class="btn btn-sm btn-danger remove-row">Remove</button>'));
-            tr.append($('<input>', { type: 'hidden', name: 'lines['+idx+'][sale_id]' }).val(''));
-            $('#bills-table tbody').append(tr);
-            try { if (window.currencyInputInit) window.currencyInputInit(); } catch(e) {}
+        var checked = $('#apply_to_opening').is(':checked');
+        if (!checked) {
+            $('#bills-table tbody tr.opening-row').remove();
             computeSettlement();
-        } else {
-            // remove synthetic opening row if present and checkbox unchecked or bills exist
-            if (!$('#apply_to_opening').is(':checked') || ($('#bills-table tbody tr').length || 0) > 0) {
-                $('#bills-table tbody tr.opening-row').remove();
-                computeSettlement();
-            }
+            return;
         }
+        // already present — keep the user's entered amount
+        if ($('#bills-table tbody tr.opening-row').length > 0) {
+            computeSettlement();
+            return;
+        }
+        // Fixed, high index so the opening line never collides with bill-line indices
+        var idx = 999;
+        var openingBal = parseFloat($('#opening_balance').val() || '0') || 0;
+        var receiptAmt = parseNumber(($('#receipt_amount_raw').length ? $('#receipt_amount_raw').val() : $('#receipt_amount').val()) || '0');
+        // Default the opening payment to the receipt amount not yet allocated to bills,
+        // capped at the available Open Balance.
+        var billPay = 0;
+        $('#bills-table tbody tr').each(function(){ billPay += parseFloat($(this).find('.payment-amount').val()) || 0; });
+        var suggested = Math.max(0, Math.min(receiptAmt - billPay, openingBal));
+        var suggestedStr = suggested > 0 ? suggested.toFixed(2) : '';
+        var tr = $('<tr>').addClass('opening-row');
+        tr.append($('<td>').text('Opening Balance'));
+        tr.append($('<td>').text('-'));
+        tr.append($('<td class="bill-amount">').text((0).toFixed(2)));
+        tr.append($('<td class="received-before">').text('0.00'));
+        tr.append($('<td class="balance-before">').text(openingBal.toFixed(2)));
+        var paymentDisplayId = 'line_' + idx + '_payment_display';
+        var paymentRawId = 'line_' + idx + '_payment_raw';
+        var paymentDisplay = $('<input>', { type: 'text', id: paymentDisplayId, 'class': 'form-control currency-input payment-amount-display', 'data-target': '#'+paymentRawId, value: suggestedStr, placeholder: '0.00', maxlength: 15, 'aria-label': 'Payment amount' });
+        var paymentHidden = $('<input>', { type: 'hidden', name: 'lines['+idx+'][payment_amount]', id: paymentRawId, 'class': 'payment-amount', value: suggestedStr });
+        tr.append($('<td>').append(paymentDisplay).append(paymentHidden));
+        tr.append($('<td class="final-balance">').text((openingBal - suggested).toFixed(2)));
+        tr.append($('<td>').html('<button type="button" class="btn btn-sm btn-danger remove-row">Remove</button>'));
+        tr.append($('<input>', { type: 'hidden', name: 'lines['+idx+'][sale_id]' }).val(''));
+        $('#bills-table tbody').append(tr);
+        try { if (window.currencyInputInit) window.currencyInputInit(); } catch(e) {}
+        computeSettlement();
     }
 
     // react to checkbox and receipt amount changes

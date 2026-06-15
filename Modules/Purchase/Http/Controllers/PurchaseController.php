@@ -329,14 +329,10 @@ class PurchaseController extends Controller
 
             $cart->destroy();
 
-            // If the purchase has any outstanding due, add it to the supplier's open balance
-            if (($purchase->due_amount ?? 0) > 0) {
-                $supplier = Supplier::lockForUpdate()->find($purchase->supplier_id);
-                if ($supplier) {
-                    $supplier->open_balance = ($supplier->open_balance ?? 0) + ($purchase->due_amount ?? 0);
-                    $supplier->save();
-                }
-            }
+            // NOTE: A bill's unpaid amount is NOT folded into the supplier's Open
+            // Balance. Bill dues live on the purchase (due_amount) and surface as
+            // the derived "Bill Balance"; Open Balance is the carried-forward
+            // opening amount only. Total Balance = Open + Bill is computed on read.
 
             // If any amount was actually paid, create a PurchasesReceipt and PurchasePayment
             // so the payment is tracked as a receipt and applied to supplier/purchase.
@@ -391,13 +387,9 @@ class PurchaseController extends Controller
                     'payment_method' => $request->payment_method
                 ]);
 
-                // adjust supplier balance by applied amount (lock row)
-                $supplier = Supplier::lockForUpdate()->find($purchase->supplier_id);
-                if ($supplier) {
-                    // Clamp open balance to zero when subtracting payments - do not allow negative balances
-                    $supplier->open_balance = max(0, ($supplier->open_balance ?? 0) - $paymentAmount);
-                    $supplier->save();
-                }
+                // Open Balance is not adjusted by a bill payment — the payment is
+                // recorded on the purchase (paid_amount) and via PurchasePayment,
+                // so the derived Bill Balance already reflects it.
             }
         });
 
@@ -963,45 +955,9 @@ class PurchaseController extends Controller
 
             $cart->destroy();
 
-            // Reconcile supplier open_balance for change in outstanding due.
-            // Special-case: Draft -> Non-Draft transition: drafts never affected supplier balances, so add full due to supplier.
-            $newDue = $due_amount;
-            $newSupplierId = $request->supplier_id;
-
-            if ($wasDraft && ($purchase->status ?? '') !== 'Draft') {
-                // Transitioning from Draft to completed state: add entire due to new supplier
-                if (($newDue ?? 0) > 0) {
-                    $supplier = Supplier::lockForUpdate()->find($newSupplierId);
-                    if ($supplier) {
-                        $supplier->open_balance = ($supplier->open_balance ?? 0) + ($newDue ?? 0);
-                        $supplier->save();
-                    }
-                }
-            } else {
-                if ($oldSupplierId == $newSupplierId) {
-                    if (abs($newDue - $oldDue) > 0.0001) {
-                        $supplier = Supplier::lockForUpdate()->find($newSupplierId);
-                        if ($supplier) {
-                            // Adjust and clamp to zero if negative
-                            $supplier->open_balance = max(0, ($supplier->open_balance ?? 0) + ($newDue - $oldDue));
-                            $supplier->save();
-                        }
-                    }
-                } else {
-                    // supplier changed: subtract oldDue from old supplier, add newDue to new supplier
-                    $suppliers = Supplier::whereIn('id', [$oldSupplierId, $newSupplierId])->lockForUpdate()->get()->keyBy('id');
-                    if (isset($suppliers[$oldSupplierId])) {
-                        $s = $suppliers[$oldSupplierId];
-                        $s->open_balance = max(0, ($s->open_balance ?? 0) - ($oldDue ?? 0));
-                        $s->save();
-                    }
-                    if (isset($suppliers[$newSupplierId])) {
-                        $s2 = $suppliers[$newSupplierId];
-                        $s2->open_balance = ($s2->open_balance ?? 0) + ($newDue ?? 0);
-                        $s2->save();
-                    }
-                }
-            }
+            // Open Balance is no longer reconciled from bill dues. The purchase's
+            // due_amount (updated above) surfaces as the derived Bill Balance;
+            // Open Balance stays the carried-forward amount.
 
             // Reconcile PurchasePayment rows to support multiple payment history.
             // Instead of replacing all payments, preserve existing payments and add new ones as needed.
@@ -1063,13 +1019,8 @@ class PurchaseController extends Controller
                     'payment_method' => $request->payment_method
                 ]);
 
-                // subtract applied amount from supplier balance
-                $supplier = Supplier::lockForUpdate()->find($purchase->supplier_id);
-                if ($supplier) {
-                    // Clamp to zero instead of throwing an error
-                    $supplier->open_balance = max(0, ($supplier->open_balance ?? 0) - $additionalAmount);
-                    $supplier->save();
-                }
+                // Open Balance is not adjusted by a bill payment — it is recorded
+                // on the purchase (paid_amount) and via PurchasePayment.
             }
             // If the desired applied amount is less than existing total, we keep existing payments
             // (this preserves payment history even if the total paid amount is reduced)
@@ -1109,14 +1060,8 @@ class PurchaseController extends Controller
             return redirect()->route('purchases.index');
         }
 
-        // Reverse supplier balance adjustment before deleting (clamp to zero)
-        if (($purchase->due_amount ?? 0) > 0) {
-            $supplier = Supplier::lockForUpdate()->find($purchase->supplier_id);
-            if ($supplier) {
-                $supplier->open_balance = max(0, ($supplier->open_balance ?? 0) - ($purchase->due_amount ?? 0));
-                $supplier->save();
-            }
-        }
+        // Open Balance is not touched on delete — the bill's due_amount disappears
+        // with the purchase, so the derived Bill Balance updates automatically.
 
         // Delete associated payment records before deleting the purchase
         PurchasePayment::where('purchase_id', $purchase->id)->delete();

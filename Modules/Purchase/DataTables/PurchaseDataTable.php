@@ -171,7 +171,7 @@ class PurchaseDataTable extends DataTable
                 ->className('text-center align-middle'),
 
             Column::computed('overall_tax_amount')
-                ->title('Tax Amount')
+                ->title('VAT Amount')
                 ->className('text-end align-middle'),
 
             Column::computed('overall_bill_amount')

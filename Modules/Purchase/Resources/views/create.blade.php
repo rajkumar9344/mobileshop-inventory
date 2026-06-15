@@ -51,8 +51,16 @@
                                     <input type="text" class="form-control" name="area" id="area" maxlength="30" readonly placeholder="Area">
                                 </div>
                                 <div class="col-md-2 pr-1">
-                                    <label for="balance" class="mb-1">Balance <span class="text-danger">*</span></label>
+                                    <label for="balance" class="mb-1">Open Balance <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="balance" id="balance" maxlength="15" pattern="^\d+(\.\d{1,2})?$|^\d+(,\d{1,2})?$" readonly placeholder="0.00" value="0.00">
+                                </div>
+                                <div class="col-md-2 pr-1">
+                                    <label for="bill_balance_display" class="mb-1">Bill Balance</label>
+                                    <input type="text" class="form-control" id="bill_balance_display" readonly placeholder="0.00" value="0.00">
+                                </div>
+                                <div class="col-md-2 pr-1">
+                                    <label for="total_balance_display" class="mb-1">Total Balance</label>
+                                    <input type="text" class="form-control" id="total_balance_display" readonly placeholder="0.00" value="0.00">
                                 </div>
                             </div>
                             <div class="form-row mt-2 mb-3">
@@ -219,6 +227,15 @@
                     $('#area').val(area);
                     $('#balance').val(parseFloat(balance).toFixed(2));
                     $('#excess_amount').val(parseFloat(excess).toFixed(2));
+                    var sid = $(this).val();
+                    if (sid) {
+                        $.get('/api/suppliers/' + sid).done(function(res){
+                            $('#bill_balance_display').val(res.bill_balance_formatted !== undefined ? res.bill_balance_formatted : '0.00');
+                            $('#total_balance_display').val(res.total_balance_formatted !== undefined ? res.total_balance_formatted : '0.00');
+                        });
+                    } else {
+                        $('#bill_balance_display,#total_balance_display').val('0.00');
+                    }
                 });
 
             if ($('#paid_amount').length) {

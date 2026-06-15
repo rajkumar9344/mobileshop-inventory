@@ -92,9 +92,18 @@ class SuppliersController extends Controller
 
         // Return only the fields needed by the purchase form
         // Include supplier discount so purchase form can apply it to the cart
-        return response()->json($supplier->only([
+        $payload = $supplier->only([
             'id', 'supplier_name', 'supplier_phone', 'area', 'open_balance', 'credit_limit', 'tax_percent', 'excess_amount', 'due_days'
-        ]));
+        ]);
+
+        // Three-bucket balance figures for the transaction forms.
+        $payload['bill_balance'] = round($supplier->bill_balance, 2);
+        $payload['total_balance'] = round($supplier->total_balance, 2);
+        $payload['open_balance_formatted'] = number_format($supplier->open_balance_value, 2, '.', '');
+        $payload['bill_balance_formatted'] = number_format($supplier->bill_balance, 2, '.', '');
+        $payload['total_balance_formatted'] = number_format($supplier->total_balance, 2, '.', '');
+
+        return response()->json($payload);
     }
 
     /**
@@ -176,6 +185,19 @@ class SuppliersController extends Controller
 
         $totals['overall_open_balance'] = $overall_open_balance_q->sum(DB::raw('COALESCE(s.open_balance,0)'));
         $totals['overall_excess'] = $overall_open_balance_q->sum(DB::raw('COALESCE(s.excess_amount,0)'));
+
+        // Paid also includes amounts applied to Open Balance via receipts (consistent with the list).
+        $overall_opening_paid_q = DB::table('purchases_receipts as pr')
+            ->join('suppliers as s', 's.id', '=', 'pr.supplier_id');
+        QueryFilters::applyDateFilters($overall_opening_paid_q, $start, $end, null, null, 's.created_at');
+        if (!empty($search)) {
+            $overall_opening_paid_q->where(function($w) use ($search) {
+                $w->where('s.supplier_name', 'like', "%{$search}%")->orWhere('s.area', 'like', "%{$search}%");
+            });
+        }
+        $overall_opening_paid = $overall_opening_paid_q->sum('pr.applied_to_supplier');
+        $totals['overall_received_amount'] += ($overall_opening_paid ?? 0) / 100;
+        $totals['overall_total_balance'] = ($totals['overall_open_balance'] ?? 0) + ($totals['overall_balance'] ?? 0);
 
         return response()->json($totals);
     }

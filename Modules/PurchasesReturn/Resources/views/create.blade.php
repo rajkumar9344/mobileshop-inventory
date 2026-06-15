@@ -56,8 +56,20 @@
                                 </div>
                                 <div class="col-lg-2">
                                     <div class="form-group">
-                                        <label for="balance">Balance</label>
+                                        <label for="balance">Open Balance</label>
                                         <input type="text" class="form-control" name="balance" id="balance" maxlength="15" pattern="^\d+(\.\d{1,2})?$|^\d+(,\d{1,2})?$" readonly placeholder="0.00" value="0.00">
+                                    </div>
+                                </div>
+                                <div class="col-lg-2">
+                                    <div class="form-group">
+                                        <label for="bill_balance_display">Bill Balance</label>
+                                        <input type="text" class="form-control" id="bill_balance_display" readonly placeholder="0.00" value="0.00">
+                                    </div>
+                                </div>
+                                <div class="col-lg-2">
+                                    <div class="form-group">
+                                        <label for="total_balance_display">Total Balance</label>
+                                        <input type="text" class="form-control" id="total_balance_display" readonly placeholder="0.00" value="0.00">
                                     </div>
                                 </div>
                             </div>
@@ -153,6 +165,8 @@
                 }
 
                 $.get('/api/suppliers/' + id).done(function(res) {
+                    $('#bill_balance_display').val(res.bill_balance_formatted !== undefined ? res.bill_balance_formatted : '0.00');
+                    $('#total_balance_display').val(res.total_balance_formatted !== undefined ? res.total_balance_formatted : '0.00');
                     var lessDisc = parseFloat(res.less_discount_percent || 0) || 0;
                     if (window.Livewire && typeof Livewire.emit === 'function') {
                         Livewire.emit('applyCustomerAdditionalDiscount', { discount: lessDisc });

@@ -78,7 +78,7 @@
                                     </tr>
                                     <tr>
                                         <th>Buy Price</th>
-                                        <td>{{ $product->buy_price ?? 'N/A' }}</td>
+                                        <td>{{ format_currency($product->buy_price) }}</td>
                                     </tr>
                                     <tr>
                                         <th>Purchase Rate</th>
@@ -90,7 +90,7 @@
                                     </tr>
                                     <tr>
                                         <th>List Price</th>
-                                        <td>{{ $product->list_price ?? 'N/A' }}</td>
+                                        <td>{{ format_currency($product->list_price) }}</td>
                                     </tr>
                                     <tr>
                                         <th>Status</th>

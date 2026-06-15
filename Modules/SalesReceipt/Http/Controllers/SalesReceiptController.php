@@ -241,45 +241,21 @@ class SalesReceiptController extends Controller
         // Detect synthetic opening-row: single submitted line with empty sale_id while apply_to_opening checked.
         // Capture the payment+discount the user entered (so we can apply partial amounts to opening),
         // but skip sale-level validation for this synthetic row.
-        $linelessApplied = 0.0;
-        $isSyntheticOpening = false;
-        if (!empty($data['apply_to_opening']) && count($submittedLines) === 1 && empty($submittedLines[0]['sale_id'])) {
-            $isSyntheticOpening = true;
-            $linelessApplied = floatval($submittedLines[0]['payment_amount'] ?? 0) + floatval($submittedLines[0]['discount_amount'] ?? 0);
-        }
-
-        // If synthetic opening requested, ensure there are no outstanding bills for this customer
-        if ($isSyntheticOpening) {
-            $customerId = $data['customer_id'] ?? null;
-            $submittedSaleIds = [];
-            if (is_array($submittedLines)) {
-                foreach ($submittedLines as $l) { if (!empty($l['sale_id'])) $submittedSaleIds[] = intval($l['sale_id']); }
-            }
-
-            $hasOutstanding = Sale::where('customer_id', $customerId)
-                ->where('due_amount', '>', 0)
-                ->where(function($q) {
-                    $q->whereNull('status')->orWhere('status', '!=', 'Draft');
-                })
-                ->when(!empty($submittedSaleIds), function($q) use ($submittedSaleIds) {
-                    $q->whereNotIn('id', $submittedSaleIds);
-                })
-                ->exists();
-
-            if ($hasOutstanding) {
-                $err = ['apply_to_opening' => 'Cannot apply directly to Opening Balance while there are outstanding bills for this customer. Please settle bills first.'];
-                if ($request->wantsJson() || $request->expectsJson()) {
-                    return response()->json(['errors' => array_map(function($v){ return [$v]; }, $err)], 422);
-                }
-                return redirect()->back()->withInput()->withErrors($err);
+        // Identify the opening-balance line (empty sale_id) when apply_to_opening is checked.
+        // Bill lines (with sale_id) and a single opening line may be submitted together,
+        // so one receipt can settle bills AND reduce Open Balance at the same time.
+        $openingLine = null;
+        if (!empty($data['apply_to_opening'])) {
+            foreach ($submittedLines as $l) {
+                if (empty($l['sale_id'])) { $openingLine = $l; break; }
             }
         }
+        $isSyntheticOpening = $openingLine !== null;
 
-        $linesForValidation = $isSyntheticOpening ? [] : $submittedLines;
-        foreach ($linesForValidation as $idx => $line) {
+        foreach ($submittedLines as $idx => $line) {
             $saleId = $line['sale_id'] ?? null;
             if (empty($saleId)) {
-                $errors["lines.{$idx}.sale_id"] = "Selected sale not found.";
+                // Opening-balance line (no sale) — validated separately, not against a sale.
                 continue;
             }
             $sale = Sale::find($saleId);
@@ -306,11 +282,11 @@ class SalesReceiptController extends Controller
             return redirect()->back()->withInput()->withErrors($errors);
         }
 
-    DB::transaction(function() use ($request, $data, $linelessApplied, $submittedLines, $isSyntheticOpening) {
+    DB::transaction(function() use ($request, $data, $openingLine, $submittedLines, $isSyntheticOpening) {
             // lock customer row to avoid concurrent balance updates
             $customer = Customer::lockForUpdate()->findOrFail($data['customer_id']);
 
-            // create receipt including a snapshot of the customer's opening balance
+            // create receipt including a snapshot of the customer's Open Balance
             $receipt = SalesReceipt::create([
                 'date' => $data['date'],
                 'customer_id' => $data['customer_id'],
@@ -318,127 +294,83 @@ class SalesReceiptController extends Controller
                 'payment_mode' => $data['payment_mode'] ?? null,
                 'total_amount' => 0,
                 'total_discount' => 0,
-                // use submitted opening_balance when provided, otherwise current customer balance
                 'customer_balance_before' => (int) round(floatval($data['opening_balance'] ?? $customer->opening_balance ?? 0) * 100),
                 'created_by' => auth()->id()
             ]);
 
-            $total = 0; // sum of all line payments (regardless of applied)
-            $totalDiscount = 0;
-            $appliedTotal = 0; // sum of payments actually applied to sales (cash or settled cheque)
-            $appliedDiscount = 0;
-
-            // Calculate total receipt amount and allocated amount for settlement logic
             $receiptAmount = floatval($data['amount'] ?? 0);
-            $totalAllocated = 0;
-            $lines = is_array($submittedLines) ? $submittedLines : [];
-            // If synthetic opening-row was submitted, do not process it as a sale line
-            $linesToProcess = $isSyntheticOpening ? [] : $lines;
-            if ($isSyntheticOpening) {
-                $totalAllocated = 0;
-            } else {
-                // settlement is based on payment amounts only (discounts do not reduce receipt allocation)
-                foreach ($linesToProcess as $line) {
-                    $totalAllocated += floatval($line['payment_amount'] ?? 0);
-                }
-            }
 
-            // Determine if receipt is settled: receipt amount equals total allocated amount
+            // Bill lines (with sale_id) reduce each sale's own due — they do NOT touch
+            // Open Balance. The opening line (no sale_id) reduces Open Balance.
+            $billLines = array_values(array_filter(is_array($submittedLines) ? $submittedLines : [], function($l){ return !empty($l['sale_id']); }));
+            $billPayments = 0.0;
+            foreach ($billLines as $l) { $billPayments += floatval($l['payment_amount'] ?? 0); }
+            $openingPayment  = $openingLine ? floatval($openingLine['payment_amount'] ?? 0) : 0.0;
+            $openingDiscount = $openingLine ? floatval($openingLine['discount_amount'] ?? 0) : 0.0;
+
+            // Settlement: receipt amount equals total payments allocated (bills + opening)
+            $totalAllocated = $billPayments + $openingPayment;
             $isReceiptSettled = abs($receiptAmount - $totalAllocated) < self::SETTLEMENT_TOLERANCE;
 
-            foreach ($linesToProcess as $line) {
+            $totalDiscount = 0.0;
+            foreach ($billLines as $line) {
                 $result = $this->processSaleLine($line, $receipt, $isReceiptSettled, $data);
-                $appliedTotal += $result['appliedTotal'];
-                $appliedDiscount += $result['appliedDiscount'];
-                $total += $result['total'];
                 $totalDiscount += $result['totalDiscount'];
             }
 
-            // update receipt totals, reference and ensure balance_before in a single query
-            $attrs = [
+            // update receipt totals + reference
+            $receipt->update([
                 'total_amount' => $receiptAmount,
                 'total_discount' => $totalDiscount,
                 'reference' => self::REFERENCE_PREFIX . str_pad($receipt->id, 5, '0', STR_PAD_LEFT),
-            ];
-            if (is_null($receipt->customer_balance_before)) {
-                $attrs['customer_balance_before'] = (int) round(floatval($customer->opening_balance ?? 0) * 100);
-            }
-            $receipt->update($attrs);
+            ]);
 
-            // update sale_payments created with temporary REC/{id} reference to final receipt reference
+            // point temp-referenced sale payments at the final receipt reference
             \Modules\Sale\Entities\SalePayment::where('reference', self::TEMP_PAYMENT_PREFIX.$receipt->id)
                 ->update(['reference' => $receipt->reference]);
-            // If user submitted a synthetic opening-row, apply only the user-entered amount (possibly partial)
-            if ($isSyntheticOpening && !empty($data['apply_to_opening'])) {
-                // For opening balance, only actual payment should count toward "applied to customer"
-                // Discounts do not reduce receipt allocation; use payment amount only when present.
-                $linelessPayment = $isSyntheticOpening && isset($submittedLines[0]['payment_amount']) ? floatval($submittedLines[0]['payment_amount']) : 0.0;
-                $linelessDiscount = $isSyntheticOpening && isset($submittedLines[0]['discount_amount']) ? floatval($submittedLines[0]['discount_amount']) : 0.0;
-                $appliedAmount = $linelessPayment > 0 ? $linelessPayment : $receiptAmount;
-                // update applied and balance-before together
-                $receipt->update([
-                    'customer_balance_before' => (int) round(floatval($customer->opening_balance ?? 0) * 100),
-                    // store applied amount as paise (payments-only)
-                    'applied_to_customer' => (int) round($appliedAmount * 100),
-                ]);
 
-                // Persist a synthetic opening-line so opening applications are auditable
+            // Open Balance application — only the opening line reduces Open Balance.
+            if ($openingLine) {
+                $openingApply = $openingPayment + $openingDiscount;
+                $balanceBefore = !is_null($receipt->customer_balance_before)
+                    ? ($receipt->customer_balance_before / 100)
+                    : floatval($customer->opening_balance ?? 0);
+
+                // applied_to_customer tracks money received against Open Balance (payments only)
+                $receipt->update(['applied_to_customer' => (int) round($openingPayment * 100)]);
+
                 try {
-                    // $linelessPayment/$linelessDiscount already computed above; recompute balanceBefore
-                    $balanceBefore = is_null($receipt->customer_balance_before) ? ($customer->opening_balance ?? 0) : ($receipt->customer_balance_before / 100);
-                    // Decide settlement based on payments-only and compare in paise (integers)
-                    $appliedPaise = (int) round($appliedAmount * 100);
-                    $receiptPaise = (int) round($receiptAmount * 100);
-                    $isSettledLineless = abs($appliedPaise - $receiptPaise) <= 1;
                     SalesReceiptLine::create([
                         'sales_receipt_id' => $receipt->id,
                         'sale_id' => null,
                         'bill_ref' => 'Opening Balance',
                         'bill_date' => null,
-                        // Lineless opening rows do not represent a sale bill; store bill_amount as zero
                         'bill_amount' => 0,
                         'received_before' => 0,
                         'balance_before' => $balanceBefore,
-                        'payment_amount' => $linelessPayment,
-                        'discount_amount' => $linelessDiscount,
-                        'final_balance' => max(0, $balanceBefore - ($linelessPayment + $linelessDiscount)),
-                        'is_settled' => $isSettledLineless,
-                        'settled_at' => $isSettledLineless ? now() : null,
-                        'settled_by' => $isSettledLineless ? auth()->id() : null,
+                        'payment_amount' => $openingPayment,
+                        'discount_amount' => $openingDiscount,
+                        'final_balance' => max(0, $balanceBefore - $openingApply),
+                        'is_settled' => $isReceiptSettled,
+                        'settled_at' => $isReceiptSettled ? now() : null,
+                        'settled_by' => $isReceiptSettled ? auth()->id() : null,
                     ]);
                 } catch (\Exception $e) {
-                    // Log and continue: migration may not yet be applied in some environments
-                    Log::warning('Failed to persist synthetic opening line', ['receipt_id' => $receipt->id, 'error' => $e->getMessage()]);
+                    Log::warning('Failed to persist opening line', ['receipt_id' => $receipt->id, 'error' => $e->getMessage()]);
                 }
 
-                // Apply payment + discount to the customer's balances so discounts reduce opening balance
-                $linelessApplyForBalance = $linelessPayment + $linelessDiscount;
-                if ($linelessApplyForBalance > 0) {
-                    $this->applyReceiptToCustomer($customer, $linelessApplyForBalance);
-                } elseif ($appliedAmount > 0) {
-                    // fallback: if no explicit payment provided but full receipt should be applied
-                    $this->applyReceiptToCustomer($customer, $appliedAmount);
-                }
-
-                // Add remaining excess (receiptAmount - appliedAmount) to excess_amount
-                $excessAmount = $receiptAmount - $appliedAmount;
-                if ($excessAmount > 0) {
-                    $customer->excess_amount = floatval($customer->excess_amount ?? 0) + $excessAmount;
+                // reduce the customer's Open Balance by the applied amount (payment + discount)
+                if ($openingApply > 0) {
+                    $customer->opening_balance = max(0, floatval($customer->opening_balance ?? 0) - $openingApply);
                     $customer->save();
                 }
-            } else {
-                // update customer balance only for applied amounts (cash or settled cheque lines)
-                $netApplied = floatval($appliedTotal + $appliedDiscount);
-                if ($netApplied > 0) {
-                    $this->applyReceiptToCustomer($customer, $netApplied);
-                }
+            }
 
-                // Add excess receipt amount (Receipt Amount - Applied Amount) to excess_amount
-                $excessAmount = $receiptAmount - $netApplied;
-                if ($excessAmount > 0) {
-                    $customer->excess_amount = floatval($customer->excess_amount ?? 0) + $excessAmount;
-                    $customer->save();
-                }
+            // Excess: any receipt amount not allocated to bills or opening becomes customer credit
+            $excessAmount = $receiptAmount - ($billPayments + $openingPayment);
+            if ($excessAmount > 0) {
+                $customer->excess_amount = floatval($customer->excess_amount ?? 0) + $excessAmount;
+                $customer->save();
             }
         });
 
@@ -540,39 +472,18 @@ class SalesReceiptController extends Controller
 
         $data = $request->validated();
 
-        // detect synthetic opening-row submitted during update so we can preserve its payment amount
+        // Identify the opening-balance line (empty sale_id). Bill lines and one opening
+        // line may be submitted together so one receipt settles bills AND Open Balance.
         $submittedLines = is_array($data['lines'] ?? null) ? $data['lines'] : [];
-        $isSyntheticOpening = !empty($data['apply_to_opening']) && count($submittedLines) === 1 && empty($submittedLines[0]['sale_id']);
-        $linelessApplied = $isSyntheticOpening ? (floatval($submittedLines[0]['payment_amount'] ?? 0) + floatval($submittedLines[0]['discount_amount'] ?? 0)) : 0.0;
-
-        // If synthetic opening requested during update, ensure there are no outstanding bills
-        if ($isSyntheticOpening) {
-            $customerId = $data['customer_id'] ?? null;
-            $submittedSaleIds = [];
-            if (is_array($submittedLines)) {
-                foreach ($submittedLines as $l) { if (!empty($l['sale_id'])) $submittedSaleIds[] = intval($l['sale_id']); }
-            }
-
-            $hasOutstanding = Sale::where('customer_id', $customerId)
-                ->where('due_amount', '>', 0)
-                ->where(function($q) {
-                    $q->whereNull('status')->orWhere('status', '!=', 'Draft');
-                })
-                ->when(!empty($submittedSaleIds), function($q) use ($submittedSaleIds) {
-                    $q->whereNotIn('id', $submittedSaleIds);
-                })
-                ->exists();
-
-            if ($hasOutstanding) {
-                $err = ['apply_to_opening' => 'Cannot apply directly to Opening Balance while there are outstanding bills for this customer. Please settle bills first.'];
-                if ($request->wantsJson() || $request->expectsJson()) {
-                    return response()->json(['errors' => array_map(function($v){ return [$v]; }, $err)], 422);
-                }
-                return redirect()->back()->withInput()->withErrors($err);
+        $openingLine = null;
+        if (!empty($data['apply_to_opening'])) {
+            foreach ($submittedLines as $l) {
+                if (empty($l['sale_id'])) { $openingLine = $l; break; }
             }
         }
+        $isSyntheticOpening = $openingLine !== null;
 
-        DB::transaction(function() use ($data, $id, $submittedLines, $isSyntheticOpening, $linelessApplied) {
+        DB::transaction(function() use ($data, $id, $submittedLines, $isSyntheticOpening, $openingLine) {
             $receipt = SalesReceipt::with('lines')->findOrFail($id);
             // lock the customer early and keep for reuse
             $customer = Customer::lockForUpdate()->find($receipt->customer_id);
@@ -582,12 +493,15 @@ class SalesReceiptController extends Controller
             // Prefer the persisted lineless line's payment+discount (if present) otherwise fall back to
             // the stored `applied_to_customer` (payments-only) for backwards compatibility.
             $oldLinelessAmount = 0.0;
+            $oldOpeningPayment = 0.0;
             $linelessLine = $receipt->lines->first(function($l){ return empty($l->sale_id); });
             if ($linelessLine) {
+                $oldOpeningPayment = floatval($linelessLine->payment_amount ?? 0);
                 $oldLinelessAmount = floatval(($linelessLine->payment_amount ?? 0) + ($linelessLine->discount_amount ?? 0));
             } else {
                 $oldLinelessPaise = intval($receipt->applied_to_customer ?? 0);
                 $oldLinelessAmount = floatval($oldLinelessPaise) / 100;
+                $oldOpeningPayment = $oldLinelessAmount;
             }
             if ($oldLinelessAmount > 0 && $customer) {
                 $this->revertReceiptOnCustomer($customer, $oldLinelessAmount);
@@ -642,162 +556,88 @@ class SalesReceiptController extends Controller
             // delete old lines
             SalesReceiptLine::where('sales_receipt_id', $receipt->id)->delete();
 
-            $total = 0;
-            $totalDiscount = 0;
-            $appliedTotal = 0;
-            $appliedDiscount = 0;
-
-            // Calculate new settlement logic for update
+            // Bill lines reduce each sale's own due; the opening line reduces Open Balance.
             $receiptAmount = floatval($data['amount'] ?? 0);
-            $lines = is_array($submittedLines) ? $submittedLines : [];
-            $linesToProcess = $isSyntheticOpening ? [] : $lines;
-            $totalAllocated = 0;
-            // settlement is based on payment amounts only (discounts do not reduce receipt allocation)
-            foreach ($linesToProcess as $line) {
-                $totalAllocated += floatval($line['payment_amount'] ?? 0);
-            }
+            $billLines = array_values(array_filter(is_array($submittedLines) ? $submittedLines : [], function($l){ return !empty($l['sale_id']); }));
+            $billPayments = 0.0;
+            foreach ($billLines as $l) { $billPayments += floatval($l['payment_amount'] ?? 0); }
+            $openingPayment  = $openingLine ? floatval($openingLine['payment_amount'] ?? 0) : 0.0;
+            $openingDiscount = $openingLine ? floatval($openingLine['discount_amount'] ?? 0) : 0.0;
 
-            // Determine if receipt is settled: receipt amount equals total allocated amount
+            $totalAllocated = $billPayments + $openingPayment;
             $isReceiptSettled = abs($receiptAmount - $totalAllocated) < self::SETTLEMENT_TOLERANCE;
 
-            // apply new lines (only process real sale lines; synthetic opening rows are skipped)
-            foreach ($linesToProcess as $line) {
+            $totalDiscount = 0.0;
+            foreach ($billLines as $line) {
                 $result = $this->processSaleLine($line, $receipt, $isReceiptSettled, $data);
-                $appliedTotal += $result['appliedTotal'];
-                $appliedDiscount += $result['appliedDiscount'];
-                $total += $result['total'];
                 $totalDiscount += $result['totalDiscount'];
             }
 
-            // Ensure new referenced sales are locked and unlock previously referenced
-            // sales which are no longer referenced by any receipt
-            $newSaleIds = array_unique(array_map(function($l) { return intval($l['sale_id'] ?? 0); }, $linesToProcess));
-            // remove any zero/invalid ids
-            $newSaleIds = array_values(array_filter($newSaleIds, function($v){ return $v > 0; }));
-
+            // Lock new referenced sales; unlock previously referenced sales no longer used.
+            $newSaleIds = array_values(array_filter(array_unique(array_map(function($l){ return intval($l['sale_id'] ?? 0); }, $billLines)), function($v){ return $v > 0; }));
             foreach ($newSaleIds as $sid) {
-                try {
-                    $s = Sale::find($sid);
-                    if ($s) {
-                        $s->locked = true;
-                        $s->save();
-                    }
-                        } catch (\Exception $e) {
-                            Log::warning('Failed to lock sale during receipt update', ['sale_id' => $sid, 'error' => $e->getMessage()]);
-                        }
+                try { $s = Sale::find($sid); if ($s) { $s->locked = true; $s->save(); } }
+                catch (\Exception $e) { Log::warning('Failed to lock sale during receipt update', ['sale_id' => $sid, 'error' => $e->getMessage()]); }
             }
-
             foreach ($oldSaleIds as $oldId) {
                 if (in_array(intval($oldId), $newSaleIds)) continue;
-                // if there are other receipt lines referring to this sale, keep it locked
-                $exists = SalesReceiptLine::where('sale_id', $oldId)->exists();
-                if (! $exists) {
-                    try {
-                        $s = Sale::find($oldId);
-                        if ($s) {
-                            $s->locked = false;
-                            $s->save();
-                        }
-                    } catch (\Exception $e) {
-                        Log::warning('Failed to unlock sale during receipt update', ['sale_id' => $oldId, 'error' => $e->getMessage()]);
-                    }
+                if (! SalesReceiptLine::where('sale_id', $oldId)->exists()) {
+                    try { $s = Sale::find($oldId); if ($s) { $s->locked = false; $s->save(); } }
+                    catch (\Exception $e) { Log::warning('Failed to unlock sale during receipt update', ['sale_id' => $oldId, 'error' => $e->getMessage()]); }
                 }
             }
 
-            // update basic receipt header and ensure balance_before recorded
-            $updateAttrs = [
+            // update receipt header
+            $receipt->update([
                 'date' => $data['date'],
                 'particular' => $data['particular'],
                 'payment_mode' => $data['payment_mode'] ?? $receipt->payment_mode,
                 'total_amount' => $receiptAmount,
                 'total_discount' => $totalDiscount,
-                // prefer opening_balance from the form if supplied (user may override on edit)
-                'customer_balance_before' => (int) round(floatval($data['opening_balance'] ?? $customer->opening_balance ?? 0) * 100),
-            ];
-            $receipt->update($updateAttrs);
+                'customer_balance_before' => (int) round(floatval($data['opening_balance'] ?? ($customer ? $customer->opening_balance : 0) ?? 0) * 100),
+                'applied_to_customer' => $openingLine ? (int) round($openingPayment * 100) : null,
+            ]);
 
-            // update customer balance by net change of *applied* amounts (we already have locked $customer)
             if ($customer) {
-                // If the updated receipt requests applying to opening via synthetic row,
-                // apply only the user-entered lineless amount (may be partial) and record it.
-                if ($isSyntheticOpening && !empty($data['apply_to_opening'])) {
-                    // For updates: compute payment-only applied amount and store it
-                    $linelessPayment = $isSyntheticOpening && isset($submittedLines[0]['payment_amount']) ? floatval($submittedLines[0]['payment_amount']) : 0.0;
-                    $linelessDiscount = $isSyntheticOpening && isset($submittedLines[0]['discount_amount']) ? floatval($submittedLines[0]['discount_amount']) : 0.0;
-                    $appliedAmount = $linelessPayment > 0 ? $linelessPayment : $receiptAmount;
-                    $receipt->update(['applied_to_customer' => (int) round($appliedAmount * 100)]);
-
-                    // Persist a synthetic opening-line so opening applications are auditable
+                // Open Balance application — only the opening line reduces Open Balance.
+                if ($openingLine) {
+                    $openingApply = $openingPayment + $openingDiscount;
+                    $balanceBefore = !is_null($receipt->customer_balance_before) ? ($receipt->customer_balance_before / 100) : floatval($customer->opening_balance ?? 0);
                     try {
-                        $balanceBefore = is_null($receipt->customer_balance_before) ? ($customer->opening_balance ?? 0) : ($receipt->customer_balance_before / 100);
-                        $appliedPaise = (int) round($appliedAmount * 100);
-                        $receiptPaise = (int) round($receiptAmount * 100);
-                        $isSettledLineless = abs($appliedPaise - $receiptPaise) <= 1;
                         SalesReceiptLine::create([
                             'sales_receipt_id' => $receipt->id,
                             'sale_id' => null,
                             'bill_ref' => 'Opening Balance',
                             'bill_date' => null,
-                            // Lineless opening rows do not represent a sale bill; store bill_amount as zero
                             'bill_amount' => 0,
                             'received_before' => 0,
                             'balance_before' => $balanceBefore,
-                            'payment_amount' => $linelessPayment,
-                            'discount_amount' => $linelessDiscount,
-                            'final_balance' => max(0, $balanceBefore - ($linelessPayment + $linelessDiscount)),
-                            'is_settled' => $isSettledLineless,
-                            'settled_at' => $isSettledLineless ? now() : null,
-                            'settled_by' => $isSettledLineless ? auth()->id() : null,
+                            'payment_amount' => $openingPayment,
+                            'discount_amount' => $openingDiscount,
+                            'final_balance' => max(0, $balanceBefore - $openingApply),
+                            'is_settled' => $isReceiptSettled,
+                            'settled_at' => $isReceiptSettled ? now() : null,
+                            'settled_by' => $isReceiptSettled ? auth()->id() : null,
                         ]);
                     } catch (\Exception $e) {
-                        Log::warning('Failed to persist synthetic opening line (update)', ['receipt_id' => $receipt->id, 'error' => $e->getMessage()]);
+                        Log::warning('Failed to persist opening line (update)', ['receipt_id' => $receipt->id, 'error' => $e->getMessage()]);
                     }
-
-                    // Apply payment + discount to the customer's balances so discounts reduce opening balance
-                    $linelessApplyForBalance = $linelessPayment + $linelessDiscount;
-                    if ($linelessApplyForBalance > 0) {
-                        $this->applyReceiptToCustomer($customer, $linelessApplyForBalance);
-                    } elseif ($appliedAmount > 0) {
-                        $this->applyReceiptToCustomer($customer, $appliedAmount);
-                    }
-
-                    // Add remaining excess (receiptAmount - appliedAmount)
-                    $excessAmount = $receiptAmount - $appliedAmount;
-                    if ($excessAmount > 0) {
-                        $customer->excess_amount = floatval($customer->excess_amount ?? 0) + $excessAmount;
+                    if ($openingApply > 0) {
+                        $customer->opening_balance = max(0, floatval($customer->opening_balance ?? 0) - $openingApply);
                         $customer->save();
                     }
-                } else {
-                    $netAppliedChange = ($appliedTotal + $appliedDiscount) - ($oldAppliedTotal + $oldAppliedDiscount);
-                    if ($netAppliedChange > 0) {
-                        // more applied now -> consume excess first then opening balance
-                        $this->applyReceiptToCustomer($customer, $netAppliedChange);
-                    } elseif ($netAppliedChange < 0) {
-                        // less applied now -> restore amounts back to customer
-                        $this->revertReceiptOnCustomer($customer, abs($netAppliedChange));
-                    }
+                }
 
-                    // Remove the old excess that was stored when this receipt was previously saved,
-                    // then add the new excess so we never double-count.
-                    $oldExcess = floatval($oldTotal) - ($oldAppliedTotal + $oldAppliedDiscount);
-                    if ($oldExcess > 0) {
-                        $customer->excess_amount = max(0, floatval($customer->excess_amount ?? 0) - $oldExcess);
-                    }
-
-                    // Add excess receipt amount (Receipt Amount - Applied Amount) to excess_amount
-                    $newNetApplied = $appliedTotal + $appliedDiscount;
-                    $excessAmount = $receiptAmount - $newNetApplied;
-                    if ($excessAmount > 0) {
-                        $customer->excess_amount = floatval($customer->excess_amount ?? 0) + $excessAmount;
-                        $customer->save();
-                    } elseif ($excessAmount < 0) {
-                        // If excess amount became negative, reduce excess_amount
-                        $customer->excess_amount = max(0, floatval($customer->excess_amount ?? 0) + $excessAmount);
-                        $customer->save();
-                    } else {
-                        // excessAmount == 0: save any old-excess removal that was applied above
-                        $customer->save();
-                    }
+                // Excess reconciliation: remove the old receipt's excess, then add the new one.
+                $oldExcess = max(0, floatval($oldTotal) - ($oldAppliedTotal + $oldOpeningPayment));
+                if ($oldExcess > 0) {
+                    $customer->excess_amount = max(0, floatval($customer->excess_amount ?? 0) - $oldExcess);
+                    $customer->save();
+                }
+                $newExcess = $receiptAmount - ($billPayments + $openingPayment);
+                if ($newExcess > 0) {
+                    $customer->excess_amount = floatval($customer->excess_amount ?? 0) + $newExcess;
+                    $customer->save();
                 }
             }
         });
@@ -817,17 +657,19 @@ class SalesReceiptController extends Controller
         DB::transaction(function() use ($id) {
             $receipt = SalesReceipt::with('lines')->findOrFail($id);
 
-            // reverse effects using helper method
-            $appliedTotal = 0;
-            $appliedDiscount = 0;
-            $linelessAmount = 0.0;
+            // Reverse effects. Bill lines are reverted by un-paying their sale (which
+            // restores Bill Balance) and do NOT touch Open Balance. The opening line's
+            // amount is added back to Open Balance.
+            $appliedTotal = 0;        // bill payments reverted
+            $appliedDiscount = 0;     // bill discounts reverted
+            $openingApplied = 0.0;    // opening payment + discount (restores Open Balance)
+            $openingPaymentOnly = 0.0; // opening payment (counts toward receipt allocation)
             foreach ($receipt->lines as $line) {
                 $oldPayment = floatval($line->payment_amount ?? 0);
                 $oldDiscount = floatval($line->discount_amount ?? 0);
-                // If this is a lineless/persisted opening line, don't call per-sale revert helper
-                // (it expects a sale_id). Instead accumulate its payment+discount separately.
                 if (empty($line->sale_id)) {
-                    $linelessAmount += ($oldPayment + $oldDiscount);
+                    $openingApplied += ($oldPayment + $oldDiscount);
+                    $openingPaymentOnly += $oldPayment;
                     continue;
                 }
 
@@ -836,20 +678,21 @@ class SalesReceiptController extends Controller
                 $appliedDiscount += $result['discount'];
             }
 
-            // update customer only for applied amounts (revert the previously applied amounts), include lineless applied if any
             $customer = Customer::lockForUpdate()->find($receipt->customer_id);
             if ($customer) {
-                // If no persisted lineless line was present, fall back to legacy applied_to_customer
-                if ($linelessAmount <= 0) {
+                // Fall back to the legacy applied_to_customer if no opening line was persisted.
+                if ($openingApplied <= 0) {
                     $linelessPaise = intval($receipt->applied_to_customer ?? 0);
-                    $linelessAmount = floatval($linelessPaise) / 100;
+                    $openingApplied = floatval($linelessPaise) / 100;
+                    $openingPaymentOnly = $openingApplied;
                 }
 
-                $this->revertReceiptOnCustomer($customer, floatval($appliedTotal + $appliedDiscount) + $linelessAmount);
+                // Restore ONLY the Open Balance portion (bills already reverted above).
+                $this->revertReceiptOnCustomer($customer, $openingApplied);
 
-                // Subtract excess receipt amount that was previously added to excess_amount
+                // Remove the excess that this receipt had added: receipt - (bill payments + opening payment).
                 $receiptAmount = floatval($receipt->total_amount ?? 0);
-                $excessAmount = $receiptAmount - (($appliedTotal + $appliedDiscount) + $linelessAmount);
+                $excessAmount = $receiptAmount - ($appliedTotal + $openingPaymentOnly);
                 if ($excessAmount > 0) {
                     $customer->excess_amount = max(0, floatval($customer->excess_amount ?? 0) - $excessAmount);
                     $customer->save();
@@ -1019,8 +862,8 @@ class SalesReceiptController extends Controller
                 $line->settled_by = auth()->id();
                 $line->save();
 
-                // update customer balance by applied amounts (consume excess first)
-                $this->applyReceiptToCustomer($customer, floatval($amount + $discount));
+                // Settling a bill payment reduces only the bill's due (done above) — it
+                // does not touch Open Balance in the three-bucket model.
             } else {
                 // currently settled -> unset (reverse payment)
                 $amount = floatval($line->payment_amount ?? 0);
@@ -1043,8 +886,7 @@ class SalesReceiptController extends Controller
                 $line->settled_by = null;
                 $line->save();
 
-                // restore customer balance (revert applied amounts)
-                $this->revertReceiptOnCustomer($customer, floatval($amount + $discount));
+                // Un-settling restores only the bill's due (done above) — Open Balance untouched.
             }
         });
 

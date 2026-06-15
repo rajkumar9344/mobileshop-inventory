@@ -32,6 +32,14 @@ class Sale extends Model
         return $this->hasMany(SalePayment::class, 'sale_id', 'id');
     }
 
+    /**
+     * Sales-receipt allocation lines for this bill. Used to surface the payment
+     * method from a later receipt when the bill itself was left unpaid (credit).
+     */
+    public function salesReceiptLines() {
+        return $this->hasMany(\Modules\SalesReceipt\Entities\SalesReceiptLine::class, 'sale_id', 'id');
+    }
+
     public function customer() {
         return $this->belongsTo(\Modules\People\Entities\Customer::class, 'customer_id', 'id');
     }

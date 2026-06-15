@@ -75,8 +75,16 @@
                                     <input type="text" id="area" class="form-control" readonly value="{{ optional($receipt->supplier)->area ?? '' }}">
                                 </div>
                                 <div class="col-md-3">
-                                    <label>Balance</label>
+                                    <label>Open Balance</label>
                                     <input type="text" id="opening_balance" name="opening_balance" class="form-control" readonly value="{{ $displaySupplierBalance }}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label>Bill Balance</label>
+                                    <input type="text" id="bill_balance_display" class="form-control" readonly value="{{ $receipt->supplier_id ? number_format(optional($receipt->supplier)->bill_balance ?? 0, 2, '.', '') : '0.00' }}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label>Total Balance</label>
+                                    <input type="text" id="total_balance_display" class="form-control" readonly value="{{ $receipt->supplier_id ? number_format(optional($receipt->supplier)->total_balance ?? 0, 2, '.', '') : '0.00' }}">
                                 </div>
                                 <div class="col-md-2">
                                     <label>Excess</label>
@@ -118,13 +126,13 @@
                                     @if($isReadOnly)
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" name="apply_to_opening" id="apply_to_opening" value="1" {{ old('apply_to_opening') ? 'checked' : ((isset($receipt) && ($receipt->applied_to_supplier ?? 0) > 0) ? 'checked' : '') }} disabled>
-                                            <label class="form-check-label" for="apply_to_opening">Apply to Opening Balance (use when no bills)</label>
+                                            <label class="form-check-label" for="apply_to_opening">Apply to Open Balance</label>
                                         </div>
                                     @else
                                         <div id="apply_to_opening_container" style="display:none">
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" name="apply_to_opening" id="apply_to_opening" value="1" {{ old('apply_to_opening') ? 'checked' : ((isset($receipt) && ($receipt->applied_to_supplier ?? 0) > 0) ? 'checked' : '') }}>
-                                                <label class="form-check-label" for="apply_to_opening">Apply to Opening Balance (use when no bills)</label>
+                                                <label class="form-check-label" for="apply_to_opening">Apply to Open Balance</label>
                                             </div>
                                         </div>
                                     @endif
@@ -175,7 +183,7 @@
                             </thead>
                             <tbody>
                                 @foreach($receipt->lines as $line)
-                                    <tr>
+                                    <tr @if(empty($line->purchase_id)) class="opening-row" @endif>
                                         <td>{{ $line->bill_ref }}</td>
                                         <td>{{ ($line->bill_date && $line->bill_date !== '-' && strtotime($line->bill_date) !== false) ? \Carbon\Carbon::parse($line->bill_date)->format('d-m-Y') : '' }}</td>
                                         <td class="bill-amount">{{ number_format($line->bill_amount, 2, '.', '') }}</td>
@@ -355,7 +363,9 @@ $(function(){
             if (storedSupplierBalance && currentSupplierId && id.toString() === currentSupplierId.toString()) {
                 $('#opening_balance').val(storedSupplierBalance);
             } else {
-                $('#opening_balance').val(resp.opening_balance || '');
+                $('#opening_balance').val(resp.open_balance_formatted || resp.open_balance || '');
+                $('#bill_balance_display').val(resp.bill_balance_formatted !== undefined ? resp.bill_balance_formatted : '0.00');
+                $('#total_balance_display').val(resp.total_balance_formatted !== undefined ? resp.total_balance_formatted : '0.00');
             }
 
             var results = res.results || [];
@@ -414,7 +424,7 @@ $(function(){
                 } catch(e) { console.debug('Failed to sync existing purchase rows with API', e); }
 
                 // Show or hide apply-to-opening checkbox: only show when no bills and supplier has an opening balance
-                if ((results || []).length === 0 && parseFloat($('#opening_balance').val() || '0') > 0) {
+                if (parseFloat($('#opening_balance').val() || '0') > 0) {
                     $('#apply_to_opening_container').show();
                 } else {
                     $('#apply_to_opening_container').hide();
@@ -567,45 +577,54 @@ $(function(){
     var appliedToSupplier = {{ isset($receipt) && $receipt->applied_to_supplier ? $receipt->applied_to_supplier / 100 : 'null' }};
 
     function ensureOpeningRow() {
-        var rows = $('#bills-table tbody tr').length || 0;
-        if ($('#apply_to_opening').is(':checked') && rows === 0) {
-            var idx = 0;
-            var openingBal = parseNumber($('#opening_balance').val() || '0') || 0;
-            var receiptAmt = parseNumber($('#receipt_amount_raw').val() || '0') || 0;
-            var tr = $('<tr>').addClass('opening-row');
-            tr.append($('<td>').text('Opening Balance'));
-            tr.append($('<td>').text('-'));
-            // For opening balance synthetic row in edit, bill amount should be zero
-            tr.append($('<td class="bill-amount">').text((0).toFixed(2)));
-            tr.append($('<td class="paid-before">').text('0.00'));
-            tr.append($('<td class="balance-before">').text(openingBal.toFixed(2)));
-            // If the server provided an applied-to-supplier amount for this receipt, prefer it
-            // as the opening payment so the receipt balance reflects partial application.
-            var openingPayment = receiptAmt;
-            try {
-                if (typeof appliedToSupplier !== 'undefined' && appliedToSupplier !== null) {
-                    var ap = parseFloat(appliedToSupplier) || 0;
-                    if (ap > 0 && ap <= receiptAmt) openingPayment = ap;
-                }
-            } catch(e) {}
-
-            var paymentDisplay = $('<input>', { type: 'text', 'class': 'form-control currency-input payment-amount-display', 'data-target': '#lines_'+idx+'_payment_raw', inputmode: 'decimal', maxlength: 15, required: true, value: openingPayment.toFixed(2) });
-            var paymentRaw = $('<input>', { type: 'hidden', id: 'lines_'+idx+'_payment_raw', name: 'lines['+idx+'][payment_amount]', 'class': 'payment-amount' }).val(openingPayment.toFixed(2));
-            tr.append($('<td>').append(paymentDisplay).append(paymentRaw));
-
-            // Final balance for opening-row is zero (not a bill)
-            tr.append($('<td class="final-balance">').text((0).toFixed(2)));
-            tr.append($('<td>').html('<button type="button" class="btn btn-sm btn-danger remove-row">Remove</button>'));
-            tr.append($('<input>', { type: 'hidden', name: 'lines['+idx+'][purchase_id]' }).val(''));
-            $('#bills-table tbody').append(tr);
-            currencyInputInit();
+        var checked = $('#apply_to_opening').is(':checked');
+        if (!checked) {
+            $('#bills-table tbody tr.opening-row').remove();
+            try { reindexLines(); } catch(e) {}
             updateSettlementStatus();
-        } else {
-            if (!$('#apply_to_opening').is(':checked') || ($('#bills-table tbody tr').length || 0) > 0) {
-                $('#bills-table tbody tr.opening-row').remove();
-                updateSettlementStatus();
-            }
+            return;
         }
+        // An opening line may already be present (server-rendered on edit) — detect it by
+        // its empty purchase_id so we never add a duplicate.
+        var $existingOpening = $('#bills-table tbody tr').filter(function(){
+            if ($(this).hasClass('opening-row')) return true;
+            var v = $(this).find('input[type=hidden][name$="[purchase_id]"]').val();
+            return (v === '' || v === undefined || v === null);
+        });
+        if ($existingOpening.length > 0) { $existingOpening.addClass('opening-row'); updateSettlementStatus(); return; }
+
+        var openingBal = parseNumber($('#opening_balance').val() || '0') || 0;
+        var receiptAmt = parseNumber($('#receipt_amount_raw').val() || '0') || 0;
+        var billAlloc = 0;
+        $('#bills-table tbody tr').each(function(){
+            billAlloc += (parseFloat($(this).find('.payment-amount').val()) || 0) + (parseFloat($(this).find('.discount-amount').val()) || 0);
+        });
+        var openingPayment = Math.max(0, Math.min(receiptAmt - billAlloc, openingBal));
+        try {
+            if (typeof appliedToSupplier !== 'undefined' && appliedToSupplier !== null) {
+                var ap = parseFloat(appliedToSupplier) || 0;
+                if (ap > 0) openingPayment = ap;
+            }
+        } catch(e) {}
+        var payVal = openingPayment > 0 ? openingPayment.toFixed(2) : '';
+
+        var tr = $('<tr>').addClass('opening-row');
+        tr.append($('<td>').text('Opening Balance'));
+        tr.append($('<td>').text('-'));
+        tr.append($('<td class="bill-amount">').text((0).toFixed(2)));
+        tr.append($('<td class="paid-before">').text('0.00'));
+        tr.append($('<td class="balance-before">').text(openingBal.toFixed(2)));
+        // non-numeric id suffix so reindexLines (which renumbers names) leaves id/data-target intact
+        var paymentDisplay = $('<input>', { type: 'text', id: 'lines_open_payment_display', 'class': 'form-control currency-input payment-amount-display', 'data-target': '#lines_open_payment_raw', inputmode: 'decimal', maxlength: 15, value: payVal });
+        var paymentRaw = $('<input>', { type: 'hidden', id: 'lines_open_payment_raw', name: 'lines[0][payment_amount]', 'class': 'payment-amount' }).val(payVal);
+        tr.append($('<td>').append(paymentDisplay).append(paymentRaw));
+        tr.append($('<td class="final-balance">').text((openingBal - openingPayment).toFixed(2)));
+        tr.append($('<td>').html('<button type="button" class="btn btn-sm btn-danger remove-row">Remove</button>'));
+        tr.append($('<input>', { type: 'hidden', name: 'lines[0][purchase_id]' }).val(''));
+        $('#bills-table tbody').append(tr);
+        try { reindexLines(); } catch(e) {}
+        try { currencyInputInit(); } catch(e) {}
+        updateSettlementStatus();
     }
 
     // react to checkbox and receipt amount changes

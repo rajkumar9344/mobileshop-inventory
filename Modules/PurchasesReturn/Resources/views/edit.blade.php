@@ -57,8 +57,20 @@
                                 </div>
                                 <div class="col-lg-2">
                                     <div class="form-group">
-                                        <label for="balance">Balance</label>
+                                        <label for="balance">Open Balance</label>
                                         <input type="text" class="form-control" name="balance" id="balance" maxlength="15" pattern="^\d+(\.\d{1,2})?$|^\d+(,\d{1,2})?$" readonly placeholder="0.00" value="{{ old('balance', $purchase_return->balance ?? '0.00') }}">
+                                    </div>
+                                </div>
+                                <div class="col-lg-2">
+                                    <div class="form-group">
+                                        <label for="bill_balance_display">Bill Balance</label>
+                                        <input type="text" class="form-control" id="bill_balance_display" readonly value="{{ $purchase_return->supplier_id ? number_format(optional($purchase_return->supplier)->bill_balance ?? 0, 2, '.', '') : '0.00' }}">
+                                    </div>
+                                </div>
+                                <div class="col-lg-2">
+                                    <div class="form-group">
+                                        <label for="total_balance_display">Total Balance</label>
+                                        <input type="text" class="form-control" id="total_balance_display" readonly value="{{ $purchase_return->supplier_id ? number_format(optional($purchase_return->supplier)->total_balance ?? 0, 2, '.', '') : '0.00' }}">
                                     </div>
                                 </div>
                             </div>
@@ -199,6 +211,8 @@
                 $.get('/api/suppliers/' + supplierId).done(function(res) {
                     $('#area').val(res.area || '');
                     $('#balance').val(parseFloat(res.open_balance || 0).toFixed(2));
+                    $('#bill_balance_display').val(res.bill_balance_formatted !== undefined ? res.bill_balance_formatted : '0.00');
+                    $('#total_balance_display').val(res.total_balance_formatted !== undefined ? res.total_balance_formatted : '0.00');
                     $('#excess_amount').val(parseFloat(res.excess_amount || 0).toFixed(2));
 
                     var lessDisc = parseFloat(res.less_discount_percent || 0) || 0;

@@ -83,6 +83,8 @@ class PurchasesReceiptsDataTable extends DataTable
                 return format_currency($amt);
             })
             ->addColumn('settled', function ($data) {
+                // Compute the Yes/No state, then render it as a coloured badge (Yes = green, No = red).
+                $state = (function ($data) {
                 // Infer settled state from allocated amounts (payment + discount) when lines exist.
                 $lines = $data->lines ?? collect();
                 // Only synthesize an opening-balance line when there are no real lines.
@@ -124,6 +126,10 @@ class PurchasesReceiptsDataTable extends DataTable
                 }
 
                 return 'No';
+                })($data);
+
+                $color = $state === 'Yes' ? 'success' : 'danger';
+                return '<span class="badge badge-' . $color . '">' . $state . '</span>';
             })
             ->editColumn('date', function ($data) {
                 return $data->date ? \Carbon\Carbon::parse($data->date)->format('d-m-Y') : '';
@@ -135,7 +141,7 @@ class PurchasesReceiptsDataTable extends DataTable
             ->addColumn('action', function ($data) {
                 return view('purchasesreceipt::partials.actions', compact('data'));
             })
-            ->rawColumns(['action']);
+            ->rawColumns(['action', 'settled']);
     }
 
     public function query(PurchasesReceipt $model) {
@@ -194,7 +200,7 @@ class PurchasesReceiptsDataTable extends DataTable
             Column::computed('supplier')->title('Name')->className('text-center align-middle'),
             Column::computed('area')->title('Area')->className('text-center align-middle'),
             Column::make('payment_mode')->title('Payment Mode')->className('text-center align-middle'),
-            Column::computed('total_amount_formatted')->title('Total')->className('text-center align-middle'),
+            Column::computed('total_amount_formatted')->title('Receipt Amount')->className('text-center align-middle'),
                 Column::computed('settled')->title('Settled')->className('text-center align-middle'),
             Column::computed('action')->exportable(false)->printable(false)->className('text-center align-middle'),
             // hide created_at from display, export and print (used internally only)

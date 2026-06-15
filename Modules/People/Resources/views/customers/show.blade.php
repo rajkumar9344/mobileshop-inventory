@@ -65,7 +65,9 @@
                                     <div class="card-header font-weight-bold">Account Details</div>
                                     <div class="card-body p-0">
                                         <table class="table table-bordered table-striped-custom mb-0">
-                                            <tr><th>Open Balance</th><td>{{ $customer->opening_balance }}</td></tr>
+                                            <tr><th>Open Balance</th><td>{{ format_currency($customer->open_balance) }}</td></tr>
+                                            <tr><th>Bill Balance</th><td>{{ format_currency($customer->bill_balance) }}</td></tr>
+                                            <tr><th>Total Balance</th><td>{{ format_currency($customer->total_balance) }}</td></tr>
                                             <tr><th>Excess Amount</th><td>{{ number_format($customer->excess_amount ?? 0, 2, '.', '') }}</td></tr>
                                             <tr><th>Credit Limit</th><td>{{ $customer->credit_limit }}</td></tr>
                                             <tr><th>Lock</th><td>{{ $customer->lock }}</td></tr>

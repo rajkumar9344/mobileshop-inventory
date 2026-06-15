@@ -49,6 +49,7 @@
                                             <th class="text-center">Overall Received Amount</th>
                                             <th class="text-center">Overall Bill Balance</th>
                                             <th class="text-center">Overall Open Balance</th>
+                                            <th class="text-center">Overall Total Balance</th>
                                             <th class="text-center">Overall Excess</th>
                                         </tr>
                                     </thead>
@@ -59,6 +60,7 @@
                                             <td class="text-center" id="totals-received">₹0.00</td>
                                             <td class="text-center" id="totals-bill-balance">₹0.00</td>
                                             <td class="text-center" id="totals-open-balance">₹0.00</td>
+                                            <td class="text-center" id="totals-total-balance">₹0.00</td>
                                             <td class="text-center" id="totals-excess">₹0.00</td>
                                         </tr>
                                     </tbody>
@@ -144,6 +146,7 @@
                         document.getElementById('totals-received').textContent = (s.overall_paid !== undefined ? s.overall_paid : '₹0.00');
                         document.getElementById('totals-bill-balance').textContent = (s.overall_balance !== undefined ? s.overall_balance : '₹0.00');
                         document.getElementById('totals-open-balance').textContent = (s.overall_open_balance !== undefined ? s.overall_open_balance : '₹0.00');
+                        document.getElementById('totals-total-balance').textContent = (s.overall_total_balance !== undefined ? s.overall_total_balance : '₹0.00');
                         document.getElementById('totals-excess').textContent = (s.overall_excess !== undefined ? s.overall_excess : '₹0.00');
                     }
                 });

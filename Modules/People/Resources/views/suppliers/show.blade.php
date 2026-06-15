@@ -64,7 +64,9 @@
                                     <div class="card-header font-weight-bold">Account Details</div>
                                     <div class="card-body p-0">
                                         <table class="table table-bordered table-striped-custom mb-0">
-                                            <tr><th>Open Balance</th><td>{{ $supplier->open_balance }}</td></tr>
+                                            <tr><th>Open Balance</th><td>{{ format_currency($supplier->open_balance_value) }}</td></tr>
+                                            <tr><th>Bill Balance</th><td>{{ format_currency($supplier->bill_balance) }}</td></tr>
+                                            <tr><th>Total Balance</th><td>{{ format_currency($supplier->total_balance) }}</td></tr>
                                             <tr><th>Excess Amount</th><td>{{ number_format($supplier->excess_amount ?? 0, 2, '.', '') }}</td></tr>
                                             <tr><th>Credit Limit</th><td>{{ $supplier->credit_limit }}</td></tr>
                                             <tr><th>VAT %</th><td>{{ $supplier->tax_percent }}</td></tr>

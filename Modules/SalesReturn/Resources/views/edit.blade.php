@@ -62,8 +62,16 @@
                                     <small id="phone-error" class="text-danger" style="display: none;"></small>
                                 </div>
                                 <div class="col-md-3 pr-1">
-                                    <label for="opening_balance" class="mb-1">Balance</label>
+                                    <label for="opening_balance" class="mb-1">Open Balance</label>
                                     <input type="text" class="form-control" name="opening_balance" id="opening_balance" maxlength="15" pattern="^-?\d+(?:\.\d{1,2})?$|^-?\d+(?:,\d{1,2})?$" value="{{ number_format($sale_return->balance ?? 0, 2, '.', '') }}" placeholder="0.00" readonly>
+                                </div>
+                                <div class="col-md-3 pr-1">
+                                    <label for="bill_balance_display" class="mb-1">Bill Balance</label>
+                                    <input type="text" class="form-control" id="bill_balance_display" readonly value="{{ $sale_return->customer_id ? number_format(optional($sale_return->customer)->bill_balance ?? 0, 2, '.', '') : '0.00' }}">
+                                </div>
+                                <div class="col-md-3 pr-1">
+                                    <label for="total_balance_display" class="mb-1">Total Balance</label>
+                                    <input type="text" class="form-control" id="total_balance_display" readonly value="{{ $sale_return->customer_id ? number_format(optional($sale_return->customer)->total_balance ?? 0, 2, '.', '') : '0.00' }}">
                                 </div>
                                 <div class="col-md-3 pr-1">
                                     <label for="excess_amount_display" class="mb-1">Excess Amount</label>
@@ -196,6 +204,8 @@
                     $('#area').val(res.area || '');
                     $('#phone').val(res.customer_phone || '');
                     $('#opening_balance').val(res.opening_balance !== undefined ? res.opening_balance : '0.00');
+                    $('#bill_balance_display').val(res.bill_balance_formatted !== undefined ? res.bill_balance_formatted : '0.00');
+                    $('#total_balance_display').val(res.total_balance_formatted !== undefined ? res.total_balance_formatted : '0.00');
                     // Populate excess amount
                     if (res.excess_amount !== undefined) {
                         $('#excess_amount_display').val(res.excess_amount);

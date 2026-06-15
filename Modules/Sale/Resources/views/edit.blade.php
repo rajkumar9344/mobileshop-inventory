@@ -63,8 +63,16 @@
                                     <input type="hidden" name="bill_type" id="bill_type" value="{{ old('bill_type', $sale->bill_type ?: \Modules\Sale\Entities\Sale::BILL_CASH) }}">
 
                                     <div class="col-md-2 pr-1">
-                                        <label for="opening_balance" class="mb-1">Balance @if($sale->status !== 'Draft') <span class="text-danger">*</span> @endif</label>
+                                        <label for="opening_balance" class="mb-1">Open Balance @if($sale->status !== 'Draft') <span class="text-danger">*</span> @endif</label>
                                             <input type="text" class="form-control" name="opening_balance" id="opening_balance" maxlength="15" pattern="^-?\d+(?:\.\d{1,2})?$|^-?\d+(?:,\d{1,2})?$" value="{{ number_format($sale->balance ?? 0, 2, '.', '') }}" placeholder="0.00" {{ $isReadOnly ? 'disabled' : ($sale->status === 'Draft' ? '' : 'required') }} readonly oninput="this.value = this.value.replace(/[^0-9.\-]/g,'').replace(/(?!^)-/g,'').slice(0,15)">
+                                        </div>
+                                        <div class="col-md-2 pr-1">
+                                            <label for="bill_balance_display" class="mb-1">Bill Balance</label>
+                                            <input type="text" class="form-control" id="bill_balance_display" readonly value="{{ $sale->customer_id ? number_format($sale->customer->bill_balance ?? 0, 2, '.', '') : '0.00' }}">
+                                        </div>
+                                        <div class="col-md-2 pr-1">
+                                            <label for="total_balance_display" class="mb-1">Total Balance</label>
+                                            <input type="text" class="form-control" id="total_balance_display" readonly value="{{ $sale->customer_id ? number_format($sale->customer->total_balance ?? 0, 2, '.', '') : '0.00' }}">
                                         </div>
                                         <div class="col-md-2 pr-1">
                                             <label for="excess_amount_display" class="mb-1">Excess Amount</label>
@@ -392,6 +400,8 @@
                         if (res.opening_balance !== undefined) {
                             $('#opening_balance').val(res.opening_balance);
                         }
+                        $('#bill_balance_display').val(res.bill_balance_formatted !== undefined ? res.bill_balance_formatted : '0.00');
+                        $('#total_balance_display').val(res.total_balance_formatted !== undefined ? res.total_balance_formatted : '0.00');
                         if (res.excess_amount !== undefined) {
                             $('#excess_amount').val(res.excess_amount);
                             $('#excess_amount_display').val(res.excess_amount);

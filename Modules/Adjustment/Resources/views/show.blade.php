@@ -98,6 +98,11 @@
                                 @endforeach
                             </table>
                         </div>
+
+                        <div class="form-group mt-3">
+                            <label class="font-weight-bold">Note</label>
+                            <p class="form-control-plaintext mb-0" style="white-space: pre-line;">{{ $adjustment->note ?: '—' }}</p>
+                        </div>
                     </div>
                 </div>
             </div>

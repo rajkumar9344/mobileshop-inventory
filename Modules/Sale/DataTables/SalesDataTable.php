@@ -18,7 +18,18 @@ class SalesDataTable extends DataTable
                 return $data->customer->customer_name ?? '';
             })
             ->addColumn('payment_method', function ($data) {
-                return $data->payment_method ?? ($data->payment_mode ?? '');
+                // Prefer the method recorded on the bill itself.
+                $method = $data->payment_method ?: ($data->payment_mode ?? null);
+
+                // If the bill was left unpaid (credit), fall back to the payment
+                // method from its most recent linked Sales Receipt.
+                if (empty($method)) {
+                    $line = $data->salesReceiptLines->sortByDesc('id')->first();
+                    $method = optional(optional($line)->receipt)->payment_mode;
+                }
+
+                // Never render a blank cell.
+                return $method ?: '—';
             })
             ->addColumn('overall_tax_amount', function ($data) {
                 return format_currency($data->overall_tax_amount ?? 0);
@@ -79,7 +90,8 @@ class SalesDataTable extends DataTable
         $query = $model->newQuery()
             ->with('customer')
             ->withCount('salePayments')
-            ->with('lastEmailLog');
+            ->with('lastEmailLog')
+            ->with('salesReceiptLines.receipt');
 
         // When listing sales for a specific customer (customer detail / export),
         // exclude sales in Draft status so aggregates and exports match customer summaries.
@@ -206,7 +218,7 @@ class SalesDataTable extends DataTable
 
 
             Column::computed('overall_tax_amount')
-                ->title('TAX Amount')
+                ->title('VAT Amount')
                 ->className('text-end align-middle'),
 
             Column::computed('overall_amount')

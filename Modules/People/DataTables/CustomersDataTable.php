@@ -61,13 +61,25 @@ class CustomersDataTable extends DataTable
 
         $overall_open_balance = $overall_open_balance_q->sum('c.opening_balance');
 
+        // Amounts received against Open Balance via receipts, for the filtered customers (paise)
+        $overall_opening_received_q = DB::table('sales_receipts as sr')
+            ->join('customers as c', 'c.id', '=', 'sr.customer_id');
+        QueryFilters::applyDateFilters($overall_opening_received_q, $start, $end, $year, $month, 'c.created_at');
+        QueryFilters::applyGlobalSearch($overall_opening_received_q, $searchValue, 'c.customer_name', 'c.area');
+        $overall_opening_received = $overall_opening_received_q->sum('sr.applied_to_customer');
+
+        // Total Balance = Open Balance (rupees) + Bill Balance (paise -> rupees)
+        $overall_total_balance = ($overall_open_balance ?? 0) + (($summary->overall_balance ?? 0) / 100);
+
         $dt = datatables()
             ->eloquent($query)
             ->addColumn('total_amount', function ($data) {
                 return format_currency( ($data->total_amount ?? 0) / 100 );
             })
             ->addColumn('paid_amount', function ($data) {
-                return format_currency( ($data->paid_amount ?? 0) / 100 );
+                // Received = bill payments (sales.paid_amount) + amounts applied to
+                // the customer's Open Balance via receipts. Both are stored in paise.
+                return format_currency( (($data->paid_amount ?? 0) + ($data->opening_received ?? 0)) / 100 );
             })
             ->addColumn('balance_amount', function ($data) {
                 return format_currency( ($data->balance_amount ?? 0) / 100 );
@@ -75,6 +87,10 @@ class CustomersDataTable extends DataTable
             ->addColumn('open_balance', function ($data) {
                 // `opening_balance` is stored on `customers` in major units
                 return format_currency( ($data->opening_balance ?? 0) );
+            })
+            ->addColumn('total_balance', function ($data) {
+                // Total Balance = Open Balance (rupees) + Bill Balance (paise -> rupees)
+                return format_currency( ($data->opening_balance ?? 0) + (($data->balance_amount ?? 0) / 100) );
             })
             ->addColumn('excess_amount', function ($data) {
                 // `excess_amount` is stored on `customers` (rupees), display formatted currency
@@ -87,9 +103,10 @@ class CustomersDataTable extends DataTable
                 'summary' => [
                     'customers_count' => $summary->customers_count ?? 0,
                     'overall_total' => format_currency( ($summary->overall_total ?? 0) / 100 ),
-                    'overall_paid' => format_currency( ($summary->overall_paid ?? 0) / 100 ),
+                    'overall_paid' => format_currency( (($summary->overall_paid ?? 0) + ($overall_opening_received ?? 0)) / 100 ),
                     'overall_balance' => format_currency( ($summary->overall_balance ?? 0) / 100 ),
                     'overall_open_balance' => format_currency( ($overall_open_balance ?? 0) ),
+                    'overall_total_balance' => format_currency( $overall_total_balance ),
                     'overall_excess' => format_currency( ($summary->overall_excess ?? 0) ),
                 ]
             ]);
@@ -127,7 +144,9 @@ class CustomersDataTable extends DataTable
             ->select(array_merge($customerCols, [
                 DB::raw("COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.total_amount ELSE 0 END), 0) as total_amount"),
                 DB::raw("COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.paid_amount ELSE 0 END), 0) as paid_amount"),
-                DB::raw("(COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.total_amount ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.paid_amount ELSE 0 END), 0)) as balance_amount")
+                DB::raw("(COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.total_amount ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN sales.status IS NULL OR sales.status != 'Draft' THEN sales.paid_amount ELSE 0 END), 0)) as balance_amount"),
+                // Amounts received from the customer against their Open Balance via receipts (paise)
+                DB::raw("COALESCE((SELECT SUM(sr.applied_to_customer) FROM sales_receipts sr WHERE sr.customer_id = customers.id), 0) as opening_received")
             ]))
             ->groupBy($customerCols);
 
@@ -195,6 +214,10 @@ class CustomersDataTable extends DataTable
 
             Column::computed('open_balance')
                 ->title('Open Balance')
+                ->className('text-center align-middle'),
+
+            Column::computed('total_balance')
+                ->title('Total Balance')
                 ->className('text-center align-middle'),
 
             Column::computed('excess_amount')
