@@ -81,7 +81,7 @@
         $currencyCode = settings()->currency->code ?? '';
         $codeSuffix   = $currencyCode ? '<br>(' . e($currencyCode) . ')' : '';
         foreach ($details as $item) {
-            $vp = (float)($item->tax_percent ?? 0);
+            $vp = (float)($item->tax_percentage ?? 0);
             if ($vat_pct_label === '' && $vp > 0) $vat_pct_label = rtrim(rtrim(number_format($vp, 1), '0'), '.') . '%';
         }
 
@@ -134,7 +134,7 @@
             @php
                 $qty        = (float)($item->quantity ?? 0);
                 $rate       = (float)($item->rate ?? 0);
-                $vat_pct    = (float)($item->tax_percent ?? 0);
+                $vat_pct    = (float)($item->tax_percentage ?? 0);
                 $vat_amt    = (float)($item->product_tax_amount ?? 0);
                 $subtotal   = $qty * $rate;
                 $line_total = $subtotal + $vat_amt;

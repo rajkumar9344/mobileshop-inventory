@@ -617,8 +617,9 @@ class ProductCart extends Component
             $rate        = (float) ($fullProduct['product_cost'] ?? 0);
             $base_rate   = $rate;
             $tax_percent = 5.0;
-        } elseif (in_array($this->cart_instance, ['sale', 'sale_edit'])) {
-            // Sale (BRD): unit price is manually entered (blank); VAT% defaults to 5%.
+        } elseif ($this->isSaleGroup()) {
+            // Sale / Sale Return / Quotation (BRD): unit price is manually entered
+            // (blank); VAT% defaults to 5%. MRP is not auto-populated.
             $base_rate   = 0.0;
             $rate        = 0.0;
             $tax_percent = 5.0;
@@ -639,8 +640,9 @@ class ProductCart extends Component
             return;
         }
 
-        // Sale: mrp starts at 0 (unit price is user-entered); other instances keep product MRP.
-        $display_mrp = in_array($this->cart_instance, ['sale', 'sale_edit'])
+        // Sale group (sale / sale return / quotation): mrp starts at 0 (unit price is
+        // user-entered); other instances keep product MRP.
+        $display_mrp = $this->isSaleGroup()
             ? 0.0
             : (array_key_exists('mrp', $fullProduct) && $fullProduct['mrp'] !== null ? (float)$fullProduct['mrp'] : (float)$base_rate);
 
