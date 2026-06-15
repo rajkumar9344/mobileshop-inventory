@@ -58,7 +58,7 @@
                                 </div>
                                 <div class="col-md-3 pr-1">
                                     <label for="phone" class="mb-1">Phone No</label>
-                                    <input type="tel" class="form-control" name="phone" id="phone" maxlength="10" pattern="[0-9]{10}" title="Please enter exactly 10 digits" oninput="validatePhone(this)" placeholder="9876543210" value="{{ old('phone', $sale_return->phone_no ?? '') }}" {{ $isReadOnly ? 'disabled' : '' }}>
+                                    <input type="tel" class="form-control" name="phone" id="phone" maxlength="15" pattern="\+?[0-9]{7,15}" title="Only numbers and + (UAE contact number, max 15)" oninput="validatePhone(this)" placeholder="+971501234567" value="{{ old('phone', $sale_return->phone_no ?? '') }}" {{ $isReadOnly ? 'disabled' : '' }}>
                                     <small id="phone-error" class="text-danger" style="display: none;"></small>
                                 </div>
                                 <div class="col-md-3 pr-1">

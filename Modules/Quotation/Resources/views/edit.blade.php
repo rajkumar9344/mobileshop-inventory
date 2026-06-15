@@ -83,7 +83,7 @@
                                     <div class="form-group">
                                         <div class="new-customer-field" style="display: {{ ($quotation->customer_type ?? 'existing') == 'new' ? 'block' : 'none' }};">
                                             <label for="contact_phone">Phone</label>
-                                            <input type="text" class="form-control" name="contact_phone" id="contact_phone" value="{{ old('contact_phone', $quotation->contact_phone) }}" placeholder="Contact Phone" oninput="validatePhone(this)" {{ $isReadOnly ? 'disabled' : '' }}>
+                                            <input type="text" class="form-control" name="contact_phone" id="contact_phone" maxlength="15" value="{{ old('contact_phone', $quotation->contact_phone) }}" placeholder="Contact Phone" oninput="validatePhone(this)" {{ $isReadOnly ? 'disabled' : '' }}>
                                             <small id="phone-error" class="text-danger" style="display: none;"></small>
                                         </div>
                                     </div>
@@ -108,6 +108,14 @@
                                     </div>
                                 </div>
 
+                            </div>
+
+                            <div class="form-row mt-2 mb-3">
+                                <div class="col-md-2 pr-1">
+                                    <label for="vat_id_display" class="mb-1">VAT ID / TRN</label>
+                                    <input type="text" class="form-control" id="vat_id_display" readonly
+                                        value="{{ $quotation->customer_id ? ($quotation->customer->vat_id ?? '') : '' }}" placeholder="—">
+                                </div>
                             </div>
 
                             {{-- Product search area styled like Sale module (placed below customer details) --}}
@@ -321,6 +329,8 @@
                 var url = '/customers/' + id + '/json';
                 $.get(url).done(function (res) {
                     $('#hidden_discount_percentage').val(res.cash_discount || 0);
+                    // Show the selected customer's VAT ID / TRN (read-only, like Sale)
+                    $('#vat_id_display').val(res.vat_id || '');
                     /* Disabled: do not auto-apply additional discount when selecting a customer.
                     if (res.additional_discount && res.additional_discount > 0) {
                         setTimeout(function() {
@@ -337,6 +347,7 @@
                     }
                 }).fail(function () {
                     $('#hidden_discount_percentage, #hidden_shipping_amount').val('0');
+                    $('#vat_id_display').val('');
                 });
             });
             // Toggle existing/new customer blocks in edit view (show/hide inline fields like create)

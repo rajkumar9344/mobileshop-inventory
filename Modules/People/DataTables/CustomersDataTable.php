@@ -117,7 +117,7 @@ class CustomersDataTable extends DataTable
             'customers.customer_phone', 'customers.city', 'customers.address', 'customers.area',
             'customers.vat_id', 'customers.excess_amount',
             'customers.state', 'customers.pincode', 'customers.opening_balance',
-            'customers.credit_limit', 'customers.lock', 'customers.outstanding',
+            'customers.credit_limit', 'customers.lock',
             'customers.is_active', 'customers.account_id', 'customers.remarks',
             'customers.created_at', 'customers.updated_at'
         ];

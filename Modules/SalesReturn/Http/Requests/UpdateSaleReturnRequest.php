@@ -18,7 +18,7 @@ class UpdateSaleReturnRequest extends FormRequest
             'customer_id' => 'required|numeric',
             'area' => 'nullable|string|max:30',
             'opening_balance' => 'nullable|numeric',
-            'phone' => 'nullable|string|max:10|regex:/^[0-9]{10}$/',
+            'phone' => ['nullable','string','max:15','regex:/^\+?[0-9]+$/'],
             'excess_amount' => 'nullable|numeric',
             'reference' => 'required|string|max:255',
             'tax_percentage' => 'required|integer|min:0|max:100',

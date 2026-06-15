@@ -285,40 +285,17 @@
             // Set initial value for Select2
             var initialSupplierId = '{{ $purchase->supplier_id }}';
             var initialSupplierName = '{{ $purchase->supplier_name }}';
-            var initialSupplierType = '{{ optional($purchase->supplier)->style ?? 1 }}';
             if (initialSupplierId && initialSupplierName) {
                 var option = new Option(initialSupplierName, initialSupplierId, true, true);
                 $('#supplier_id').append(option);
-                // Ensure the DOM option has the supplier type so change handlers can read it
-                $('#supplier_id').find('option[value="' + initialSupplierId + '"]').attr('data-type', initialSupplierType);
             }
 
-            // Load supplier data when selected (Select2 AJAX results will provide data in e.params.data)
-            $('#supplier_id').on('select2:select', function (e) {
-                var supplierId = e.params.data.id;
-                // If the AJAX payload provides a type/style, use it; otherwise fallback to option attr
-                var supplierType = e.params.data.type || e.params.data.style || 1;
-                if ($('#purchase_type').length) {
-                    $('#purchase_type').val(supplierType).trigger('change');
-                    if (window.Livewire && typeof Livewire.dispatch === 'function') {
-                        Livewire.dispatch('purchaseTypeChanged', { type: supplierType });
-                    }
-                }
-            });
-
-            // Update excess_amount and purchase type when option has data attributes
+            // Update excess_amount when option has data attributes
             $('#supplier_id').on('change', function() {
                 var opt = $(this).find('option:selected');
                 var excess = opt.data('excess');
                 if (excess !== undefined) {
                     $('#excess_amount').val(parseFloat(excess).toFixed(2));
-                }
-                var supplierType = opt.data('type') || 1;
-                if ($('#purchase_type').length) {
-                    $('#purchase_type').val(supplierType).trigger('change');
-                    if (window.Livewire && typeof Livewire.dispatch === 'function') {
-                        Livewire.dispatch('purchaseTypeChanged', { type: supplierType });
-                    }
                 }
                 var id = $(this).val();
                 if (!id) {

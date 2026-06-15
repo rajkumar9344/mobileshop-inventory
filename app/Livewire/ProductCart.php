@@ -9,10 +9,9 @@ use Modules\Product\Entities\Product;
 
 class ProductCart extends Component
 {
-    protected $listeners = ['productSelected', 'discountModalRefresh', 'applyCustomerAdditionalDiscount' => 'applyCustomerAdditionalDiscount', 'applyCustomerCashDiscount' => 'applyCustomerCashDiscount', 'purchaseTypeChanged' => 'setPurchaseType'];
+    protected $listeners = ['productSelected', 'discountModalRefresh', 'applyCustomerAdditionalDiscount' => 'applyCustomerAdditionalDiscount', 'applyCustomerCashDiscount' => 'applyCustomerCashDiscount'];
 
     public $cart_instance;
-    public $purchase_type = 1; // 1/2/3/4 — type 4 hides GST column and uses pre-tax totals
     public $readonly = false;
     public $global_discount_amount;
     public $global_tax_amount;
@@ -43,8 +42,6 @@ class ProductCart extends Component
     public $product_codes  = []; // all available codes per product
     public $selected_code  = []; // the currently selected code per product
     public $custom_product_names = []; // editable names for silicon mobile cover items (keyed by rowId)
-    // Cache product master buy_price to avoid repeated DB queries during render
-    protected $productBuyPriceCache = [];
 
     public function updatedCustomProductNames($value, $rowId) {
         if ($this->readonly || trim($value) === '') {
@@ -224,7 +221,6 @@ class ProductCart extends Component
         if ($data) {
             $this->data = $data;
 
-            $this->purchase_type = (int) ($data->purchase_type ?? 1);
             $this->global_discount_amount = $data->discount_percentage;
             $this->global_tax_amount = $data->tax_percentage;
             $this->shipping = $data->shipping_amount;
@@ -273,17 +269,12 @@ class ProductCart extends Component
                     } elseif ($storedRate !== null) {
                         $this->rate[$cart_item->id] = (float)$storedRate;
                     } else {
-                        // Special-case: when editing a Type-4 purchase and product master has no buy_price,
-                        // do not derive rate from MRP — leave as zero so UI shows empty/zero rate.
-                        if (intval($this->purchase_type ?? 0) === 4) {
-                            // Use cached product buy price helper to avoid repeated DB queries
-                            $prodBuy = $this->getProductBuyPrice($cart_item->id);
-                            $this->rate[$cart_item->id] = ($prodBuy > 0) ? $prodBuy : 0.0;
-                        } elseif (intval($this->purchase_type ?? 0) === 3) {
-                            $this->rate[$cart_item->id] = (float) $original_mrp;
-                        } else {
-                            $this->rate[$cart_item->id] = round($original_mrp / (1 + ($taxPercent / 100)), 2);
-                        }
+                        // Purchase / Purchase Return: fall back to the product's purchase
+                        // cost; if missing, derive a pre-tax rate from MRP.
+                        $cost = (float) ($cart_item->options->product_cost ?? 0);
+                        $this->rate[$cart_item->id] = $cost > 0
+                            ? $cost
+                            : round($original_mrp / (1 + ($taxPercent / 100)), 2);
                     }
                 }
 
@@ -317,7 +308,6 @@ class ProductCart extends Component
                 $this->custom_product_names[$cart_item->rowId] = $cart_item->name;
             }
         } else {
-            $this->purchase_type = 1;
             $this->global_discount_amount = 0;
             $this->global_tax_amount = 0;
             $this->shipping = 0.00;
@@ -352,27 +342,6 @@ class ProductCart extends Component
         ]);
     }
 
-    /**
-     * Return product master buy_price for given product id, caching the result.
-     * Returns float(0) when not present.
-     */
-    public function getProductBuyPrice($productId)
-    {
-        if (array_key_exists($productId, $this->productBuyPriceCache)) {
-            return $this->productBuyPriceCache[$productId];
-        }
-
-        try {
-            $p = Product::find($productId);
-            $val = floatval($p->buy_price ?? 0);
-        } catch (\Exception $e) {
-            $val = 0.0;
-        }
-
-        $this->productBuyPriceCache[$productId] = $val;
-        return $val;
-    }
-
     public function updatedRateType($value, $name) {
         if ($this->readonly) return;
         $this->withUpdateLock(function() use ($value, $name) {
@@ -400,23 +369,12 @@ class ProductCart extends Component
 
             $tax_percent = $cart_item->options->tax_percent ?? 0;
             $calculated_rate = 0;
-            $skipTaxDivision = false;
 
             switch (strtoupper($value)) {
                 case 'N': // Net Rate (Purchase/Purchase Return) or Sell Rate (Sale)
                     if ($this->isPurchaseCartInstance()) {
-                        // When purchase type is 4, use product_cost directly as the pre-tax purchase rate
-                        if ($this->purchase_type == 4) {
-                            if (!is_null($product->product_cost)) {
-                                $calculated_rate = $product->product_cost;
-                                $skipTaxDivision = true;
-                            } else {
-                                $calculated_rate = $product->product_price ?? 0;
-                            }
-                        } else {
-                            // Default: use sell rate (product_price) first
-                            $calculated_rate = $product->product_price ?? $product->product_cost ?? 0;
-                        }
+                        // Default: use sell rate (product_price) first
+                        $calculated_rate = $product->product_price ?? $product->product_cost ?? 0;
                     } else {
                         $calculated_rate = $product->product_price ?? 0;
                     }
@@ -430,16 +388,7 @@ class ProductCart extends Component
                     break;
             }
 
-            if (
-                !$skipTaxDivision
-                && !(
-                    $this->isPurchaseCartInstance()
-                    && $this->purchase_type == 3
-                    && strtoupper($value) === 'M'
-                )
-                && $tax_percent > 0
-                && $calculated_rate > 0
-            ) {
+            if ($tax_percent > 0 && $calculated_rate > 0) {
                 $calculated_rate = $calculated_rate / (1 + ($tax_percent / 100));
             }
 
@@ -504,42 +453,29 @@ class ProductCart extends Component
                 return;
             }
 
-            // For Purchase contexts: when purchase_type is 1/2/3, editing MRP should
-            // recompute the Rate before Discount = MRP / (1 + tax%) and update the
-            // cart options accordingly. When purchase_type == 4, keep the old
-            // behaviour where MRP is treated as a label and does not alter Rate.
+            // For Purchase contexts: editing MRP recomputes the Rate before Discount
+            // = MRP / (1 + tax%) and updates the cart options accordingly.
             if ($this->isPurchaseCartInstance()) {
                 $this->mrp[$id] = (float)$new_mrp;
                 $opts = $cart_item->options->toArray();
                 $opts['mrp'] = (float)$new_mrp;
 
-                if ($this->purchase_type != 4) {
-                    // For purchase type 3, Rate Before Discount mirrors MRP.
-                    // For other purchase types, keep pre-tax derivation from MRP.
-                    $new_rate = $this->purchase_type == 3
-                        ? $new_mrp
-                        : ($tax_percent > 0 ? $new_mrp / (1 + $tax_percent / 100) : $new_mrp);
-                    $this->rate[$id] = round($new_rate, 2);
-                    $this->rate_type[$id] = 'M';
+                $new_rate = $tax_percent > 0 ? $new_mrp / (1 + $tax_percent / 100) : $new_mrp;
+                $this->rate[$id] = round($new_rate, 2);
+                $this->rate_type[$id] = 'M';
 
-                    // Persist both mrp and rate_before_discount into cart options
-                    $opts['rate_before_discount'] = (float)$this->rate[$id];
-                    $opts['rate'] = (float)$this->rate[$id];
-                    $opts['rate_type'] = 'M';
+                // Persist both mrp and rate_before_discount into cart options
+                $opts['rate_before_discount'] = (float)$this->rate[$id];
+                $opts['rate'] = (float)$this->rate[$id];
+                $opts['rate_type'] = 'M';
 
-                    $this->cart()->update($cart_item->rowId, ['options' => $opts]);
-                    $this->invalidateCartCache();
-
-                    // Recalculate item price (applies discounts & tax)
-                    $this->updateItemPrice($cart_item->rowId);
-                    // Ensure UI reflects refreshed values
-                    $this->dispatch('refreshCart');
-                    return;
-                }
-
-                // purchase_type == 4: persist only MRP (no rate recalculation)
                 $this->cart()->update($cart_item->rowId, ['options' => $opts]);
                 $this->invalidateCartCache();
+
+                // Recalculate item price (applies discounts & tax)
+                $this->updateItemPrice($cart_item->rowId);
+                // Ensure UI reflects refreshed values
+                $this->dispatch('refreshCart');
                 return;
             }
 
@@ -671,9 +607,8 @@ class ProductCart extends Component
                 'mrp'                   => $display_mrp,
                 'rate'                  => (float)$rate,
                 'cash_discount_percent' => $this->customer_discount_percent,
-                // rate_before_discount and rate_type: when purchase_type==4 prefer product_cost (rate already set above)
                 'rate_before_discount'  => (float)$rate,
-                'rate_type'             => ($this->purchase_type == 4 ? 'N' : 'M'),
+                'rate_type'             => 'M',
                 'product_cost'          => (float)($fullProduct['product_cost'] ?? 0)
             ]
         ]);
@@ -687,7 +622,7 @@ class ProductCart extends Component
         $this->item_discount[$fullProduct['id']] = (float) ($this->customer_additional_discount ?? 0);
         $this->rate[$fullProduct['id']] = (float)$rate;
         $this->cash_discount_percent[$fullProduct['id']] = $this->customer_discount_percent;
-        $this->rate_type[$fullProduct['id']] = ($this->purchase_type == 4 ? 'N' : 'M');
+        $this->rate_type[$fullProduct['id']] = 'M';
         // Ensure editable MRP is set so the input shows the product master MRP when available
         $this->mrp[$fullProduct['id']] = $display_mrp;
         $this->tax_percent_edit[$fullProduct['id']] = floatval($tax_percent);
@@ -879,12 +814,7 @@ class ProductCart extends Component
 
         // Recompute pre-tax rate from unchanged MRP
         $mrp = floatval($this->mrp[$id] ?? $cart_item->options->mrp ?? $cart_item->price);
-        $new_rate = (
-            $this->isPurchaseCartInstance()
-            && $this->purchase_type == 3
-        )
-            ? $mrp
-            : ($tax_pct > 0 ? $mrp / (1 + $tax_pct / 100) : $mrp);
+        $new_rate = $tax_pct > 0 ? $mrp / (1 + $tax_pct / 100) : $mrp;
         $this->rate[$id] = (float)$new_rate;
 
         // Recalculate price with discounts under new tax rate
@@ -1418,15 +1348,7 @@ class ProductCart extends Component
             // Grand Total for sale flows = taxable + VAT
             $overall_amount = round($overall_total_without_gst + $overall_tax_amount, 2);
         } else {
-            // Type 4 purchase/purchase_return mode: use pre-tax total (GST column hidden)
-            $isPurchaseType4 = $this->isPurchaseCartInstance(true)
-                && $this->purchase_type == 4;
-            if ($isPurchaseType4) {
-                $overall_amount       = $overall_total_without_gst;
-                $overall_gross_amount = $overall_total_without_gst;
-            } else {
-                $overall_gross_amount = $overall_amount; // total incl. GST
-            }
+            $overall_gross_amount   = $overall_amount; // total incl. GST
             $overall_taxable_amount = $overall_total_without_gst;
         }
 
@@ -1497,86 +1419,4 @@ class ProductCart extends Component
         $this->dispatch('$refresh');
     }
 
-    public function setPurchaseType($type)
-    {
-        $this->withUpdateLock(function() use ($type) {
-            $this->purchase_type = (int) $type;
-
-            // Only apply changes for purchase-related cart instances
-            if (!$this->isPurchaseCartInstance()) {
-                return;
-            }
-            // When purchase type is 4, force Rate before Discount to product_cost for all cart items.
-            // Otherwise restore Rate Type to 'M' (MRP-derived) and recompute rates from MRP/tax.
-            $cart_items = $this->getCachedCartItems();
-            $ids = $cart_items->pluck('id')->unique()->values()->all();
-            if (!empty($ids)) {
-                $products = Product::whereIn('id', $ids)->get()->keyBy('id');
-            } else {
-                $products = collect();
-            }
-
-            $cart = $this->cart();
-            if ($this->purchase_type === 4) {
-                foreach ($cart_items as $cart_item) {
-                    $product_id = $cart_item->id;
-                    $product = $products->get($product_id);
-                    if (!$product) continue;
-
-                    // Prefer product_cost; if missing, leave existing rate unchanged
-                    if (!is_null($product->product_cost)) {
-                        $purchaseRate = (float) $product->product_cost;
-
-                        // Update Livewire state
-                        $this->rate[$product_id] = $purchaseRate;
-                        $this->rate_type[$product_id] = 'N';
-
-                        // Persist to cart options: set rate_before_discount and rate_type
-                        $opts = $cart_item->options->toArray();
-                        $opts['rate_before_discount'] = $purchaseRate;
-                        $opts['rate_type'] = 'N';
-                        $cart->update($cart_item->rowId, ['options' => $opts]);
-
-                        // Recalculate item price using the new pre-tax purchase rate
-                        $this->updateItemPrice($cart_item->rowId);
-                    }
-                }
-            } else {
-                // Restore MRP-based rates for non-type-4 purchases
-                foreach ($cart_items as $cart_item) {
-                    $product_id = $cart_item->id;
-                    $product = $products->get($product_id);
-                    // Determine tax percent and MRP from options or product
-                    $taxPercent = floatval($cart_item->options->tax_percent ?? ($product->product_order_tax ?? 0));
-                    $mrp = floatval($cart_item->options->mrp ?? ($product->mrp ?? $cart_item->price));
-
-                    // Type-3 mirrors MRP directly in Rate Before Discount.
-                    // Other types keep pre-tax derivation from MRP.
-                    $derivedRate = $this->purchase_type === 3
-                        ? $mrp
-                        : ($taxPercent > 0 ? ($mrp / (1 + ($taxPercent / 100))) : $mrp);
-
-                    // Update Livewire state to 'M' (MRP) and set rate to derived
-                    $this->rate_type[$product_id] = 'M';
-                    $this->rate[$product_id] = round((float)$derivedRate, 2);
-
-                    // Persist to cart options
-                    try {
-                        $opts = $cart_item->options->toArray();
-                        $opts['rate_before_discount'] = (float)$derivedRate;
-                        $opts['rate_type'] = 'M';
-                        $cart->update($cart_item->rowId, ['options' => $opts]);
-                    } catch (\Exception $e) {
-                        // ignore persistence errors
-                    }
-
-                    // Recalculate item price using the new rate
-                    $this->updateItemPrice($cart_item->rowId);
-                }
-            }
-
-            $this->invalidateCartCache();
-            $this->dispatch('refreshCart');
-        });
-    }
 }

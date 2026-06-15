@@ -69,7 +69,6 @@
                                             <tr><th>Excess Amount</th><td>{{ number_format($customer->excess_amount ?? 0, 2, '.', '') }}</td></tr>
                                             <tr><th>Credit Limit</th><td>{{ $customer->credit_limit }}</td></tr>
                                             <tr><th>Lock</th><td>{{ $customer->lock }}</td></tr>
-                                            <tr><th>Outstanding</th><td>{{ $customer->outstanding }}</td></tr>
                                             <tr><th>Active</th><td>{{ $customer->is_active ? 'Yes' : 'No' }}</td></tr>
                                             <tr><th>Account ID</th><td>{{ $customer->account_id }}</td></tr>
                                             <tr><th>Remarks</th><td>{{ $customer->remarks }}</td></tr>

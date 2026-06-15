@@ -77,7 +77,7 @@
                                     <div class="form-group">
                                         <div class="new-customer-field" style="display:none;">
                                             <label for="contact_phone">Phone</label>
-                                            <input type="text" class="form-control" name="contact_phone" id="contact_phone" placeholder="Contact Phone" oninput="validatePhone(this)">
+                                            <input type="text" class="form-control" name="contact_phone" id="contact_phone" maxlength="15" placeholder="Contact Phone" oninput="validatePhone(this)">
                                             <small id="phone-error" class="text-danger" style="display: none;"></small>
                                         </div>
                                     </div>
@@ -100,6 +100,13 @@
                                             <input type="text" class="form-control" name="contact_address" id="contact_address" placeholder="Contact Address / Area">
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+
+                            <div class="form-row mt-2 mb-3">
+                                <div class="col-md-2 pr-1">
+                                    <label for="vat_id_display" class="mb-1">VAT ID / TRN</label>
+                                    <input type="text" class="form-control" id="vat_id_display" readonly placeholder="—">
                                 </div>
                             </div>
 
@@ -305,6 +312,9 @@
                     // set hidden discount percentage used by Quotation controller
                     $('#hidden_discount_percentage').val(res.cash_discount || 0);
 
+                    // Show the selected customer's VAT ID / TRN (read-only, like Sale)
+                    $('#vat_id_display').val(res.vat_id || '');
+
                     /* Disabled: do not auto-apply additional discount when selecting a customer.
                     // Apply additional discount to ProductCart if present
                     if (res.additional_discount && res.additional_discount > 0) {
@@ -325,6 +335,7 @@
                 }).fail(function () {
                     // reset on fail
                     $('#hidden_discount_percentage, #hidden_shipping_amount').val('0');
+                    $('#vat_id_display').val('');
                 });
             });
 

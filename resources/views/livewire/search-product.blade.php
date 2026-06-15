@@ -93,12 +93,11 @@
                                         <div class="col-md-6 text-right">
                                             <span class="sp-meta">
                                                 Brand: {{ $result->category ?? '-' }} |
-                                                Net Rate: {{ format_currency($result->product_cost ?? $result->product_price ?? 0, true, false) }} |
-                                                List Price: {{ format_currency($result->list_price ?? 0, true, false) }} |
+                                                Purchase Rate: {{ format_currency($result->product_cost ?? 0, true, false) }} |
+                                                Sell Rate: {{ format_currency($result->product_price ?? 0, true, false) }} |
                                                 {{ $stockLabel }}: {{ $result->stock ?? $result->product_quantity }}
                                             </span><br>
-                                            <span class="sp-meta">VAT: {{ $result->product_order_tax ?? 0 }}% | Unit: {{ $result->product_unit ?? '-' }}</span><br>
-                                            <span class="sp-meta text-muted">Comments: {{ $result->product_note ?? 'N/A' }}</span>
+                                            <span class="sp-meta">VAT: {{ $result->product_order_tax ?? 0 }}% | Unit: {{ $result->product_unit ?? '-' }}</span>
                                         </div>
                                     </div>
                                 </a>

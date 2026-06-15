@@ -17,7 +17,7 @@ class StoreSettingsRequest extends FormRequest
         return [
             'company_name' => 'required|string|max:255',
             'company_email' => 'required|email|max:255',
-            'company_phone' => 'required|string|max:255',
+            'company_phone' => ['required', 'string', 'max:15', 'regex:/^\+?[0-9]+$/'],
             'bank_name' => 'nullable|string|min:2|max:100',
             'bank_account' => ['nullable','string','min:6','max:50','regex:/^[A-Za-z0-9\-\/\s]+$/'],
             'bank_branch' => 'nullable|string|min:2|max:100',

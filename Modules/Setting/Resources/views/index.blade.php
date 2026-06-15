@@ -39,7 +39,7 @@
                                 <div class="col-lg-4">
                                     <div class="form-group">
                                         <label for="company_phone">Company Phone <span class="text-danger">*</span></label>
-                                        <input type="tel" class="form-control" name="company_phone" id="company_phone" value="{{ old('company_phone', $settings->company_phone) }}" required maxlength="10" pattern="[0-9]{10}" title="Please enter exactly 10 digits" oninput="validatePhone(this, 'company-phone-error');">
+                                        <input type="tel" class="form-control" name="company_phone" id="company_phone" value="{{ old('company_phone', $settings->company_phone) }}" required maxlength="15" pattern="\+?[0-9]{7,15}" title="Only numbers and + (UAE contact number, max 15)" oninput="validatePhone(this, 'company-phone-error');">
                                         <small id="company-phone-error" class="text-danger" style="display: none;"></small>
                                     </div>
                                 </div>

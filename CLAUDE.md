@@ -24,9 +24,10 @@ Laravel 10 · NWIDART Modules · Livewire v3 · Bootstrap 4 / CoreUI 3 · Yajra 
 |---|---|
 | Rack, Bin modules | Deleted entirely (dirs, providers, routes, menu) |
 | Product | Removed: barcode, sub-category, MRP, HSN, rack/bin, image upload, supplier field from form/view. "Compatibility" → "Comments" |
-| Customer | Removed: GST, PAN, Aadhaar, country, discounts, salesman. **Added: `vat_id`** |
+| Customer | Removed: GST, PAN, Aadhaar, country, discounts, salesman. **Added: `vat_id`**. Removed `outstanding` Yes/No status flag + its auto-sync (2026-06-15) |
 | Supplier | Removed: GST, country, bank details, style/type, additional discount% |
-| Sale | Removed: HSN col, discount% col (DataTable), CGST, SGST, IGST, TCS%, adj, due date/days. "Net Rate" → "Total Amount". Balance = total − paid |
+| Sale | Removed: HSN col, discount% col (DataTable), CGST, SGST, IGST, TCS%, adj, due date/days. "Net Rate" → "Total Amount". Balance = total − paid. Removed customer "Outstanding Bills are available" warning (2026-06-15) |
+| Purchase (Type pricing) | Removed the supplier "Type" (1–4) pricing engine entirely — `purchase_type` column dropped from `purchases`/`purchase_returns`, `ProductCart::setPurchaseType()` + all type branching gone. Purchase Rate is now plain-editable (pre-fills `product_cost`) — one flow (2026-06-15) |
 | Purchase | Removed same fields. Added: draft save redirect, reorder button, payment status badge in DataTable |
 | Sale Return / Purchase Return | Removed same India fields (were already hidden-only) |
 | Sale Invoice | Removed: HSN/SGST/CGST cols, "Rupees" text, vehicle fields. Added: Tax col, Paid row, Balance Due row |

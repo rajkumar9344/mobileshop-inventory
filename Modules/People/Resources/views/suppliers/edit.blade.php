@@ -59,7 +59,7 @@
                                     <div class="form-group">
                                         <label>Phone <span class="text-danger">*</span></label>
                                         <input type="tel" class="form-control" name="supplier_phone" id="supplier_phone" required
-                                            maxlength="10" pattern="[0-9]{10}" title="Please enter exactly 10 digits"
+                                            maxlength="15" pattern="\+?[0-9]{7,15}" title="Only numbers and + (UAE contact number, max 15)"
                                             value="{{ old('supplier_phone', $supplier->supplier_phone) }}"
                                             oninput="validatePhone(this)">
                                         <small id="phone-error" class="text-danger" style="display:none;"></small>

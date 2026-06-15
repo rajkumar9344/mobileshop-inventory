@@ -51,32 +51,9 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="product_code">Code <span class="text-danger">*</span></label>
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" name="product_code" id="product_code" required value="{{ old('product_code') }}" maxlength="50" title="Max 50 characters">
-                                            <div class="input-group-append">
-                                                <button type="button" id="add-code-btn" class="btn btn-outline-primary" title="Add another code"><i class="bi bi-plus-circle"></i></button>
-                                            </div>
-                                        </div>
+                                        <input type="text" class="form-control" name="product_code" id="product_code" required value="{{ old('product_code') }}" maxlength="50" title="Max 50 characters">
                                         <small id="product_code_hint" class="form-text text-muted">Max 50 characters.</small>
                                         <small id="product_code_error" class="form-text text-danger" style="display:none;"></small>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- Additional Codes (hidden by default until used) --}}
-                            <div class="form-row" id="additional-codes-row" style="display: none;">
-                                <div class="col-md-12">
-                                    <div id="additional-codes-wrapper">
-                                        @foreach(old('additional_codes', []) as $extraCode)
-                                            <div class="mb-2 additional-code-row">
-                                                <div class="input-group">
-                                                    <input type="text" class="form-control" name="additional_codes[]" value="{{ $extraCode }}" maxlength="50" placeholder="Enter code">
-                                                    <div class="input-group-append">
-                                                        <button type="button" class="btn btn-outline-danger remove-code-btn"><i class="bi bi-trash"></i></button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endforeach
                                     </div>
                                 </div>
                             </div>
@@ -91,19 +68,19 @@
                                 </div>
                             </div>
 
-                            {{-- Row 3: Tax % | Tax Type --}}
+                            {{-- Row 3: VAT % | VAT Type --}}
                             <div class="form-row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="product_order_tax">Tax (%)</label>
+                                        <label for="product_order_tax">VAT (%)</label>
                                         <input type="number" class="form-control" name="product_order_tax" value="{{ old('product_order_tax', 5) }}" min="0" max="99" oninput="this.value = this.value.replace(/[^0-9]/g,'').slice(0,2)">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="product_tax_type">Tax Type</label>
+                                        <label for="product_tax_type">VAT Type</label>
                                         <select class="form-control" name="product_tax_type" id="product_tax_type">
-                                            <option value="" {{ old('product_tax_type', 2) == '' ? 'selected' : '' }}>Select Tax Type</option>
+                                            <option value="" {{ old('product_tax_type', 2) == '' ? 'selected' : '' }}>Select VAT Type</option>
                                             <option value="1" {{ old('product_tax_type', 2) == 1 ? 'selected' : '' }}>Exclusive</option>
                                             <option value="2" {{ old('product_tax_type', 2) == 2 ? 'selected' : '' }}>Inclusive</option>
                                         </select>
@@ -166,7 +143,7 @@
                             <div class="form-row">
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="product_cost">Purchase Rate (Net Rate) <span class="text-danger">*</span></label>
+                                        <label for="product_cost">Purchase Rate <span class="text-danger">*</span></label>
                                         <x-currency-input id="product_cost" name="product_cost" class="form-control" :display="old('product_cost')" aria-label="Purchase Rate" maxlength="13" required />
                                     </div>
                                 </div>
@@ -266,30 +243,6 @@
     </script>
     <script>
         $(document).ready(function () {
-            if ($('#additional-codes-wrapper').children().length > 0) {
-                $('#additional-codes-row').show();
-            }
-
-            $('#add-code-btn').on('click', function () {
-                if ($('#additional-codes-wrapper').children().length === 0) {
-                    $('#additional-codes-row').show();
-                }
-                var row = '<div class="mb-2 additional-code-row">' +
-                    '<div class="input-group">' +
-                    '<input type="text" class="form-control" name="additional_codes[]" maxlength="50" placeholder="Enter code">' +
-                    '<div class="input-group-append">' +
-                    '<button type="button" class="btn btn-outline-danger remove-code-btn"><i class="bi bi-trash"></i></button>' +
-                    '</div></div></div>';
-                $('#additional-codes-wrapper').append(row);
-            });
-
-            $(document).on('click', '.remove-code-btn', function () {
-                $(this).closest('.additional-code-row').remove();
-                if ($('#additional-codes-wrapper').children().length === 0) {
-                    $('#additional-codes-row').hide();
-                }
-            });
-
             var codeCheckTimeout = null;
             $('#product_code').on('blur', function () {
                 clearTimeout(codeCheckTimeout);

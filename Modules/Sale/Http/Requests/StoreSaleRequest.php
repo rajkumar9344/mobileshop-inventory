@@ -23,7 +23,7 @@ class StoreSaleRequest extends FormRequest
             'vehicle_no' => 'nullable|string|max:30',
             // allow negative balances (leading minus) as customers can have credits
             'opening_balance' => $isDraft ? 'nullable|regex:/^-?[0-9.,]+$/' : 'required|regex:/^-?[0-9.,]+$/',
-            'phone' => ['nullable','string','max:10','regex:/^[0-9]+$/'],
+            'phone' => ['nullable','string','max:15','regex:/^\+?[0-9]+$/'],
             // 'reference' => 'required|string|max:255', // Auto-generated in model
             'total_amount' => $isDraft ? 'nullable|numeric' : 'required|numeric',
             'status' => 'required|string|max:255',

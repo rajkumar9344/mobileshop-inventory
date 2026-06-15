@@ -10,7 +10,6 @@ use Modules\People\Http\Requests\UpdateCustomerRequest;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
 use Modules\People\Entities\Customer;
-use Modules\Sale\Entities\Sale;
 use Illuminate\Support\Facades\DB;
 use App\Services\QueryFilters;
 use Carbon\Carbon;
@@ -93,7 +92,6 @@ class CustomersController extends Controller
 
         // Defaults for dropdowns
         $data['lock'] = $data['lock'] ?? 'No';
-        $data['outstanding'] = $data['outstanding'] ?? 'No';
 
         foreach (['opening_balance', 'excess_amount', 'credit_limit'] as $numField) {
             if (array_key_exists($numField, $data)) {
@@ -130,21 +128,10 @@ class CustomersController extends Controller
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
-        $today = Carbon::today();
-
-        // Check if customer has any unpaid outstanding sales
-        $hasOverdueOutstanding = Sale::query()
-            ->where('customer_id', $customer->id)
-            ->whereIn('payment_status', ['Unpaid', 'Pending', 'Partial', 'Partially Paid'])
-            ->where('status', '!=', 'Draft')
-            ->exists();
-
         // Return only the fields needed by the sale form
         $payload = $customer->only([
-            'id', 'customer_name', 'customer_phone', 'area', 'opening_balance', 'lock', 'credit_limit', 'excess_amount', 'outstanding', 'vat_id'
+            'id', 'customer_name', 'customer_phone', 'area', 'opening_balance', 'lock', 'credit_limit', 'excess_amount', 'vat_id'
         ]);
-
-        $payload['has_overdue_outstanding'] = $hasOverdueOutstanding;
 
         return response()->json($payload);
     }
@@ -232,7 +219,6 @@ class CustomersController extends Controller
         $data['is_active'] = isset($data['is_active']) ? (bool) $data['is_active'] : $customer->is_active;
 
         $data['lock'] = $data['lock'] ?? $customer->lock ?? 'No';
-        $data['outstanding'] = $data['outstanding'] ?? $customer->outstanding ?? 'No';
 
         $customer->update($data);
 

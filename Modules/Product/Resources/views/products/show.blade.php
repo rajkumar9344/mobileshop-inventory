@@ -34,17 +34,7 @@
                                     </tr>
                                     <tr>
                                         <th>Code</th>
-                                        <td>
-                                            {{ $product->product_code }}
-                                            @php
-                                                $additionalCodes = isset($product->productCodes) ? collect($product->productCodes)->where('is_primary', false)->pluck('code')->all() : [];
-                                            @endphp
-                                            @if(!empty($additionalCodes))
-                                                @foreach($additionalCodes as $c)
-                                                    <span class="badge badge-secondary ml-2">{{ $c }}</span>
-                                                @endforeach
-                                            @endif
-                                        </td>
+                                        <td>{{ $product->product_code }}</td>
                                     </tr>
                                     <tr>
                                         <th>Equivalent Product's Code</th>
@@ -71,11 +61,11 @@
                                         <td>{{ $product->product_stock_alert ?? 'N/A' }}</td>
                                     </tr>
                                     <tr>
-                                        <th>Tax (%)</th>
+                                        <th>VAT (%)</th>
                                         <td>{{ $product->product_order_tax ?? 'N/A' }}</td>
                                     </tr>
                                     <tr>
-                                        <th>Tax Type</th>
+                                        <th>VAT Type</th>
                                         <td>
                                             @if($product->product_tax_type == 1)
                                                 Exclusive
@@ -91,7 +81,7 @@
                                         <td>{{ $product->buy_price ?? 'N/A' }}</td>
                                     </tr>
                                     <tr>
-                                        <th>Purchase Rate (Net Rate)</th>
+                                        <th>Purchase Rate</th>
                                         <td>{{ format_currency($product->product_cost) }}</td>
                                     </tr>
                                     <tr>

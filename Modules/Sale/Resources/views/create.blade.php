@@ -28,9 +28,6 @@
                         <div id="credit-limit-warning" class="alert alert-danger d-none">
                             <strong>Warning:</strong> Credit limit exceeded for this customer. Please settle outstanding dues before proceeding.
                         </div>
-                        <div id="outstanding-warning" class="alert alert-info d-none">
-                            <strong>Note:</strong> Outstanding Bills are available for this Customer.
-                        </div>
                         <form id="sale-form" action="{{ route('sales.store') }}" method="POST">
                             @csrf
                             <input type="hidden" wire:model.live="customer_discount_percent" id="customer_discount_percent">
@@ -47,7 +44,7 @@
                                 </div>
                                 <div class="col-md-2 pr-1">
                                     <label for="phone" class="mb-1">Phone No</label>
-                                    <input type="tel" class="form-control" name="phone" id="phone" maxlength="10" pattern="[0-9]{10}" title="Please enter exactly 10 digits" oninput="validatePhone(this)" placeholder="9876543210">
+                                    <input type="tel" class="form-control" name="phone" id="phone" maxlength="15" pattern="\+?[0-9]{7,15}" title="Only numbers and + (UAE contact number, max 15)" oninput="validatePhone(this)" placeholder="+971501234567">
                                     <small id="phone-error" class="text-danger" style="display: none;"></small>
                                 </div>
                                 <div class="col-md-3 pr-1">
@@ -808,12 +805,6 @@
                         $('#area').val(res.area || '');
                         $('#opening_balance').val(res.opening_balance !== undefined ? res.opening_balance : '0.00');
                         $('#vat_id_display').val(res.vat_id || '');
-                        // Outstanding message: only overdue outstanding (same as report)
-                        if (res.has_overdue_outstanding === true) {
-                            $('#outstanding-warning').removeClass('d-none');
-                        } else {
-                            $('#outstanding-warning').addClass('d-none');
-                        }
                     // Populate excess amount
                     if (res.excess_amount !== undefined) {
                         $('#excess_amount_display').val(res.excess_amount);
@@ -839,7 +830,6 @@
                     $('#area,#opening_balance,#phone,#customer_discount_percent').val('');
                     $('#excess_amount_display,#excess_amount').val('0.00');
                     $('#vat_id_display').val('');
-                    $('#outstanding-warning').addClass('d-none');
                 });
             });
         });

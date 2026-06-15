@@ -172,25 +172,10 @@
             // Set initial value for Select2 (do not trigger change – we already rendered area/balance/excess server-side)
             var initialSupplierId = '{{ $purchase_return->supplier_id }}';
             var initialSupplierName = '{{ $purchase_return->supplier_name }}';
-            var initialSupplierType = '{{ optional($purchase_return->supplier)->style ?? 1 }}';
             if (initialSupplierId && initialSupplierName) {
                 var option = new Option(initialSupplierName, initialSupplierId, true, true);
                 $('#supplier_id').append(option);
-                // Attach data-type to the DOM option so change handlers can read it
-                $('#supplier_id').find('option[value="' + initialSupplierId + '"]').attr('data-type', initialSupplierType);
             }
-
-            // Load supplier data when selected (Select2 AJAX may include `type` in payload)
-            $('#supplier_id').on('select2:select', function (e) {
-                var supplierId = e.params.data.id;
-                var supplierType = e.params.data.type || e.params.data.style || 1;
-                if ($('#purchase_type').length) {
-                    $('#purchase_type').val(supplierType).trigger('change');
-                    if (window.Livewire && typeof Livewire.dispatch === 'function') {
-                        Livewire.dispatch('purchaseTypeChanged', { type: supplierType });
-                    }
-                }
-            });
 
             // Single supplier-change pipeline: update supplier fields and apply supplier default discount.
             $('#supplier_id').on('change', function() {

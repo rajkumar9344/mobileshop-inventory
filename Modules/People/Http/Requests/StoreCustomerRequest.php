@@ -25,8 +25,8 @@ class StoreCustomerRequest extends FormRequest
     {
         return [
             'customer_name'   => 'required|string|max:80',
-            'customer_code'   => 'required|alpha_num|max:10|unique:customers,customer_code',
-            'customer_phone'  => ['required','string','max:10','regex:/^[0-9]+$/','unique:customers,customer_phone'],
+            'customer_code'   => ['required','string','max:15','regex:/^\+?[0-9]+$/','unique:customers,customer_code'],
+            'customer_phone'  => ['required','string','max:15','regex:/^\+?[0-9]+$/','unique:customers,customer_phone'],
             'customer_email'  => ['nullable','email:rfc,strict','max:50','unique:customers,customer_email'],
             'city'            => 'nullable|string|max:30',
             'state'           => 'nullable|string|max:30',
@@ -38,7 +38,6 @@ class StoreCustomerRequest extends FormRequest
             'excess_amount'   => ['nullable','regex:/^-?\\d+(?:\\.\\d{1,2})?$/','max:15'],
             'credit_limit'    => ['required','regex:/^\\d+(?:\\.\\d{1,2})?$/','max:15'],
             'lock'            => 'required|in:Yes,No',
-            'outstanding'     => 'required|in:Yes,No',
             'is_active'       => 'required|boolean',
             'account_id'      => 'nullable|alpha_num|max:10',
             'remarks'         => 'nullable|string|max:200',

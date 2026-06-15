@@ -1,10 +1,13 @@
 // Shared validation functions for phone and email fields and banking fields
 function validatePhone(input, errorId = 'phone-error') {
-    // Allow only numbers and limit to 10 digits
-    input.value = input.value.replace(/[^0-9]/g, '').slice(0, 10);
+    // UAE contact number: allow only digits and an optional leading '+', max 15 chars
+    let v = input.value.replace(/[^0-9+]/g, '');
+    v = v.replace(/(?!^)\+/g, ''); // '+' is allowed only as the first character
+    input.value = v.slice(0, 15);
 
-    if (input.value.length > 0 && input.value.length !== 10) {
-        showError(errorId, 'Phone number must be exactly 10 digits');
+    const digits = input.value.replace(/\D/g, '');
+    if (input.value.length > 0 && digits.length < 7) {
+        showError(errorId, 'Enter a valid phone number (numbers and + only)');
     } else {
         hideError(errorId);
     }

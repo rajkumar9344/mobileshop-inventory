@@ -33,8 +33,8 @@
                                 <div class="col-lg-4">
                                     <div class="form-group">
                                         <label for="customer_phone">Phone <span class="text-danger">*</span></label>
-                                        <input type="tel" class="form-control" name="customer_phone" id="customer_phone" required maxlength="10"
-                                            pattern="[0-9]{10}" title="Please enter exactly 10 digits"
+                                        <input type="tel" class="form-control" name="customer_phone" id="customer_phone" required maxlength="15"
+                                            pattern="\+?[0-9]{7,15}" title="Only numbers and + (UAE contact number, max 15)"
                                             oninput="validatePhone(this); document.getElementById('customer_code').value = this.value;">
                                         <small id="phone-error" class="text-danger" style="display: none;"></small>
                                         @error('customer_phone')<small class="text-danger">{{ $message }}</small>@enderror
@@ -55,8 +55,8 @@
                                 <div class="col-lg-4">
                                     <div class="form-group">
                                         <label for="customer_code">Customer Code (Auto-filled from Mobile) <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="customer_code" id="customer_code" required maxlength="10"
-                                            pattern="[A-Za-z0-9]+" oninput="this.value = this.value.replace(/[^A-Za-z0-9]/g,'').slice(0,10);">
+                                        <input type="text" class="form-control" name="customer_code" id="customer_code" required maxlength="15"
+                                            pattern="\+?[0-9]{7,15}" title="Only numbers and + (auto-filled from phone)" oninput="this.value = this.value.replace(/[^0-9+]/g,'').replace(/(?!^)\+/g,'').slice(0,15);">
                                         @error('customer_code')<small class="text-danger">{{ $message }}</small>@enderror
                                     </div>
                                 </div>
@@ -173,17 +173,7 @@
                             </div>
 
                             <div class="form-row">
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="outstanding">Outstanding <span class="text-danger">*</span></label>
-                                        <select name="outstanding" class="form-control" required>
-                                            <option value="No" selected>No</option>
-                                            <option value="Yes">Yes</option>
-                                        </select>
-                                        @error('outstanding')<small class="text-danger">{{ $message }}</small>@enderror
-                                    </div>
-                                </div>
-                                <div class="col-lg-8">
+                                <div class="col-lg-12">
                                     <div class="form-group">
                                         <label for="remarks">Remarks</label>
                                         <textarea class="form-control" name="remarks" rows="2" maxlength="200"></textarea>

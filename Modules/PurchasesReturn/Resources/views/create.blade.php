@@ -42,7 +42,7 @@
                                             <select class="form-control select2-supplier" name="supplier_id" id="supplier_id" required>
                                                 <option value="">-- Select supplier --</option>
                                                 @foreach(\Modules\People\Entities\Supplier::where('status', 'active')->orderBy('supplier_name', 'asc')->get() as $supplier)
-                                                    <option value="{{ $supplier->id }}" data-area="{{ $supplier->area }}" data-balance="{{ $supplier->open_balance ?? 0 }}" data-excess="{{ $supplier->excess_amount ?? 0 }}" data-type="{{ $supplier->style ?? 1 }}">{{ $supplier->supplier_name }}</option>
+                                                    <option value="{{ $supplier->id }}" data-area="{{ $supplier->area }}" data-balance="{{ $supplier->open_balance ?? 0 }}" data-excess="{{ $supplier->excess_amount ?? 0 }}">{{ $supplier->supplier_name }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -137,18 +137,10 @@
                 var area = selectedOption.data('area') || '';
                 var balance = selectedOption.data('balance') || 0;
                 var excess = selectedOption.data('excess') || 0;
-                var supplierType = selectedOption.data('type') || 1;
 
                 $('#area').val(area);
                 $('#balance').val(parseFloat(balance).toFixed(2));
                 $('#excess_amount').val(parseFloat(excess).toFixed(2));
-                // Populate purchase Type from supplier (editable by user)
-                if ($('#purchase_type').length) {
-                    $('#purchase_type').val(supplierType).trigger('change');
-                    if (window.Livewire && typeof Livewire.dispatch === 'function') {
-                        Livewire.dispatch('purchaseTypeChanged', { type: supplierType });
-                    }
-                }
 
                 // Fetch supplier JSON to get discount fields and apply them to the Livewire cart
                 var id = $(this).val();

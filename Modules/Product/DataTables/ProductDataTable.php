@@ -161,7 +161,7 @@ class ProductDataTable extends DataTable
                 ->className('text-center align-middle'),
 
             Column::computed('product_cost')
-                ->title('Purchase Rate (Net Rate)')
+                ->title('Purchase Rate')
                 ->className('text-center align-middle'),
 
             Column::computed('list_price')
@@ -186,7 +186,7 @@ class ProductDataTable extends DataTable
                 ->className('text-center align-middle'),
 
             Column::make('product_order_tax')
-                ->title('Tax (%)')
+                ->title('VAT (%)')
                 ->className('text-center align-middle'),
 
             Column::make('product_note')

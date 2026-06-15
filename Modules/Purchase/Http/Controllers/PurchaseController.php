@@ -198,7 +198,6 @@ class PurchaseController extends Controller
                     'overall_taxable_amount' => $request->overall_taxable_amount ?? 0,
                     'overall_tax_amount' => $request->overall_tax_amount ?? 0,
                     'overall_amount' => $request->overall_amount ?? 0,
-                    'purchase_type' => $request->purchase_type ?? 1,
                 ]);
                 $purchase = $existingDraft;
 
@@ -236,7 +235,6 @@ class PurchaseController extends Controller
                     'overall_taxable_amount' => $request->overall_taxable_amount ?? 0,
                     'overall_tax_amount' => $request->overall_tax_amount ?? 0,
                     'overall_amount' => $request->overall_amount ?? 0,
-                    'purchase_type' => $request->purchase_type ?? 1,
                 ]);
             }
 
@@ -543,7 +541,6 @@ class PurchaseController extends Controller
                     'overall_taxable_amount' => $request->overall_taxable_amount ?? 0,
                     'overall_tax_amount' => $request->overall_tax_amount ?? 0,
                     'overall_amount' => $request->overall_amount ?? 0,
-                    'purchase_type' => $request->purchase_type ?? 1,
                 ];
 
                 if ($purchase) {
@@ -709,11 +706,7 @@ class PurchaseController extends Controller
                 'rate_before_discount' => (
                     $purchase_detail->rate_before_discount !== null
                         ? $purchase_detail->rate_before_discount
-                        : (
-                            (isset($purchase->purchase_type) && intval($purchase->purchase_type) === 4 && $product && $product->product_cost !== null)
-                                ? (float) $product->product_cost
-                                : ($purchase_detail->rate ?? $purchase_detail->unit_price)
-                        )
+                        : ($purchase_detail->rate ?? $purchase_detail->unit_price)
                 ),
                 'tax_percent' => $purchase_detail->tax_percent ?? ($product->product_order_tax ?? 0),
                 'gst_percent' => $purchase_detail->tax_percent ?? ($product->product_order_tax ?? 0),
@@ -878,7 +871,6 @@ class PurchaseController extends Controller
                 'overall_taxable_amount' => $request->overall_taxable_amount ?? 0,
                 'overall_tax_amount' => $request->overall_tax_amount ?? 0,
                 'overall_amount' => $request->overall_amount ?? 0,
-                'purchase_type' => $request->purchase_type ?? 1,
             ]);
 
                 foreach ($cart->content() as $cart_item) {
@@ -1189,7 +1181,6 @@ class PurchaseController extends Controller
             'invoice_no'       => '',
             'invoice_date'     => now()->format('Y-m-d'),
             'area'             => $purchase->area,
-            'purchase_type'    => $purchase->purchase_type ?? 1,
             'tax_percentage'   => 0,
             'tax_amount'       => 0,
             'discount_percentage' => 0,

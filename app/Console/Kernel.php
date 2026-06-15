@@ -14,7 +14,6 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
          \App\Console\Commands\CheckWkhtmltopdf::class,
-         \App\Console\Commands\UpdateCustomerOutstandingStatus::class,
             \App\Console\Commands\RecomputePurchaseLines::class,
             \App\Console\Commands\BackfillAllProductCodes::class,
             \App\Console\Commands\BackfillPurchasePaymentsDiscounts::class,
@@ -32,7 +31,6 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
-        $schedule->command('update:customer-outstanding-status')->daily();
     }
 
     /**

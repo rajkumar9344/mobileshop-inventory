@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::table('customers', function (Blueprint $table) {
             // Basic new fields
-            $table->string('customer_code', 10)->unique()->nullable(false)->after('id');
+            $table->string('customer_code', 15)->unique()->nullable(false)->after('id');
 
             // Address related
             $table->string('area', 30)->nullable();

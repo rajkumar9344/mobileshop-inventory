@@ -126,9 +126,6 @@ class SuppliersController extends Controller
                 'id' => $s->id,
                 // text is what Select2 displays in the dropdown
                 'text' => $s->supplier_name . ($s->supplier_code ? ' (' . $s->supplier_code . ')' : ''),
-                // include style/type so Select2 selection handlers can read supplier type without an extra API call
-                'type' => $s->style ?? 1,
-                'style' => $s->style ?? 1,
                 'excess' => $s->excess_amount ?? 0,
             ];
         })->values();

@@ -474,8 +474,6 @@ class SaleController extends Controller
                 $customer = Customer::lockForUpdate()->find($sale->customer_id);
                 if ($customer) {
                     $customer->opening_balance = ($customer->opening_balance ?? 0) + ($sale->due_amount ?? 0);
-                    // Set outstanding flag based on new opening balance
-                    $customer->outstanding = (($customer->opening_balance ?? 0) > 0) ? 'Yes' : 'No';
                     $customer->save();
                 }
             }
@@ -784,7 +782,6 @@ class SaleController extends Controller
                             $customer = Customer::lockForUpdate()->find($newCustomerId);
                             if ($customer) {
                                 $customer->opening_balance = ($customer->opening_balance ?? 0) + $newDue;
-                                $customer->outstanding = (($customer->opening_balance ?? 0) > 0) ? 'Yes' : 'No';
                                 $customer->save();
                             }
                         } else {
@@ -793,7 +790,6 @@ class SaleController extends Controller
                                 $customer = Customer::lockForUpdate()->find($newCustomerId);
                                 if ($customer) {
                                     $customer->opening_balance = ($customer->opening_balance ?? 0) + ($newDue - $oldDue);
-                                    $customer->outstanding = (($customer->opening_balance ?? 0) > 0) ? 'Yes' : 'No';
                                     $customer->save();
                                 }
                             }
@@ -805,14 +801,12 @@ class SaleController extends Controller
                             // Only subtract oldDue if the previous sale was not a draft (since drafts don't add to balance)
                             $c = $customers[$oldCustomerId];
                             $c->opening_balance = ($c->opening_balance ?? 0) - ($oldDue ?? 0);
-                            $c->outstanding = (($c->opening_balance ?? 0) > 0) ? 'Yes' : 'No';
                             $c->save();
                         }
                         if (isset($customers[$newCustomerId])) {
                             // Always add full newDue to the new customer
                             $c2 = $customers[$newCustomerId];
                             $c2->opening_balance = ($c2->opening_balance ?? 0) + $newDue;
-                            $c2->outstanding = (($c2->opening_balance ?? 0) > 0) ? 'Yes' : 'No';
                             $c2->save();
                         }
                     }
@@ -1019,7 +1013,6 @@ class SaleController extends Controller
                         $customer = Customer::lockForUpdate()->find($sale->customer_id);
                         if ($customer) {
                             $customer->opening_balance = ($customer->opening_balance ?? 0) - ($sale->due_amount ?? 0);
-                            $customer->outstanding = (($customer->opening_balance ?? 0) > 0) ? 'Yes' : 'No';
                             $customer->save();
                         }
                     } catch (\Exception $e) {

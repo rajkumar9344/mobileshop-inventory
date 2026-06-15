@@ -13,7 +13,7 @@ class Customer extends Model
     protected $fillable = [
         'customer_name', 'customer_code', 'customer_email', 'customer_phone', 'address', 'city', 'state',
         'pincode', 'area', 'vat_id', 'opening_balance', 'credit_limit',
-        'lock', 'outstanding', 'is_active', 'account_id', 'remarks', 'excess_amount'
+        'lock', 'is_active', 'account_id', 'remarks', 'excess_amount'
     ];
 
     protected $casts = [
@@ -29,17 +29,6 @@ class Customer extends Model
 
     public function getOpeningBalanceFormattedAttribute() {
         return number_format($this->opening_balance, 2, '.', '');
-    }
-
-    /**
-     * Set the outstanding flag based on opening balance.
-     * If $balance is provided, use it; otherwise use current model value.
-     */
-    public function setOutstandingFromBalance($balance = null)
-    {
-        $balance = $balance ?? $this->opening_balance ?? 0;
-        $this->outstanding = ($balance > 0) ? 'Yes' : 'No';
-        $this->save();
     }
 
 }
