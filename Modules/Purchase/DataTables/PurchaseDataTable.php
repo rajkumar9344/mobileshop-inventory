@@ -41,6 +41,12 @@ class PurchaseDataTable extends DataTable
             ->addColumn('balance_amount', function ($data) {
                 return format_currency($data->due_amount ?? 0);
             })
+            ->addColumn('payment_method', function ($data) {
+                // A bill may be paid via several receipts — show every distinct method used.
+                $methods = $data->purchasePayments->pluck('payment_method')
+                    ->map(fn($m) => trim((string) $m))->filter()->unique()->values();
+                return $methods->isNotEmpty() ? $methods->implode(', ') : '—';
+            })
             ->addColumn('status', function ($data) {
                 return $data->status_badge;
             })
@@ -55,6 +61,7 @@ class PurchaseDataTable extends DataTable
         $query = $model->newQuery()
             ->with('supplier')
             ->withCount('purchasePayments')
+            ->with('purchasePayments')
             ->with('lastEmailLog')
             ->orderBy('id', 'desc');
 
@@ -185,6 +192,10 @@ class PurchaseDataTable extends DataTable
             Column::computed('balance_amount')
                 ->title('Balance')
                 ->className('text-end align-middle'),
+
+            Column::computed('payment_method')
+                ->title('Payment Method')
+                ->className('text-center align-middle'),
 
             Column::computed('status')
                 ->title('Status')

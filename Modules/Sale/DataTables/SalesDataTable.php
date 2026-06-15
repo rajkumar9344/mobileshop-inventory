@@ -18,18 +18,23 @@ class SalesDataTable extends DataTable
                 return $data->customer->customer_name ?? '';
             })
             ->addColumn('payment_method', function ($data) {
-                // Prefer the method recorded on the bill itself.
-                $method = $data->payment_method ?: ($data->payment_mode ?? null);
+                // A bill may be paid via several receipts — show every distinct method used.
+                $methods = $data->salePayments->pluck('payment_method')
+                    ->map(fn($m) => trim((string) $m))->filter()->unique()->values();
 
-                // If the bill was left unpaid (credit), fall back to the payment
-                // method from its most recent linked Sales Receipt.
-                if (empty($method)) {
-                    $line = $data->salesReceiptLines->sortByDesc('id')->first();
-                    $method = optional(optional($line)->receipt)->payment_mode;
+                // Fall back to the bill's own method, then the linked receipts' modes.
+                if ($methods->isEmpty()) {
+                    $own = $data->payment_method ?: ($data->payment_mode ?? null);
+                    if (!empty($own)) {
+                        $methods = collect([$own]);
+                    } else {
+                        $methods = $data->salesReceiptLines
+                            ->map(fn($l) => optional($l->receipt)->payment_mode)
+                            ->filter()->unique()->values();
+                    }
                 }
 
-                // Never render a blank cell.
-                return $method ?: '—';
+                return $methods->isNotEmpty() ? $methods->implode(', ') : '—';
             })
             ->addColumn('overall_tax_amount', function ($data) {
                 return format_currency($data->overall_tax_amount ?? 0);
@@ -90,6 +95,7 @@ class SalesDataTable extends DataTable
         $query = $model->newQuery()
             ->with('customer')
             ->withCount('salePayments')
+            ->with('salePayments')
             ->with('lastEmailLog')
             ->with('salesReceiptLines.receipt');
 

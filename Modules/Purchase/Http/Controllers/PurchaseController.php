@@ -1112,32 +1112,41 @@ class PurchaseController extends Controller
 
         $purchase->load('purchaseDetails');
 
-        // Generate new reference number
-        $lastPurchase = Purchase::latest('id')->first();
-        $nextNumber = $lastPurchase ? $lastPurchase->id + 1 : 1;
-        $newReference = 'PU' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+        // Bill total used for status: prefer the customer-payable overall_amount.
+        $billTotal = $purchase->overall_amount ?: $purchase->total_amount;
+        // Supplier's current Open Balance snapshot (so the edit page shows it correctly).
+        $supplierOpenBalance = optional($purchase->supplier)->open_balance ?? 0;
 
-        // Create a new Draft purchase copying header from original
+        // Create a new Draft purchase copying header from original.
+        // NOTE: the Purchase `creating` hook sets a dashed reference (PU-xxxxx); we override
+        // it below with the plain "PUxxxxx" format used by normal purchases.
         $newPurchase = Purchase::create([
             'date'             => now()->format('Y-m-d'),
-            'reference'        => $newReference,
             'supplier_id'      => $purchase->supplier_id,
             'supplier_name'    => $purchase->supplier_name,
             'invoice_no'       => '',
             'invoice_date'     => now()->format('Y-m-d'),
             'area'             => $purchase->area,
+            'balance'          => $supplierOpenBalance,
             'tax_percentage'   => 0,
             'tax_amount'       => 0,
             'discount_percentage' => 0,
             'discount_amount'  => 0,
             'shipping_amount'  => 0,
             'total_amount'     => $purchase->total_amount,
+            // overall_amount drives the status badge; must equal due so an unpaid draft
+            // shows "Pending" (not "Partially Paid").
+            'overall_amount'   => $billTotal,
             'paid_amount'      => 0,
-            'due_amount'       => $purchase->total_amount,
+            'due_amount'       => $billTotal,
             'status'           => 'Draft',
             'payment_status'   => 'Unpaid',
             'note'             => 'Reorder from ' . $purchase->reference,
         ]);
+
+        // Use the plain "PUxxxxx" reference format (no dash), matching normal purchases.
+        $newPurchase->reference = 'PU' . str_pad($newPurchase->id, 5, '0', STR_PAD_LEFT);
+        $newPurchase->save();
 
         // Copy line items (no stock change — draft)
         // attributesToArray() returns only DB column values via getters (rupees, not raw paise)
