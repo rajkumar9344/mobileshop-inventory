@@ -170,33 +170,44 @@ class SettingController extends Controller
 
 
     public function updateSmtp(StoreSmtpSettingsRequest $request) {
-        $toReplace = array(
-            'MAIL_MAILER='.env('MAIL_HOST'),
-            'MAIL_HOST="'.env('MAIL_HOST').'"',
-            'MAIL_PORT='.env('MAIL_PORT'),
-            'MAIL_FROM_ADDRESS="'.env('MAIL_FROM_ADDRESS').'"',
-            'MAIL_FROM_NAME="'.env('MAIL_FROM_NAME').'"',
-            'MAIL_USERNAME="'.env('MAIL_USERNAME').'"',
-            'MAIL_PASSWORD="'.env('MAIL_PASSWORD').'"',
-            'MAIL_ENCRYPTION="'.env('MAIL_ENCRYPTION').'"'
-        );
+        // Sanitize every value before it touches the .env file: strip quotes,
+        // newlines and null bytes so a value can't break out of its line or
+        // inject extra variables (required .env-write rule).
+        $sanitize = fn ($v) => str_replace(['"', "\n", "\r", "\0"], '', (string) $v);
 
-        $replaceWith = array(
-            'MAIL_MAILER='.$request->mail_mailer,
-            'MAIL_HOST="'.$request->mail_host.'"',
-            'MAIL_PORT='.$request->mail_port,
-            'MAIL_FROM_ADDRESS="'.$request->mail_from_address.'"',
-            'MAIL_FROM_NAME="'.$request->mail_from_name.'"',
-            'MAIL_USERNAME="'.$request->mail_username.'"',
-            'MAIL_PASSWORD="'.$request->mail_password.'"',
-            'MAIL_ENCRYPTION="'.$request->mail_encryption.'"');
+        $values = [
+            'MAIL_MAILER'       => $sanitize($request->mail_mailer),
+            'MAIL_HOST'         => $sanitize($request->mail_host),
+            'MAIL_PORT'         => $sanitize($request->mail_port),
+            'MAIL_USERNAME'     => $sanitize($request->mail_username),
+            'MAIL_PASSWORD'     => $sanitize($request->mail_password),
+            'MAIL_ENCRYPTION'   => $sanitize($request->mail_encryption),
+            'MAIL_FROM_ADDRESS' => $sanitize($request->mail_from_address),
+            'MAIL_FROM_NAME'    => $sanitize($request->mail_from_name),
+        ];
 
         try {
-            file_put_contents(base_path('.env'), str_replace($toReplace, $replaceWith, file_get_contents(base_path('.env'))));
-            Artisan::call('cache:clear');
+            $path = base_path('.env');
+            $env  = file_get_contents($path);
+
+            foreach ($values as $key => $value) {
+                $line    = $key . '="' . $value . '"';
+                $pattern = '/^' . preg_quote($key, '/') . '=.*$/m';
+                // Replace the existing KEY=... line whether it is quoted or not;
+                // append it if the key is missing. Use a callback so $ or \ in the
+                // value are never treated as regex backreferences.
+                if (preg_match($pattern, $env)) {
+                    $env = preg_replace_callback($pattern, fn () => $line, $env);
+                } else {
+                    $env .= PHP_EOL . $line;
+                }
+            }
+
+            file_put_contents($path, $env);
+            Artisan::call('config:clear');
 
             toast('Mail Settings Updated!', 'info');
-        } catch (\Exception $exception) {
+        } catch (\Throwable $exception) {
             Log::error($exception);
             session()->flash('settings_smtp_message', 'Something Went Wrong!');
         }
