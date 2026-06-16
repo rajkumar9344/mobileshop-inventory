@@ -72,12 +72,17 @@ class SalesReturnController extends Controller
                 }
             }
 
+            // Load the customer once: used for the stored name and the frozen Bill Balance
+            // snapshot (sum of unpaid dues as it is just before this return is created).
+            $customer = Customer::findOrFail($request->customer_id);
+
             $sale_return = SaleReturn::create([
                 'date' => $request->date,
                 'customer_id' => $request->customer_id,
-                'customer_name' => Customer::findOrFail($request->customer_id)->customer_name,
+                'customer_name' => $customer->customer_name,
                 'area' => $request->area,
                 'balance' => $request->opening_balance,
+                'bill_balance_before' => (float) ($customer->bill_balance ?? 0),
                 'phone_no' => $request->phone,
                 'excess_amount' => $request->excess_amount,
                 'tax_percentage' => $request->tax_percentage ?? 0,

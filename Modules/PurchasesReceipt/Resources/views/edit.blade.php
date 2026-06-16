@@ -16,6 +16,14 @@
             $displaySupplierBalance = optional($receipt->supplier)->open_balance ?? '';
         }
     }
+    // Bill / Total balance: prefer the snapshot frozen at creation; fall back to the
+    // supplier's live balance for older receipts saved before snapshots existed.
+    $openNum = (float) str_replace(',', '', (string) $displaySupplierBalance);
+    $billNum = (isset($receipt->bill_balance_before) && $receipt->bill_balance_before !== null)
+        ? ($receipt->bill_balance_before / 100)
+        : (float) (optional($receipt->supplier)->bill_balance ?? 0);
+    $displayBillBalance = number_format($billNum, 2, '.', '');
+    $displayTotalBalance = number_format($openNum + $billNum, 2, '.', '');
 @endphp
 <div class="container-fluid mb-4">
     <div class="row">
@@ -80,11 +88,11 @@
                                 </div>
                                 <div class="col-md-3">
                                     <label>Bill Balance</label>
-                                    <input type="text" id="bill_balance_display" class="form-control" readonly value="{{ $receipt->supplier_id ? number_format(optional($receipt->supplier)->bill_balance ?? 0, 2, '.', '') : '0.00' }}">
+                                    <input type="text" id="bill_balance_display" class="form-control" readonly value="{{ $receipt->supplier_id ? $displayBillBalance : '0.00' }}">
                                 </div>
                                 <div class="col-md-3">
                                     <label>Total Balance</label>
-                                    <input type="text" id="total_balance_display" class="form-control" readonly value="{{ $receipt->supplier_id ? number_format(optional($receipt->supplier)->total_balance ?? 0, 2, '.', '') : '0.00' }}">
+                                    <input type="text" id="total_balance_display" class="form-control" readonly value="{{ $receipt->supplier_id ? $displayTotalBalance : '0.00' }}">
                                 </div>
                                 <div class="col-md-2">
                                     <label>Excess</label>

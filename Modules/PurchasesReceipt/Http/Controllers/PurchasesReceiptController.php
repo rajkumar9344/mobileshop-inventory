@@ -203,16 +203,18 @@ class PurchasesReceiptController extends Controller
 
     /**
      * Return the references of any not-settled receipts for a supplier.
-     * A receipt is "not settled" when it has at least one line with is_settled = false.
+     * "Not settled" uses the same definition as the settledNo() scope so that BOTH
+     * normal receipts (line payments < total) AND lineless receipts created from a
+     * Purchase Return (applied_to_supplier < total) block a new receipt. The scope is
+     * wrapped in a nested where() because it uses orWhere internally — without the
+     * wrapper the supplier_id filter would not apply to the lineless branch.
      */
     protected function supplierUnsettledReceipts($supplierId, $excludeReceiptId = null): array
     {
         if (empty($supplierId)) return [];
 
         $query = PurchasesReceipt::where('supplier_id', $supplierId)
-            ->whereHas('lines', function ($l) {
-                $l->where('is_settled', false);
-            });
+            ->where(function ($q) { $q->settledNo(); });
 
         if ($excludeReceiptId) {
             $query->where('id', '!=', $excludeReceiptId);
@@ -306,6 +308,9 @@ class PurchasesReceiptController extends Controller
                 'total_amount' => 0,
                 'total_discount' => 0,
                 'supplier_balance_before' => (int) round(floatval($data['opening_balance'] ?? $supplier->open_balance ?? 0) * 100),
+                // Freeze the supplier's Bill Balance (unpaid dues) right now, before this
+                // receipt's payments reduce any due. Paise, to match supplier_balance_before.
+                'bill_balance_before' => (int) round(floatval($supplier->bill_balance ?? 0) * 100),
                 'created_by' => auth()->id()
             ]);
 

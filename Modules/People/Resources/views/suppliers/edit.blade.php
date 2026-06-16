@@ -123,7 +123,7 @@
                                     <div class="form-group">
                                         <label>Excess Amount</label>
                                         <x-currency-input id="excess_amount_display" hiddenName="excess_amount" class="form-control"
-                                            hiddenId="excess_amount_raw" display="{{ old('excess_amount', $supplier->excess_amount ?? '') }}" maxlength="20" />
+                                            hiddenId="excess_amount_raw" display="{{ old('excess_amount', $supplier->excess_amount ?? '') }}" maxlength="20" readonly />
                                         @error('excess_amount')<small class="text-danger">{{ $message }}</small>@enderror
                                     </div>
                                 </div>

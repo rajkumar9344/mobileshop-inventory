@@ -23,6 +23,14 @@
                                 $displayOpeningBalance = optional($receipt->customer)->opening_balance_formatted ?? optional($receipt->customer)->opening_balance ?? 0;
                             }
                         }
+                        // Bill / Total balance: prefer the snapshot frozen at creation; fall back to
+                        // the customer's live balance for older receipts saved before snapshots existed.
+                        $openNum = (float) str_replace(',', '', (string) $displayOpeningBalance);
+                        $billNum = (isset($receipt->bill_balance_before) && $receipt->bill_balance_before !== null)
+                            ? ($receipt->bill_balance_before / 100)
+                            : (float) (optional($receipt->customer)->bill_balance ?? 0);
+                        $displayBillBalance = number_format($billNum, 2, '.', '');
+                        $displayTotalBalance = number_format($openNum + $billNum, 2, '.', '');
                     @endphp
                     <h3>{{ $isReadOnly ? 'View Sales Receipt' : 'Edit Sales Receipt' }}</h3>
 
@@ -76,11 +84,11 @@
                                 </div>
                                 <div class="col-md-3">
                                     <label>Bill Balance</label>
-                                    <input type="text" id="bill_balance_display" class="form-control" readonly value="{{ $receipt->customer_id ? number_format(optional($receipt->customer)->bill_balance ?? 0, 2, '.', '') : '0.00' }}">
+                                    <input type="text" id="bill_balance_display" class="form-control" readonly value="{{ $receipt->customer_id ? $displayBillBalance : '0.00' }}">
                                 </div>
                                 <div class="col-md-3">
                                     <label>Total Balance</label>
-                                    <input type="text" id="total_balance_display" class="form-control" readonly value="{{ $receipt->customer_id ? number_format(optional($receipt->customer)->total_balance ?? 0, 2, '.', '') : '0.00' }}">
+                                    <input type="text" id="total_balance_display" class="form-control" readonly value="{{ $receipt->customer_id ? $displayTotalBalance : '0.00' }}">
                                 </div>
                                 <div class="col-md-3">
                                     <label>Excess Amount</label>

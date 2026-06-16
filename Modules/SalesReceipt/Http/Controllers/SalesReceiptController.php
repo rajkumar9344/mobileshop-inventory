@@ -186,16 +186,18 @@ class SalesReceiptController extends Controller
 
     /**
      * Return the references of any not-settled receipts for a customer.
-     * A receipt is "not settled" when it has at least one line with is_settled = false.
+     * "Not settled" uses the same definition as the settledNo() scope so that BOTH
+     * normal receipts (line payments < total) AND lineless receipts created from a
+     * Sales Return (applied_to_customer < total) block a new receipt. The scope is
+     * wrapped in a nested where() because it uses orWhere internally — without the
+     * wrapper the customer_id filter would not apply to the lineless branch.
      */
     protected function customerUnsettledReceipts($customerId, $excludeReceiptId = null): array
     {
         if (empty($customerId)) return [];
 
         $query = SalesReceipt::where('customer_id', $customerId)
-            ->whereHas('lines', function ($l) {
-                $l->where('is_settled', false);
-            });
+            ->where(function ($q) { $q->settledNo(); });
 
         if ($excludeReceiptId) {
             $query->where('id', '!=', $excludeReceiptId);
@@ -295,6 +297,9 @@ class SalesReceiptController extends Controller
                 'total_amount' => 0,
                 'total_discount' => 0,
                 'customer_balance_before' => (int) round(floatval($data['opening_balance'] ?? $customer->opening_balance ?? 0) * 100),
+                // Freeze the customer's Bill Balance (unpaid dues) as it is right now, before
+                // this receipt's payments reduce any due. Paise, to match customer_balance_before.
+                'bill_balance_before' => (int) round(floatval($customer->bill_balance ?? 0) * 100),
                 'created_by' => auth()->id()
             ]);
 

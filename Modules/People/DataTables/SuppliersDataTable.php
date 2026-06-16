@@ -33,7 +33,6 @@ class SuppliersDataTable extends DataTable
             DB::raw('COUNT(DISTINCT suppliers.id) as suppliers_count'),
             // Exclude purchases with status = "Draft"
             DB::raw("COALESCE(SUM(CASE WHEN purchases.status IS NULL OR purchases.status != 'Draft' THEN purchases.total_amount ELSE 0 END),0) as overall_total"),
-            DB::raw("COALESCE(SUM(CASE WHEN purchases.status IS NULL OR purchases.status != 'Draft' THEN purchases.paid_amount ELSE 0 END),0) as overall_paid"),
             DB::raw("COALESCE(SUM(CASE WHEN purchases.status IS NULL OR purchases.status != 'Draft' THEN purchases.discount_amount ELSE 0 END),0) as overall_discount"),
             DB::raw("COALESCE(SUM(CASE WHEN purchases.status IS NULL OR purchases.status != 'Draft' THEN purchases.total_amount ELSE 0 END),0) - COALESCE(SUM(CASE WHEN purchases.status IS NULL OR purchases.status != 'Draft' THEN purchases.paid_amount ELSE 0 END),0) - COALESCE(SUM(CASE WHEN purchases.status IS NULL OR purchases.status != 'Draft' THEN purchases.discount_amount ELSE 0 END),0) as overall_balance"),
             DB::raw('COALESCE(SUM(suppliers.excess_amount),0) as overall_excess')
@@ -51,12 +50,12 @@ class SuppliersDataTable extends DataTable
 
         $overall_open_balance = $overall_open_balance_q->sum('s.open_balance');
 
-        // Amounts paid against Open Balance via receipts, for the filtered suppliers (paise)
-        $overall_opening_paid_q = DB::table('purchases_receipts as pr')
+        // Total receipt amount paid to the filtered suppliers, taken directly (paise)
+        $overall_receipt_total_q = DB::table('purchases_receipts as pr')
             ->join('suppliers as s', 's.id', '=', 'pr.supplier_id');
-        QueryFilters::applyDateFilters($overall_opening_paid_q, $start, $end, null, null, 's.created_at');
-        QueryFilters::applyGlobalSearch($overall_opening_paid_q, $searchValue, 's.supplier_name', 's.area');
-        $overall_opening_paid = $overall_opening_paid_q->sum('pr.applied_to_supplier');
+        QueryFilters::applyDateFilters($overall_receipt_total_q, $start, $end, null, null, 's.created_at');
+        QueryFilters::applyGlobalSearch($overall_receipt_total_q, $searchValue, 's.supplier_name', 's.area');
+        $overall_receipt_total = $overall_receipt_total_q->sum('pr.total_amount');
 
         // Total Balance = Open Balance (rupees) + Bill Balance (paise -> rupees)
         $overall_total_balance = ($overall_open_balance ?? 0) + (($summary->overall_balance ?? 0) / 100);
@@ -67,9 +66,10 @@ class SuppliersDataTable extends DataTable
                 return format_currency( ($data->total_amount ?? 0) / 100 );
             })
             ->addColumn('paid_amount', function($data){
-                // Paid = bill payments (purchases.paid_amount) + amounts applied to
-                // the supplier's Open Balance via receipts. Both are stored in paise.
-                return format_currency( (($data->paid_amount ?? 0) + ($data->opening_paid ?? 0)) / 100 );
+                // Paid = the receipt amount entered by the user, taken directly
+                // (SUM of purchases_receipts.total_amount, paise) — not reconstructed from
+                // how the receipt was allocated across bills / open balance / excess.
+                return format_currency( ($data->receipt_total ?? 0) / 100 );
             })
             ->addColumn('discount_amount', function($data){
                 return format_currency( ($data->discount_amount ?? 0) / 100 );
@@ -96,7 +96,7 @@ class SuppliersDataTable extends DataTable
                 'summary' => [
                     'suppliers_count' => $summary->suppliers_count ?? 0,
                     'overall_total' => format_currency( ($summary->overall_total ?? 0) / 100 ),
-                    'overall_paid' => format_currency( (($summary->overall_paid ?? 0) + ($overall_opening_paid ?? 0)) / 100 ),
+                    'overall_paid' => format_currency( ($overall_receipt_total ?? 0) / 100 ),
                     'overall_discount' => format_currency( ($summary->overall_discount ?? 0) / 100 ),
                     'overall_balance' => format_currency( ($summary->overall_balance ?? 0) / 100 ),
                     'overall_open_balance' => format_currency( ($overall_open_balance ?? 0) ),
@@ -136,11 +136,10 @@ class SuppliersDataTable extends DataTable
             ->leftJoin('purchases', 'purchases.supplier_id', '=', 'suppliers.id')
             ->select(array_merge($supplierCols, [
                 DB::raw("COALESCE(SUM(CASE WHEN purchases.status IS NULL OR purchases.status != 'Draft' THEN purchases.total_amount ELSE 0 END), 0) as total_amount"),
-                DB::raw("COALESCE(SUM(CASE WHEN purchases.status IS NULL OR purchases.status != 'Draft' THEN purchases.paid_amount ELSE 0 END), 0) as paid_amount"),
                 DB::raw("COALESCE(SUM(CASE WHEN purchases.status IS NULL OR purchases.status != 'Draft' THEN purchases.discount_amount ELSE 0 END), 0) as discount_amount"),
                 DB::raw("(COALESCE(SUM(CASE WHEN purchases.status IS NULL OR purchases.status != 'Draft' THEN purchases.total_amount ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN purchases.status IS NULL OR purchases.status != 'Draft' THEN purchases.paid_amount ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN purchases.status IS NULL OR purchases.status != 'Draft' THEN purchases.discount_amount ELSE 0 END), 0)) as balance_amount"),
-                // Amounts paid to the supplier against their Open Balance via receipts (paise)
-                DB::raw("COALESCE((SELECT SUM(pr.applied_to_supplier) FROM purchases_receipts pr WHERE pr.supplier_id = suppliers.id), 0) as opening_paid")
+                // Total receipt amount paid to the supplier, taken directly (paise)
+                DB::raw("COALESCE((SELECT SUM(pr.total_amount) FROM purchases_receipts pr WHERE pr.supplier_id = suppliers.id), 0) as receipt_total")
             ]))
             ->groupBy($supplierCols);
 

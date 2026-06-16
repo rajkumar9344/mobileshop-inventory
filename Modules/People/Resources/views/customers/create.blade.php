@@ -129,7 +129,7 @@
                                 <div class="col-lg-4">
                                     <div class="form-group">
                                         <label for="excess_amount">Excess Amount</label>
-                                        <x-currency-input id="excess_amount" displayName="excess_amount_display" hiddenName="excess_amount" :value="old('excess_amount', 0)" />
+                                        <x-currency-input id="excess_amount" displayName="excess_amount_display" hiddenName="excess_amount" :value="old('excess_amount', 0)" readonly />
                                         @error('excess_amount')<small class="text-danger">{{ $message }}</small>@enderror
                                     </div>
                                 </div>

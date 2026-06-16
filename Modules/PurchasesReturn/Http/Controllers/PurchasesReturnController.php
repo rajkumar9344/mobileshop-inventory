@@ -57,12 +57,17 @@ class PurchasesReturnController extends Controller
                 $payment_status = 'Paid';
             }
 
+            // Load the supplier once: used for the stored name and the frozen Bill Balance
+            // snapshot (sum of unpaid dues as it is just before this return is created).
+            $supplier = Supplier::findOrFail($request->supplier_id);
+
             $purchase_return = PurchaseReturn::create([
                 'date' => $request->date,
                 'supplier_id' => $request->supplier_id,
-                'supplier_name' => Supplier::findOrFail($request->supplier_id)->supplier_name,
+                'supplier_name' => $supplier->supplier_name,
                 'area' => $request->area,
                 'balance' => $request->balance,
+                'bill_balance_before' => (float) ($supplier->bill_balance ?? 0),
                 'invoice_no' => $request->invoice_no,
                 'invoice_date' => $request->invoice_date,
                 'excess_amount' => $request->excess_amount,

@@ -67,11 +67,11 @@
                                 </div>
                                 <div class="col-md-3 pr-1">
                                     <label for="bill_balance_display" class="mb-1">Bill Balance</label>
-                                    <input type="text" class="form-control" id="bill_balance_display" readonly value="{{ $sale_return->customer_id ? number_format(optional($sale_return->customer)->bill_balance ?? 0, 2, '.', '') : '0.00' }}">
+                                    <input type="text" class="form-control" id="bill_balance_display" readonly value="{{ $sale_return->customer_id ? number_format($sale_return->bill_balance_before ?? (optional($sale_return->customer)->bill_balance ?? 0), 2, '.', '') : '0.00' }}">
                                 </div>
                                 <div class="col-md-3 pr-1">
                                     <label for="total_balance_display" class="mb-1">Total Balance</label>
-                                    <input type="text" class="form-control" id="total_balance_display" readonly value="{{ $sale_return->customer_id ? number_format(optional($sale_return->customer)->total_balance ?? 0, 2, '.', '') : '0.00' }}">
+                                    <input type="text" class="form-control" id="total_balance_display" readonly value="{{ $sale_return->customer_id ? number_format(((float)($sale_return->balance ?? 0)) + ((float)($sale_return->bill_balance_before ?? (optional($sale_return->customer)->bill_balance ?? 0))), 2, '.', '') : '0.00' }}">
                                 </div>
                                 <div class="col-md-3 pr-1">
                                     <label for="excess_amount_display" class="mb-1">Excess Amount</label>

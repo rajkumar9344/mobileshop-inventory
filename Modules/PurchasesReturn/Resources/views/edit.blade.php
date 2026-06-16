@@ -64,13 +64,13 @@
                                 <div class="col-lg-2">
                                     <div class="form-group">
                                         <label for="bill_balance_display">Bill Balance</label>
-                                        <input type="text" class="form-control" id="bill_balance_display" readonly value="{{ $purchase_return->supplier_id ? number_format(optional($purchase_return->supplier)->bill_balance ?? 0, 2, '.', '') : '0.00' }}">
+                                        <input type="text" class="form-control" id="bill_balance_display" readonly value="{{ $purchase_return->supplier_id ? number_format($purchase_return->bill_balance_before ?? (optional($purchase_return->supplier)->bill_balance ?? 0), 2, '.', '') : '0.00' }}">
                                     </div>
                                 </div>
                                 <div class="col-lg-2">
                                     <div class="form-group">
                                         <label for="total_balance_display">Total Balance</label>
-                                        <input type="text" class="form-control" id="total_balance_display" readonly value="{{ $purchase_return->supplier_id ? number_format(optional($purchase_return->supplier)->total_balance ?? 0, 2, '.', '') : '0.00' }}">
+                                        <input type="text" class="form-control" id="total_balance_display" readonly value="{{ $purchase_return->supplier_id ? number_format(((float)($purchase_return->balance ?? 0)) + ((float)($purchase_return->bill_balance_before ?? (optional($purchase_return->supplier)->bill_balance ?? 0))), 2, '.', '') : '0.00' }}">
                                     </div>
                                 </div>
                             </div>

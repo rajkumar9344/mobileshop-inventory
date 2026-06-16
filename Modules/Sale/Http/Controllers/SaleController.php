@@ -314,11 +314,17 @@ class SaleController extends Controller
         // If potentialBalance is between limit and limit+grace, allow but frontend should warn.
     }
 
+        // Snapshot the customer's Bill Balance (sum of existing unpaid dues) BEFORE this
+        // sale is created, so the saved bill always shows the balance as it was at creation.
+        $billBalanceBefore = $request->customer_id
+            ? (float) (optional(Customer::find($request->customer_id))->bill_balance ?? 0)
+            : 0;
+
         // Prefetch product codes for the active sale cart to reduce lookups
         $resolver = new ProductCodeResolver();
         $resolver->preload(Cart::instance('sale')->content()->pluck('id')->unique()->toArray());
 
-        DB::transaction(function () use ($request, &$shouldDispatch, &$dispatchSaleId, $isDraft, $resolver) {
+        DB::transaction(function () use ($request, &$shouldDispatch, &$dispatchSaleId, $isDraft, $resolver, $billBalanceBefore) {
             $cart = Cart::instance('sale');
 
             // Determine the base total from overall_amount or hidden total_amount.
@@ -370,6 +376,7 @@ class SaleController extends Controller
                 'customer_id' => $request->customer_id,
                 'area' => $request->area,
                 'balance' => $request->opening_balance ?? 0,
+                'bill_balance_before' => $billBalanceBefore,
                 'bill_type' => $request->bill_type ?? 'Cash',
                 'phone_no' => $request->phone,
                 'paid_amount' => $initialPaid,

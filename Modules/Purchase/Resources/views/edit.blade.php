@@ -50,11 +50,11 @@
                                 </div>
                                 <div class="col-md-2 pr-1">
                                     <label for="bill_balance_display" class="mb-1">Bill Balance</label>
-                                    <input type="text" class="form-control" id="bill_balance_display" readonly value="{{ $purchase->supplier_id ? number_format(optional($purchase->supplier)->bill_balance ?? 0, 2, '.', '') : '0.00' }}">
+                                    <input type="text" class="form-control" id="bill_balance_display" readonly value="{{ $purchase->supplier_id ? number_format($purchase->bill_balance_before ?? (optional($purchase->supplier)->bill_balance ?? 0), 2, '.', '') : '0.00' }}">
                                 </div>
                                 <div class="col-md-2 pr-1">
                                     <label for="total_balance_display" class="mb-1">Total Balance</label>
-                                    <input type="text" class="form-control" id="total_balance_display" readonly value="{{ $purchase->supplier_id ? number_format(optional($purchase->supplier)->total_balance ?? 0, 2, '.', '') : '0.00' }}">
+                                    <input type="text" class="form-control" id="total_balance_display" readonly value="{{ $purchase->supplier_id ? number_format(((float)($purchase->balance ?? 0)) + ((float)($purchase->bill_balance_before ?? (optional($purchase->supplier)->bill_balance ?? 0))), 2, '.', '') : '0.00' }}">
                                 </div>
                             </div>
                             <div class="form-row mt-2 mb-3">

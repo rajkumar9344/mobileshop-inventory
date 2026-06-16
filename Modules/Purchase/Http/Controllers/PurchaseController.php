@@ -166,6 +166,13 @@ class PurchaseController extends Controller
                 $payment_status = 'Paid';
             }
 
+            // Freeze the supplier's Bill Balance (sum of existing unpaid dues) as it is just
+            // before this purchase is finalised, so the saved bill shows it as at creation.
+            // A draft is excluded from bill_balance, so finalising one snapshots other dues only.
+            $billBalanceBefore = $request->supplier_id
+                ? (float) (optional(Supplier::find($request->supplier_id))->bill_balance ?? 0)
+                : 0;
+
             if ($existingDraft) {
                 // Update existing draft to completed purchase
                 $existingDraft->update([
@@ -175,6 +182,7 @@ class PurchaseController extends Controller
                     'supplier_name' => Supplier::findOrFail($request->supplier_id)->supplier_name,
                     'area' => $request->area,
                     'balance' => $request->balance,
+                    'bill_balance_before' => $billBalanceBefore,
                     'invoice_no' => $request->invoice_no,
                     'invoice_date' => $request->invoice_date,
                     'days' => $days,
@@ -212,6 +220,7 @@ class PurchaseController extends Controller
                     'supplier_name' => Supplier::findOrFail($request->supplier_id)->supplier_name,
                     'area' => $request->area,
                     'balance' => $request->balance,
+                    'bill_balance_before' => $billBalanceBefore,
                     'invoice_no' => $request->invoice_no,
                     'invoice_date' => $request->invoice_date,
                     'days' => $days,
