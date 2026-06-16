@@ -1,5 +1,24 @@
 <?php
 
+if (!function_exists('asset_v')) {
+    /**
+     * Versioned asset URL for cache-busting.
+     *
+     * Appends the file's last-modified time as a `?v=` query string, e.g.
+     * `/js/validation.js?v=1718524800`. Because the URL changes every time the
+     * file is edited, browsers (on any device) re-download it automatically —
+     * no need to clear each device's cache after a deploy. Falls back to a plain
+     * asset() URL if the file can't be found.
+     */
+    function asset_v($path) {
+        $full = public_path($path);
+        if (is_file($full)) {
+            return asset($path) . '?v=' . filemtime($full);
+        }
+        return asset($path);
+    }
+}
+
 if (!function_exists('settings')) {
     function settings() {
         return cache()->remember('settings', 24*60, function () {

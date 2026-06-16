@@ -93,7 +93,7 @@
 @endsection
 
 @push('page_scripts')
-    <script src="{{ asset('js/currency-input.js') }}"></script>
+    <script src="{{ asset_v('js/currency-input.js') }}"></script>
     <script>
         $(function(){
             try { if (window.currencyInputInit) window.currencyInputInit(); } catch(e) {}

@@ -257,7 +257,7 @@
 @if(!empty($isReadOnly) && $isReadOnly)
     {{-- Readonly view: skip page scripts to prevent interactive behavior --}}
 @else
-<script src="{{ asset('js/currency-input.js') }}"></script>
+<script src="{{ asset_v('js/currency-input.js') }}"></script>
 <script>
 $(function(){
     // populate supplier select via AJAX (simple select2 if available)

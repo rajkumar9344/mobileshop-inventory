@@ -190,8 +190,8 @@
 
 @push('page_scripts')
     <!-- <script src="{{ asset('js/jquery-mask-money.js') }}"></script> -->
-    <script src="{{ asset('js/validation.js') }}"></script>
-    <script src="{{ asset('js/currency-input.js') }}"></script>
+    <script src="{{ asset_v('js/validation.js') }}"></script>
+    <script src="{{ asset_v('js/currency-input.js') }}"></script>
     <script>
         (function($){
             // Helper: async credit-limit check (returns Promise resolving to server response)

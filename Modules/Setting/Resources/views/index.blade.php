@@ -222,7 +222,7 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('js/validation.js') }}"></script>
+    <script src="{{ asset_v('js/validation.js') }}"></script>
     <script>
         (function(){
             function csrf() { return document.querySelector('meta[name="csrf-token"]').getAttribute('content'); }

@@ -176,7 +176,7 @@
 
 @push('page_scripts')
     <script src="{{ asset('js/jquery-mask-money.js') }}"></script>
-    <script src="{{ asset('js/currency-input.js') }}"></script>
+    <script src="{{ asset_v('js/currency-input.js') }}"></script>
     <script>
         // Quick-cart search: find product in the cart by id or name
         (function(){

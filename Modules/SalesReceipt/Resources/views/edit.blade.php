@@ -266,7 +266,7 @@
 
 @push('page_scripts')
 @unless($isReadOnly)
-    <script src="{{ asset('js/currency-input.js') }}"></script>
+    <script src="{{ asset_v('js/currency-input.js') }}"></script>
 <script>
 $(function(){
     // populate customer select via AJAX (simple select2 if available)

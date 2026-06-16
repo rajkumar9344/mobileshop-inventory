@@ -201,8 +201,8 @@
             gap: 0.5rem;
         }
     </style>
-    <script src="{{ asset('js/validation.js') }}"></script>
-    <script src="{{ asset('js/currency-input.js') }}"></script>
+    <script src="{{ asset_v('js/validation.js') }}"></script>
+    <script src="{{ asset_v('js/currency-input.js') }}"></script>
     <script>
         $(document).ready(function () {
             // Initialize Select2 for customer dropdown

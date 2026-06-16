@@ -197,8 +197,8 @@
 @endsection
 
 @push('page_scripts')
-    <script src="{{ asset('js/validation.js') }}"></script>
-    <script src="{{ asset('js/currency-input.js') }}"></script>
+    <script src="{{ asset_v('js/validation.js') }}"></script>
+    <script src="{{ asset_v('js/currency-input.js') }}"></script>
     <script>
         $(document).ready(function () {
             // Update hidden fields on page load

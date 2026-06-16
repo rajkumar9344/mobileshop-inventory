@@ -132,7 +132,7 @@
 
 @push('page_scripts')
     <script src="{{ asset('js/jquery-mask-money.js') }}"></script>
-    <script src="{{ asset('js/currency-input.js') }}"></script>
+    <script src="{{ asset_v('js/currency-input.js') }}"></script>
     <script>
         $(document).ready(function () {
             // Populate hidden calculation fields on load and before submit
