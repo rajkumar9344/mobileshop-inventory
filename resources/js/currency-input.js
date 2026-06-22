@@ -53,6 +53,7 @@
 
     // Write the current raw value into the paired hidden field.
     // Safe to call during typing — does NOT dispatch events or notify Livewire.
+    // Livewire is notified once on blur via commitToLivewire() → Livewire.find().set().
     function syncHidden(el) {
         const hidden = el.dataset.target ? document.querySelector(el.dataset.target) : null;
         if (!hidden) return null;
@@ -60,8 +61,9 @@
         try {
             hidden.setAttribute('value', hidden.value);
             hidden.defaultValue = hidden.value;
-            // Notify other scripts (listeners on the hidden input) that value changed
-            try { hidden.dispatchEvent(new Event('input', { bubbles: true })); } catch (ee) {}
+            // Do NOT dispatch 'input' here — that would fire wire:model on every keystroke,
+            // causing per-character Livewire round-trips that invalidate cart rowIds and
+            // replace the focused <tr>, losing the user's cursor mid-type (the 95.24 bug).
         } catch (e) {}
         return hidden;
     }

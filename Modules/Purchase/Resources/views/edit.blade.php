@@ -25,8 +25,9 @@
                             <div id="validation-errors" style="display: none;"></div>
 
                             <div class="border p-3 mb-3">
+                            {{-- Row 1: Reference No | Ref Date | Supplier Name | Area | Open Balance --}}
                             <div class="form-row">
-                                <div class="col-md-3 pr-1">
+                                <div class="col-md-2 pr-1">
                                     <label for="reference" class="mb-1">Purchase Reference No <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="reference" id="reference" readonly maxlength="7" pattern="[A-Za-z0-9]+" value="{{ $purchase->reference }}" placeholder="Auto-generated" @if($isReadOnly) disabled @endif>
                                 </div>
@@ -34,7 +35,7 @@
                                     <label for="ref_date" class="mb-1">Ref Date <span class="text-danger">*</span></label>
                                     <input type="date" class="form-control" name="ref_date" id="ref_date" required value="{{ $purchase->date ?? $purchase->ref_date ?? now()->format('Y-m-d') }}" @if($isReadOnly) disabled @endif>
                                 </div>
-                                <div class="col-md-3 pr-1">
+                                <div class="col-md-4 pr-1">
                                     <label for="supplier_id" class="mb-1">Supplier Name <span class="text-danger">*</span></label>
                                     <select class="form-control" name="supplier_id" id="supplier_id" required @if($isReadOnly) disabled @endif>
                                         <option value="{{ $purchase->supplier_id }}" data-due-days="{{ optional($purchase->supplier)->due_days ?? 0 }}" selected>{{ $purchase->supplier_name }}</option>
@@ -48,6 +49,17 @@
                                     <label for="balance" class="mb-1">Open Balance <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="balance" id="balance" maxlength="15" pattern="^\d+(\.\d{1,2})?$|^\d+(,\d{1,2})?$" placeholder="0.00" value="{{ $purchase->balance }}" readonly>
                                 </div>
+                            </div>
+                            {{-- Row 2: Invoice No | Invoice Date | Bill Balance | Total Balance | Excess --}}
+                            <div class="form-row mt-2 mb-3">
+                                <div class="col-md-3 pr-1">
+                                    <label for="invoice_no" class="mb-1">Invoice No <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="invoice_no" id="invoice_no" maxlength="20" value="{{ $purchase->invoice_no }}" required placeholder="Invoice Number" @if($isReadOnly) disabled @endif>
+                                </div>
+                                <div class="col-md-3 pr-1">
+                                    <label for="invoice_date" class="mb-1">Invoice Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="invoice_date" id="invoice_date" value="{{ $purchase->invoice_date }}" required @if($isReadOnly) disabled @endif>
+                                </div>
                                 <div class="col-md-2 pr-1">
                                     <label for="bill_balance_display" class="mb-1">Bill Balance</label>
                                     <input type="text" class="form-control" id="bill_balance_display" readonly value="{{ $purchase->supplier_id ? number_format($purchase->bill_balance_before ?? (optional($purchase->supplier)->bill_balance ?? 0), 2, '.', '') : '0.00' }}">
@@ -55,16 +67,6 @@
                                 <div class="col-md-2 pr-1">
                                     <label for="total_balance_display" class="mb-1">Total Balance</label>
                                     <input type="text" class="form-control" id="total_balance_display" readonly value="{{ $purchase->supplier_id ? number_format(((float)($purchase->balance ?? 0)) + ((float)($purchase->bill_balance_before ?? (optional($purchase->supplier)->bill_balance ?? 0))), 2, '.', '') : '0.00' }}">
-                                </div>
-                            </div>
-                            <div class="form-row mt-2 mb-3">
-                                <div class="col-md-2 pr-1">
-                                    <label for="invoice_no" class="mb-1">Invoice No <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="invoice_no" id="invoice_no" maxlength="20" value="{{ $purchase->invoice_no }}" required placeholder="Invoice Number" @if($isReadOnly) disabled @endif>
-                                </div>
-                                <div class="col-md-2 pr-1">
-                                    <label for="invoice_date" class="mb-1">Invoice Date <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="invoice_date" id="invoice_date" value="{{ $purchase->invoice_date }}" required @if($isReadOnly) disabled @endif>
                                 </div>
                                 <div class="col-md-2 pr-1">
                                     <label for="excess_amount" class="mb-1">Excess</label>

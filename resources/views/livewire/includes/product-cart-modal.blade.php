@@ -32,18 +32,18 @@
                     @endif
                     <div class="form-group">
                         <label>Discount Type <span class="text-danger">*</span></label>
-                        <select wire:model.live="discount_type.{{ $cart_item->id }}" class="form-control" required>
+                        <select wire:model.live="discount_type.{{ $cart_item->rowId }}" class="form-control" required>
                             <option value="fixed">Fixed</option>
                             <option value="percentage">Percentage</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        @if($discount_type[$cart_item->id] == 'percentage')
+                        @if(($discount_type[$cart_item->rowId] ?? 'percentage') == 'percentage')
                             <label>Discount(%) <span class="text-danger">*</span></label>
-                            <input wire:model="item_discount.{{ $cart_item->id }}" type="number" class="form-control" value="{{ $item_discount[$cart_item->id] }}" min="0" max="100">
-                        @elseif($discount_type[$cart_item->id] == 'fixed')
+                            <input wire:model="item_discount.{{ $cart_item->rowId }}" type="number" class="form-control" value="{{ $item_discount[$cart_item->rowId] ?? 0 }}" min="0" max="100">
+                        @elseif(($discount_type[$cart_item->rowId] ?? '') == 'fixed')
                             <label>Discount <span class="text-danger">*</span></label>
-                            <input wire:model="item_discount.{{ $cart_item->id }}" type="number" class="form-control" value="{{ $item_discount[$cart_item->id] }}">
+                            <input wire:model="item_discount.{{ $cart_item->rowId }}" type="number" class="form-control" value="{{ $item_discount[$cart_item->rowId] ?? 0 }}">
                         @endif
                     </div>
                 </div>

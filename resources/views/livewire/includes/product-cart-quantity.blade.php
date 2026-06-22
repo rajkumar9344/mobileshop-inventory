@@ -1,7 +1,7 @@
 <div class="input-group d-flex justify-content-center">
     <input 
         data-quick-qty="1"
-        wire:model.lazy="quantity.{{ $cart_item->id }}"
+        wire:model.lazy="quantity.{{ $cart_item->rowId }}"
         style="min-width: 28px; max-width: 60px; padding:4px 6px; text-align:center;" 
         type="number" 
         class="form-control" 

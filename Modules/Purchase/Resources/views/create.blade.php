@@ -28,8 +28,9 @@
                             <div id="validation-errors" style="display: none;"></div>
 
                             <div class="border p-3 mb-3">
+                            {{-- Row 1: Reference No | Ref Date | Supplier Name | Area | Open Balance --}}
                             <div class="form-row">
-                                <div class="col-md-3 pr-1">
+                                <div class="col-md-2 pr-1">
                                     <label for="reference" class="mb-1">Purchase Reference No <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="reference" id="reference" readonly maxlength="7" pattern="[A-Za-z0-9]+" value="" placeholder="Auto-generated">
                                 </div>
@@ -37,7 +38,7 @@
                                     <label for="ref_date" class="mb-1">Ref Date <span class="text-danger">*</span></label>
                                     <input type="date" class="form-control" name="ref_date" id="ref_date" required value="{{ now()->format('Y-m-d') }}">
                                 </div>
-                                <div class="col-md-3 pr-1">
+                                <div class="col-md-4 pr-1">
                                     <label for="supplier_id" class="mb-1">Supplier Name <span class="text-danger">*</span></label>
                                     <select class="form-control select2-supplier" name="supplier_id" id="supplier_id" required>
                                         <option value="">-- Select supplier --</option>
@@ -54,6 +55,17 @@
                                     <label for="balance" class="mb-1">Open Balance <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="balance" id="balance" maxlength="15" pattern="^\d+(\.\d{1,2})?$|^\d+(,\d{1,2})?$" readonly placeholder="0.00" value="0.00">
                                 </div>
+                            </div>
+                            {{-- Row 2: Invoice No | Invoice Date | Bill Balance | Total Balance | Excess --}}
+                            <div class="form-row mt-2 mb-3">
+                                <div class="col-md-3 pr-1">
+                                    <label for="invoice_no" class="mb-1">Invoice No <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="invoice_no" id="invoice_no" maxlength="20" required placeholder="Invoice Number">
+                                </div>
+                                <div class="col-md-3 pr-1">
+                                    <label for="invoice_date" class="mb-1">Invoice Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="invoice_date" id="invoice_date" required value="{{ now()->format('Y-m-d') }}">
+                                </div>
                                 <div class="col-md-2 pr-1">
                                     <label for="bill_balance_display" class="mb-1">Bill Balance</label>
                                     <input type="text" class="form-control" id="bill_balance_display" readonly placeholder="0.00" value="0.00">
@@ -61,16 +73,6 @@
                                 <div class="col-md-2 pr-1">
                                     <label for="total_balance_display" class="mb-1">Total Balance</label>
                                     <input type="text" class="form-control" id="total_balance_display" readonly placeholder="0.00" value="0.00">
-                                </div>
-                            </div>
-                            <div class="form-row mt-2 mb-3">
-                                <div class="col-md-2 pr-1">
-                                    <label for="invoice_no" class="mb-1">Invoice No <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="invoice_no" id="invoice_no" maxlength="20" required placeholder="Invoice Number">
-                                </div>
-                                <div class="col-md-2 pr-1">
-                                    <label for="invoice_date" class="mb-1">Invoice Date <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="invoice_date" id="invoice_date" required value="{{ now()->format('Y-m-d') }}">
                                 </div>
                                 <div class="col-md-2 pr-1">
                                     <label for="excess_amount" class="mb-1">Excess</label>
@@ -602,7 +604,7 @@
             // Check if there's something worth saving (only consider the product-cart table)
             function hasContentToSave() {
                 // Only count rows inside the product cart table to avoid matching product-search results
-                var cartItems = document.querySelectorAll('.product-cart-table tbody tr[data-product-id]');
+                var cartItems = document.querySelectorAll('.product-cart-table tbody tr[data-row-id]');
                 return cartItems.length > 0;
             }
 

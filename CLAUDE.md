@@ -75,6 +75,24 @@ Modules/*/Database/Migrations/        — Module-level migrations
 - Currency inputs use `x-currency-input` Blade component; `prepareForValidation()` strips commas before validation
 - Monetary amounts stored as bigint (paise ×100); models use `toMinor()` setters and `/ 100` getters
 
+### Vendor patch (re-apply after `composer install`)
+
+`vendor/anayarojo/shoppingcart/src/CartItem.php` — `generateRowId()` must be patched to use `_uid` when present so that mutable cart options (mrp, sub_total, etc.) don't change the rowId on every `cart()->update()` call.
+
+Replace the method body with:
+```php
+protected function generateRowId($id, array $options)
+{
+    if (array_key_exists('_uid', $options) && (string) $options['_uid'] !== '') {
+        return md5($id . $options['_uid']);
+    }
+    ksort($options);
+    return md5($id.serialize($options));
+}
+```
+
+Without this patch, every option mutation causes a new rowId, invalidating all Livewire-state keys (`$this->rate`, `$this->mrp`, etc.) and ultimately displaying 95.24 instead of the user-entered 100 when VAT is 5%.
+
 ---
 
 ## Security Rules

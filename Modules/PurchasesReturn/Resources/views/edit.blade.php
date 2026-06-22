@@ -24,57 +24,33 @@
                         <form id="purchase-return-form" action="{{ $isReadOnly ? '#' : route('purchase-returns.update', $purchase_return) }}" method="POST">
                             @csrf
                             @method('patch')
+                            {{-- Row 1: Reference | Date | Supplier | Area | Open Balance --}}
                             <div class="form-row">
-                                <div class="col-lg-2">
-                                    <div class="form-group">
-                                        <label for="reference">Reference <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="reference" required value="{{ $purchase_return->reference }}" readonly>
-                                    </div>
+                                <div class="col-md-2 pr-1">
+                                    <label for="reference" class="mb-1">Reference <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="reference" required value="{{ $purchase_return->reference }}" readonly>
                                 </div>
-                                <div class="col-lg-2">
-                                    <div class="from-group">
-                                        <div class="form-group">
-                                            <label for="date">Date <span class="text-danger">*</span></label>
-                                            <input type="date" class="form-control" name="date" {{ $isReadOnly ? 'disabled' : 'required' }} value="{{ $purchase_return->date }}">
-                                        </div>
-                                    </div>
+                                <div class="col-md-2 pr-1">
+                                    <label for="date" class="mb-1">Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="date" {{ $isReadOnly ? 'disabled' : 'required' }} value="{{ $purchase_return->date }}">
                                 </div>
-                                <div class="col-lg-3">
-                                    <div class="from-group">
-                                        <div class="form-group">
-                                            <label for="supplier_id">Supplier <span class="text-danger">*</span></label>
-                                            <select class="form-control select2-supplier" name="supplier_id" id="supplier_id" {{ $isReadOnly ? 'disabled' : 'required' }}>
-                                                <option value="{{ $purchase_return->supplier_id }}" selected>{{ $purchase_return->supplier_name }}</option>
-                                            </select>
-                                        </div>
-                                    </div>
+                                <div class="col-md-4 pr-1">
+                                    <label for="supplier_id" class="mb-1">Supplier <span class="text-danger">*</span></label>
+                                    <select class="form-control select2-supplier" name="supplier_id" id="supplier_id" {{ $isReadOnly ? 'disabled' : 'required' }}>
+                                        <option value="{{ $purchase_return->supplier_id }}" selected>{{ $purchase_return->supplier_name }}</option>
+                                    </select>
                                 </div>
-                                <div class="col-lg-3">
-                                    <div class="form-group">
-                                        <label for="area">Area</label>
-                                        <input type="text" class="form-control" name="area" id="area" maxlength="30" readonly placeholder="Area" value="{{ old('area', $purchase_return->area ?? '') }}">
-                                    </div>
+                                <div class="col-md-2 pr-1">
+                                    <label for="area" class="mb-1">Area</label>
+                                    <input type="text" class="form-control" name="area" id="area" maxlength="30" readonly placeholder="Area" value="{{ old('area', $purchase_return->area ?? '') }}">
                                 </div>
-                                <div class="col-lg-2">
-                                    <div class="form-group">
-                                        <label for="balance">Open Balance</label>
-                                        <input type="text" class="form-control" name="balance" id="balance" maxlength="15" pattern="^\d+(\.\d{1,2})?$|^\d+(,\d{1,2})?$" readonly placeholder="0.00" value="{{ old('balance', $purchase_return->balance ?? '0.00') }}">
-                                    </div>
-                                </div>
-                                <div class="col-lg-2">
-                                    <div class="form-group">
-                                        <label for="bill_balance_display">Bill Balance</label>
-                                        <input type="text" class="form-control" id="bill_balance_display" readonly value="{{ $purchase_return->supplier_id ? number_format($purchase_return->bill_balance_before ?? (optional($purchase_return->supplier)->bill_balance ?? 0), 2, '.', '') : '0.00' }}">
-                                    </div>
-                                </div>
-                                <div class="col-lg-2">
-                                    <div class="form-group">
-                                        <label for="total_balance_display">Total Balance</label>
-                                        <input type="text" class="form-control" id="total_balance_display" readonly value="{{ $purchase_return->supplier_id ? number_format(((float)($purchase_return->balance ?? 0)) + ((float)($purchase_return->bill_balance_before ?? (optional($purchase_return->supplier)->bill_balance ?? 0))), 2, '.', '') : '0.00' }}">
-                                    </div>
+                                <div class="col-md-2 pr-1">
+                                    <label for="balance" class="mb-1">Open Balance</label>
+                                    <input type="text" class="form-control" name="balance" id="balance" maxlength="15" pattern="^\d+(\.\d{1,2})?$|^\d+(,\d{1,2})?$" readonly placeholder="0.00" value="{{ old('balance', $purchase_return->balance ?? '0.00') }}">
                                 </div>
                             </div>
-                            <div class="form-row  mb-3">
+                            {{-- Row 2: Invoice No | Invoice Date | Bill Balance | Total Balance | Excess --}}
+                            <div class="form-row mt-2 mb-3">
                                 <div class="col-md-3 pr-1">
                                     <label for="invoice_no" class="mb-1">Invoice No <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="invoice_no" id="invoice_no" maxlength="20" {{ $isReadOnly ? 'disabled' : 'required' }} placeholder="Invoice Number" value="{{ old('invoice_no', $purchase_return->invoice_no ?? '') }}">
@@ -83,7 +59,15 @@
                                     <label for="invoice_date" class="mb-1">Invoice Date <span class="text-danger">*</span></label>
                                     <input type="date" class="form-control" name="invoice_date" id="invoice_date" {{ $isReadOnly ? 'disabled' : 'required' }} value="{{ old('invoice_date', $purchase_return->invoice_date ?? now()->format('Y-m-d')) }}">
                                 </div>
-                                <div class="col-md-3 pr-1">
+                                <div class="col-md-2 pr-1">
+                                    <label for="bill_balance_display" class="mb-1">Bill Balance</label>
+                                    <input type="text" class="form-control" id="bill_balance_display" readonly value="{{ $purchase_return->supplier_id ? number_format($purchase_return->bill_balance_before ?? (optional($purchase_return->supplier)->bill_balance ?? 0), 2, '.', '') : '0.00' }}">
+                                </div>
+                                <div class="col-md-2 pr-1">
+                                    <label for="total_balance_display" class="mb-1">Total Balance</label>
+                                    <input type="text" class="form-control" id="total_balance_display" readonly value="{{ $purchase_return->supplier_id ? number_format(((float)($purchase_return->balance ?? 0)) + ((float)($purchase_return->bill_balance_before ?? (optional($purchase_return->supplier)->bill_balance ?? 0))), 2, '.', '') : '0.00' }}">
+                                </div>
+                                <div class="col-md-2 pr-1">
                                     <label for="excess_amount" class="mb-1">Excess</label>
                                     <input type="text" class="form-control" name="excess_amount" id="excess_amount" maxlength="15" readonly placeholder="0.00" value="{{ old('excess_amount', $purchase_return->excess_amount ?? '0.00') }}">
                                 </div>

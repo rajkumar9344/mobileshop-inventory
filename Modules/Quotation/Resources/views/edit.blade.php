@@ -111,7 +111,7 @@
                             </div>
 
                             <div class="form-row mt-2 mb-3">
-                                <div class="col-md-2 pr-1">
+                                <div class="col-md-4 pr-1">
                                     <label for="vat_id_display" class="mb-1">VAT ID / TRN</label>
                                     <input type="text" class="form-control" id="vat_id_display" readonly
                                         value="{{ $quotation->customer_id ? ($quotation->customer->vat_id ?? '') : '' }}" placeholder="—">

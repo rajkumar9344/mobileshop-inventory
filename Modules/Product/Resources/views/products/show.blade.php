@@ -77,22 +77,6 @@
                                         </td>
                                     </tr>
                                     <tr>
-                                        <th>Buy Price</th>
-                                        <td>{{ format_currency($product->buy_price) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Purchase Rate</th>
-                                        <td>{{ format_currency($product->product_cost) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Sell Rate</th>
-                                        <td>{{ format_currency($product->product_price) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>List Price</th>
-                                        <td>{{ format_currency($product->list_price) }}</td>
-                                    </tr>
-                                    <tr>
                                         <th>Status</th>
                                         <td>{{ $product->status ?? 'N/A' }}</td>
                                     </tr>

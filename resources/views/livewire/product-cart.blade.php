@@ -266,42 +266,27 @@
                     @if($cart_items->isNotEmpty())
                         @foreach($cart_items as $cart_item)
                             @php
-                                $_mrp_val              = (float)($mrp[$cart_item->id] ?? $cart_item->options->mrp ?? 0);
-                                // Tax % (col 7): used only for Rate before Discount = MRP / (1 + tax%)
-                                $_tax_pct              = (float)($tax_percent_edit[$cart_item->id] ?? $cart_item->options->tax_percent ?? 0);
-                                // VAT % (last col): used for Tax Amount and Amount incl. VAT
-                                $_gst_pct              = (float)($gst_percent[$cart_item->id] ?? $cart_item->options->gst_percent ?? $_tax_pct);
-                                // For sale/sale_return/quotation: allow user override via rate property if set, else derive from MRP.
-                                // This matches purchase/purchase_return logic and ensures editable fields don't revert on blur.
-                                if (false) { // Disabled strict MRP derivation to allow user edits
-                                    $_rate_before_discount_precise = $_tax_pct > 0
-                                        ? ($_mrp_val / (1 + $_tax_pct / 100))
-                                        : $_mrp_val;
+                                $_mrp_val  = (float)($mrp[$cart_item->rowId] ?? $cart_item->options->mrp ?? 0);
+                                $_tax_pct  = (float)($tax_percent_edit[$cart_item->rowId] ?? $cart_item->options->tax_percent ?? 0);
+                                $_gst_pct  = (float)($gst_percent[$cart_item->rowId] ?? $cart_item->options->gst_percent ?? $_tax_pct);
+                                if (is_array($rate) && array_key_exists($cart_item->rowId, $rate)) {
+                                    $_rate_before_discount_precise = (float) $rate[$cart_item->rowId];
+                                } elseif (isset($cart_item->options->rate_before_discount)) {
+                                    $_rate_before_discount_precise = (float) $cart_item->options->rate_before_discount;
                                 } else {
-                                    // If the Livewire `rate` array contains an entry for
-                                    // this product (even if zero) treat it as authoritative.
-                                    if (is_array($rate) && array_key_exists($cart_item->id, $rate)) {
-                                        $_rate_before_discount_precise = (float) $rate[$cart_item->id];
-                                    } elseif (isset($cart_item->options->rate_before_discount)) {
-                                        $_rate_before_discount_precise = (float) $cart_item->options->rate_before_discount;
-                                    } else {
-                                        $_rate_before_discount_precise = (($_tax_pct > 0) ? ($_mrp_val / (1 + $_tax_pct / 100)) : $_mrp_val);
-                                    }
+                                    $_rate_before_discount_precise = $_tax_pct > 0 ? ($_mrp_val / (1 + $_tax_pct / 100)) : $_mrp_val;
                                 }
-                                // Rounded value used for display only
                                 $_rate_before_discount = round($_rate_before_discount_precise, 2);
-
-                                // Discounts removed from all transaction modules — net rate is the rate as entered.
                                 $_net_rate             = $_rate_before_discount;
                                 $_total_without_vat    = round($_net_rate * $cart_item->qty, 2);
                                 $_tax_amount_display   = round($_total_without_vat * $_gst_pct / 100, 2);
                             @endphp
                             @php
-                                // Compare against product ID (integer) — deterministic, matches updateValidity()
-                                $_isInvalidRow = isset($invalid_row_ids) && is_array($invalid_row_ids) && in_array((int)$cart_item->id, $invalid_row_ids);
+                                $_isInvalidRow = isset($invalid_row_ids) && is_array($invalid_row_ids) && in_array($cart_item->rowId, $invalid_row_ids);
                             @endphp
                             <tr wire:key="{{ $cart_item->rowId }}"
                                 id="cart-row-{{ $cart_item->rowId }}"
+                                data-row-id="{{ $cart_item->rowId }}"
                                 data-product-id="{{ $cart_item->id }}"
                                 class="{{ $_isInvalidRow ? 'table-danger invalid-row' : '' }}">
                                 <td class="align-middle product-name col-product-name">
@@ -320,7 +305,7 @@
                                 <td class="align-middle text-center product-code col-product-code">
                                     {{-- Product code is read-only (only the product name is editable). --}}
                                     <span class="badge badge-success">
-                                        {{ $selected_code[$cart_item->id] ?? $cart_item->options->code }}
+                                        {{ $selected_code[$cart_item->rowId] ?? $cart_item->options->code }}
                                     </span>
                                 </td>
 
@@ -407,12 +392,12 @@
                                 </td>
                                 <td class="align-middle text-center col-amount">
                                     <x-currency-input
-                                        id="{{ 'rate_'.$cart_item->id }}"
-                                        wireModel="{{ 'rate.'.$cart_item->id }}"
+                                        id="{{ 'rate_'.$cart_item->rowId }}"
+                                        wireModel="{{ 'rate.'.$cart_item->rowId }}"
                                         class="form-control form-control-sm autosize"
                                         display="{{ ($_unit_price > 0 || !in_array($cart_instance, ['sale','sale_edit'])) ? format_currency($_unit_price, true, false) : '' }}"
                                         maxlength="15"
-                                        wire:key="rate-{{ $cart_item->id }}"
+                                        wire:key="rate-{{ $cart_item->rowId }}"
                                         :disabled="$isReadOnly"
                                     />
                                 </td>
@@ -423,7 +408,7 @@
                                 </td>
                                 <td class="align-middle text-center small-field numeric col-percent">
                                     <input type="number"
-                                           wire:model.lazy="gst_percent.{{ $cart_item->id }}"
+                                           wire:model.lazy="gst_percent.{{ $cart_item->rowId }}"
                                            class="form-control form-control-sm autosize"
                                            step="0.01" min="0" max="100" maxlength="5"
                                            value="{{ (in_array($cart_instance, ['sale','sale_edit']) && $_gst_pct == 0) ? '' : $_gst_pct }}"
@@ -454,13 +439,13 @@
                                 </td>
                                 <td class="align-middle text-center col-amount">
                                     <x-currency-input
-                                        id="{{ 'rate_'.$cart_item->id }}"
-                                        wireModel="{{ 'rate.'.$cart_item->id }}"
+                                        id="{{ 'rate_'.$cart_item->rowId }}"
+                                        wireModel="{{ 'rate.'.$cart_item->rowId }}"
                                         class="form-control form-control-sm autosize"
-                                        display="{{ format_currency($rate[$cart_item->id] ?? $_pr_rate ?? 0, true, false) }}"
+                                        display="{{ format_currency($rate[$cart_item->rowId] ?? $_pr_rate ?? 0, true, false) }}"
                                         maxlength="15"
                                         title="Purchase Rate (pre-VAT). Saving updates the product cost."
-                                        wire:key="rate-{{ $cart_item->id }}"
+                                        wire:key="rate-{{ $cart_item->rowId }}"
                                         :disabled="$isReadOnly"
                                     />
                                 </td>
@@ -471,7 +456,7 @@
                                 </td>
                                 <td class="align-middle text-center small-field numeric col-percent">
                                     <input type="number"
-                                           wire:model.lazy="gst_percent.{{ $cart_item->id }}"
+                                           wire:model.lazy="gst_percent.{{ $cart_item->rowId }}"
                                            class="form-control form-control-sm autosize"
                                            step="0.01" min="0" max="100" maxlength="3"
                                            value="{{ $_pr_vat }}"
@@ -618,12 +603,11 @@
                     if (store) {
                         try { ids = JSON.parse(store.getAttribute('data-invalid-ids') || '[]'); } catch(e) { ids = []; }
                     }
-                    // ids now contains product IDs (integers); rows have id="cart-row-{rowId}"
-                    // So we match via data-product-id attribute set on each <tr>, OR we scan all rows
+                    // ids contains rowIds (strings); rows carry data-row-id on each <tr>
                     var allRows = document.querySelectorAll('tr[id^="cart-row-"]');
                     allRows.forEach(function(tr) {
-                        var pid = parseInt(tr.getAttribute('data-product-id') || '0', 10);
-                        if (ids.indexOf(pid) !== -1) {
+                        var rowId = tr.getAttribute('data-row-id') || '';
+                        if (ids.indexOf(rowId) !== -1) {
                             tr.classList.add('invalid-row', 'table-danger');
                             tr.style.setProperty('background-color', '#f8d7da', 'important');
                         } else {

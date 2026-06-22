@@ -104,7 +104,7 @@
                             </div>
 
                             <div class="form-row mt-2 mb-3">
-                                <div class="col-md-2 pr-1">
+                                <div class="col-md-4 pr-1">
                                     <label for="vat_id_display" class="mb-1">VAT ID / TRN</label>
                                     <input type="text" class="form-control" id="vat_id_display" readonly placeholder="—">
                                 </div>
@@ -468,7 +468,7 @@
             // Check if there's something worth saving (only consider the product-cart table)
             function hasContentToSave() {
                 // Only count rows inside the product cart table to avoid matching product-search results
-                var cartItems = document.querySelectorAll('.product-cart-table tbody tr[data-product-id]');
+                var cartItems = document.querySelectorAll('.product-cart-table tbody tr[data-row-id]');
                 return cartItems.length > 0;
             }
 

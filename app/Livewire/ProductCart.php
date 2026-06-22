@@ -238,61 +238,49 @@ class ProductCart extends Component
             }
 
             foreach ($cart_items as $cart_item) {
-                $this->check_quantity[$cart_item->id] = $cart_item->options->stock;
-                $this->quantity[$cart_item->id] = $cart_item->qty;
-                $this->original_sale_quantity[$cart_item->id] = $cart_item->qty; // freeze original qty for stock validation
-                $this->unit_price[$cart_item->id] = $cart_item->price;
+                $rId = $cart_item->rowId;
+                $this->check_quantity[$cart_item->id] = $cart_item->options->stock; // stock is per-product, keyed by product_id
+                $this->quantity[$rId] = $cart_item->qty;
+                $this->original_sale_quantity[$rId] = $cart_item->qty;
+                $this->unit_price[$rId] = $cart_item->price;
 
-                // Set rate first so it can be used for discount calculation
                 $taxPercent = $cart_item->options->tax_percent ?? 0;
                 $original_mrp = $cart_item->options->mrp ?? $cart_item->price;
-                $this->mrp[$cart_item->id] = (float)$original_mrp;
-                // Prefer authoritative rate from existing purchase details when editing.
-                // This preserves user-entered values (e.g. type-3 custom rate different from MRP).
+                $this->mrp[$rId] = (float)$original_mrp;
                 if ($detailsByProduct->has($cart_item->id) && $detailsByProduct->get($cart_item->id)->rate_before_discount !== null) {
-                    $this->rate[$cart_item->id] = (float) $detailsByProduct->get($cart_item->id)->rate_before_discount;
+                    $this->rate[$rId] = (float) $detailsByProduct->get($cart_item->id)->rate_before_discount;
                 } elseif (in_array($this->cart_instance, ['sale', 'sale_edit', 'sale_view', 'sale_return', 'sale_return_view', 'quotation', 'quotation_edit', 'quotation_view'])) {
-                    // Sale / Sale Return / Quotation: the user-entered Unit Price lives in the cart options. options is a
-                    // Gloudemans CartItemOptions (a Collection) — a (array) cast mangles its keys,
-                    // so read via has()/get(). Without this the value is lost and the rate falls
-                    // back to mrp/(1+tax%) (e.g. 250 → 238.1) on the edit/view page.
                     $storedRbd = $cart_item->options->has('rate_before_discount') ? $cart_item->options->get('rate_before_discount') : null;
                     $storedRt  = $cart_item->options->has('rate') ? $cart_item->options->get('rate') : null;
-                    $this->rate[$cart_item->id] = (float) ($storedRbd ?? $storedRt ?? $original_mrp);
+                    $this->rate[$rId] = (float) ($storedRbd ?? $storedRt ?? $original_mrp);
                 } else {
-                    // Use the stored rate_before_discount if available (including explicit zero),
-                    // else fallback to stored rate (including zero), else fallback to MRP-derived calculation.
                     $storedRateBeforeDiscount = array_key_exists('rate_before_discount', (array)$cart_item->options) ? $cart_item->options->rate_before_discount : null;
                     $storedRate = array_key_exists('rate', (array)$cart_item->options) ? $cart_item->options->rate : null;
                     if ($storedRateBeforeDiscount !== null) {
-                        $this->rate[$cart_item->id] = (float)$storedRateBeforeDiscount;
+                        $this->rate[$rId] = (float)$storedRateBeforeDiscount;
                     } elseif ($storedRate !== null) {
-                        $this->rate[$cart_item->id] = (float)$storedRate;
+                        $this->rate[$rId] = (float)$storedRate;
                     } else {
-                        // Purchase / Purchase Return: fall back to the product's purchase
-                        // cost; if missing, derive a pre-tax rate from MRP.
                         $cost = (float) ($cart_item->options->product_cost ?? 0);
-                        $this->rate[$cart_item->id] = $cost > 0
+                        $this->rate[$rId] = $cost > 0
                             ? $cost
                             : round($original_mrp / (1 + ($taxPercent / 100)), 2);
                     }
                 }
 
-                $this->discount_type[$cart_item->id] = $cart_item->options->product_discount_type;
+                $this->discount_type[$rId] = $cart_item->options->product_discount_type;
                 if ($cart_item->options->product_discount_type == 'fixed') {
-                    $this->item_discount[$cart_item->id] = $cart_item->options->product_discount;
+                    $this->item_discount[$rId] = $cart_item->options->product_discount;
                 } elseif ($cart_item->options->product_discount_type == 'percentage') {
-                    // Use stored percent directly; no recalculation needed
-                    $this->item_discount[$cart_item->id] = $cart_item->options->product_discount_percent ?? 0;
+                    $this->item_discount[$rId] = $cart_item->options->product_discount_percent ?? 0;
                 }
 
-                $this->cash_discount_percent[$cart_item->id] = intval($cart_item->options->cash_discount_percent ?? 0);
-                $this->cash_discount_amount[$cart_item->id] = $cart_item->options->cash_discount_amount ?? 0;
-                $this->tax_percent_edit[$cart_item->id] = floatval($taxPercent);
-                $this->gst_percent[$cart_item->id]      = floatval($cart_item->options->gst_percent ?? $taxPercent);
-                $this->rate_type[$cart_item->id] = $cart_item->options->rate_type ?? 'M'; // Default to M (MRP)
+                $this->cash_discount_percent[$rId] = intval($cart_item->options->cash_discount_percent ?? 0);
+                $this->cash_discount_amount[$rId] = $cart_item->options->cash_discount_amount ?? 0;
+                $this->tax_percent_edit[$rId] = floatval($taxPercent);
+                $this->gst_percent[$rId]      = floatval($cart_item->options->gst_percent ?? $taxPercent);
+                $this->rate_type[$rId] = $cart_item->options->rate_type ?? 'M';
 
-                // Restore available codes (edit mode)
                 $allCodes = \Modules\Product\Entities\ProductCode::where('product_id', $cart_item->id)
                     ->orderByDesc('is_primary')
                     ->pluck('code')
@@ -301,11 +289,10 @@ class ProductCart extends Component
                 if (empty($allCodes)) {
                     $allCodes = $savedCode ? [$savedCode] : [];
                 }
-                $this->product_codes[$cart_item->id] = $allCodes;
-                $this->selected_code[$cart_item->id] = $savedCode ?? ($allCodes[0] ?? '');
+                $this->product_codes[$rId] = $allCodes;
+                $this->selected_code[$rId] = $savedCode ?? ($allCodes[0] ?? '');
 
-                // Pre-populate the editable product name for every item in edit mode
-                $this->custom_product_names[$cart_item->rowId] = $cart_item->name;
+                $this->custom_product_names[$rId] = $cart_item->name;
             }
         } else {
             $this->global_discount_amount = 0;
@@ -356,13 +343,13 @@ class ProductCart extends Component
             }
 
             $cart_items = $this->getCachedCartItems();
-            $cart_item = $cart_items->firstWhere('id', $id);
+            $cart_item = $cart_items->firstWhere('rowId', $id);
 
             if (!$cart_item) {
                 return;
             }
 
-            $product = Product::find($id);
+            $product = Product::find($cart_item->id);
             if (!$product) {
                 return;
             }
@@ -437,7 +424,7 @@ class ProductCart extends Component
             }
 
             $cart_items = $this->getCachedCartItems();
-            $cart_item = $cart_items->firstWhere('id', $id);
+            $cart_item = $cart_items->firstWhere('rowId', $id);
             if (!$cart_item) {
                 return;
             }
@@ -511,14 +498,7 @@ class ProductCart extends Component
             $product = $product->toArray();
         }
 
-        $exists = $cart->search(function ($cartItem, $rowId) use ($product) {
-            return $cartItem->id == $product['id'];
-        });
-
-        if ($exists->isNotEmpty()) {
-            session()->flash('message', 'Product exists in the cart!');
-            return;
-        }
+        // Duplicate products are allowed in all modules — same product can be added at different rates.
 
         // Use the passed product data directly (it should include category relationship)
         $fullProduct = $product;
@@ -548,10 +528,9 @@ class ProductCart extends Component
 
         // New product default rate by context (Purchase Bill Type removed — single path).
         if ($this->isPurchaseGroup()) {
-            // Purchase / Purchase Return (BRD): Purchase Rate pre-fills with the product's
-            // cost and VAT defaults to 5%. Both are editable.
-            $rate        = (float) ($fullProduct['product_cost'] ?? 0);
-            $base_rate   = $rate;
+            // Purchase / Purchase Return: rate starts blank (0); user enters manually.
+            $rate        = 0.0;
+            $base_rate   = 0.0;
             $tax_percent = 5.0;
         } elseif ($this->isSaleGroup()) {
             // Sale / Sale Return / Quotation (BRD): unit price is manually entered
@@ -609,29 +588,30 @@ class ProductCart extends Component
                 'cash_discount_percent' => $this->customer_discount_percent,
                 'rate_before_discount'  => (float)$rate,
                 'rate_type'             => 'M',
-                'product_cost'          => (float)($fullProduct['product_cost'] ?? 0)
+                'product_cost'          => (float)($fullProduct['product_cost'] ?? 0),
+                // Unique key so that adding the same product twice always produces a new rowId
+                '_uid'                  => \Illuminate\Support\Str::random(8),
             ]
         ]);
         // Allow the product name to be edited for every added item
-        $this->custom_product_names[$newCartItem->rowId] = $fullProduct['product_name'];
+        $rowId = $newCartItem->rowId;
+        $this->custom_product_names[$rowId] = $fullProduct['product_name'];
 
-        $this->check_quantity[$fullProduct['id']] = $stock;
-        $this->quantity[$fullProduct['id']] = $initialQty;
-        $this->discount_type[$fullProduct['id']] = 'percentage'; // Default to percentage for Dis % column
-        // Initialize per-item discount to the customer's additional discount so new items inherit it
-        $this->item_discount[$fullProduct['id']] = (float) ($this->customer_additional_discount ?? 0);
-        $this->rate[$fullProduct['id']] = (float)$rate;
-        $this->cash_discount_percent[$fullProduct['id']] = $this->customer_discount_percent;
-        $this->rate_type[$fullProduct['id']] = 'M';
-        // Ensure editable MRP is set so the input shows the product master MRP when available
-        $this->mrp[$fullProduct['id']] = $display_mrp;
-        $this->tax_percent_edit[$fullProduct['id']] = floatval($tax_percent);
-        $this->gst_percent[$fullProduct['id']]      = floatval($tax_percent);
+        $this->check_quantity[$fullProduct['id']] = $stock; // stock is per-product, keyed by product_id
+        $this->quantity[$rowId] = $initialQty;
+        $this->discount_type[$rowId] = 'percentage';
+        $this->item_discount[$rowId] = (float) ($this->customer_additional_discount ?? 0);
+        $this->rate[$rowId] = (float)$rate;
+        $this->cash_discount_percent[$rowId] = $this->customer_discount_percent;
+        $this->rate_type[$rowId] = 'M';
+        $this->mrp[$rowId] = $display_mrp;
+        $this->tax_percent_edit[$rowId] = floatval($tax_percent);
+        $this->gst_percent[$rowId]      = floatval($tax_percent);
 
         // Store available codes for the dropdown
         $codes = $fullProduct['product_codes'] ?? [$fullProduct['product_code']];
-        $this->product_codes[$fullProduct['id']]  = $codes;
-        $this->selected_code[$fullProduct['id']]  = $fullProduct['product_code'];
+        $this->product_codes[$rowId]  = $codes;
+        $this->selected_code[$rowId]  = $fullProduct['product_code'];
 
         $this->invalidateCartCache();
         $this->dispatch('refreshCart');
@@ -672,7 +652,7 @@ class ProductCart extends Component
         if ($this->readonly) return;
 
         $cart_items = $this->getCachedCartItems();
-        $cart_item  = $cart_items->firstWhere('id', $id);
+        $cart_item  = $cart_items->firstWhere('rowId', $id);
         if (!$cart_item) return;
 
         $opts         = $cart_item->options->toArray();
@@ -694,7 +674,7 @@ class ProductCart extends Component
         }
 
         $cart_items = $this->getCachedCartItems();
-        $cart_item  = $cart_items->firstWhere('id', $id);
+        $cart_item  = $cart_items->firstWhere('rowId', $id);
         if (!$cart_item) return;
 
         $this->updateItemPrice($cart_item->rowId);
@@ -709,7 +689,7 @@ class ProductCart extends Component
         if ($value === '' || $value === null || !is_numeric($value) || floatval($value) <= 0) {
             $this->cash_discount_amount[$id] = 0;
             $cart_items = $this->getCachedCartItems();
-            $cart_item  = $cart_items->firstWhere('id', $id);
+            $cart_item  = $cart_items->firstWhere('rowId', $id);
             if ($cart_item) {
                 $this->updateItemPrice($cart_item->rowId);
                 $this->global_discount_amount = $this->computeGlobalEffectiveDiscount();
@@ -718,7 +698,7 @@ class ProductCart extends Component
         }
 
         $cart_items = $this->getCachedCartItems();
-        $cart_item  = $cart_items->firstWhere('id', $id);
+        $cart_item  = $cart_items->firstWhere('rowId', $id);
         if (!$cart_item) return;
 
         $mrp = (float) ($cart_item->options->mrp ?? 0);
@@ -734,7 +714,7 @@ class ProductCart extends Component
         if ($this->readonly) return;
         $this->withUpdateLock(function() use ($value, $id) {
             $cart_items = $this->getCachedCartItems();
-            $cart_item  = $cart_items->firstWhere('id', $id);
+            $cart_item  = $cart_items->firstWhere('rowId', $id);
 
             // Guard: compare against the cart-session's stored rate_before_discount
             // rather than $this->rate[$id] (which Livewire pre-sets to $value before
@@ -781,7 +761,7 @@ class ProductCart extends Component
         if (!is_numeric($value) || $value < 0) return;
 
         $cart_items = $this->getCachedCartItems();
-        $cart_item = $cart_items->firstWhere('id', $id);
+        $cart_item = $cart_items->firstWhere('rowId', $id);
         if (!$cart_item) return;
 
         // Save new GST % to cart options
@@ -799,7 +779,7 @@ class ProductCart extends Component
         if (!is_numeric($value) || $value < 0) return;
 
         $cart_items = $this->getCachedCartItems();
-        $cart_item = $cart_items->firstWhere('id', $id);
+        $cart_item = $cart_items->firstWhere('rowId', $id);
         if (!$cart_item) return;
 
         $tax_pct = (float) $value;
@@ -824,7 +804,7 @@ class ProductCart extends Component
     public function updatedItemDiscount($value, $id) {
         if ($this->readonly) return;
         $cart_items = $this->getCachedCartItems();
-        $cart_item = $cart_items->firstWhere('id', $id);
+        $cart_item = $cart_items->firstWhere('rowId', $id);
         if ($cart_item) {
             $this->updateItemPrice($cart_item->rowId);
         }
@@ -838,27 +818,14 @@ class ProductCart extends Component
         if (!$cart_item) {
             return; // Row no longer exists (e.g. removed between updates)
         }
-        $product_id = $cart_item->id;
-        
         $tax_percent = floatval($cart_item->options->tax_percent ?? 0);
-        // GST % used for the final Amount incl. GST — independent from tax_percent
-        $gst_pct = floatval($this->gst_percent[$product_id] ?? $cart_item->options->gst_percent ?? $tax_percent);
+        $gst_pct = floatval($this->gst_percent[$row_id] ?? $cart_item->options->gst_percent ?? $tax_percent);
 
-        // MRP is always the stored value — never auto-derived from rate.
         $base_mrp = floatval($cart_item->options->mrp ?? $cart_item->price);
 
-        // ── All calculations in pre-tax space ────────────────────────────────
-        // Discounts removed from all transaction modules:
-        //   net_rate(pre-tax) = rate (as entered)
-        //   final_price_with_tax = net_rate × (1 + VAT%)
-        // ─────────────────────────────────────────────────────────────────────
-
-        // Pre-tax base rate (Rate column):
-        // Treat an explicit rate of 0 as an explicit user value and DO NOT
-        // fall back to a previously stored value or MRP-derived rate.
-        $hasExplicitRate = is_array($this->rate) ? array_key_exists($product_id, $this->rate) : isset($this->rate[$product_id]);
+        $hasExplicitRate = is_array($this->rate) ? array_key_exists($row_id, $this->rate) : isset($this->rate[$row_id]);
         if ($hasExplicitRate) {
-            $rate_before_discount = floatval($this->rate[$product_id]);
+            $rate_before_discount = floatval($this->rate[$row_id]);
         } elseif (isset($cart_item->options->rate_before_discount)) {
             $rate_before_discount = floatval($cart_item->options->rate_before_discount);
         } else {
@@ -913,10 +880,8 @@ class ProductCart extends Component
     protected function getUpdatedCartOptions($cart_item, $row_id, $product_id = null, $discount_amount = 0) {
         $current_price = $cart_item->price;
         $tax_percent = $cart_item->options->tax_percent ?? 0;
-        $product_id = $product_id ?? $cart_item->id;
-        $rate = $this->rate[$product_id] ?? ($current_price / (1 + ($tax_percent / 100)));
-        // Preserve explicit pre-discount rate if present; fall back to computed rate
-        $rate_before_discount = $this->rate[$product_id] ?? ($cart_item->options->rate_before_discount ?? $rate);
+        $rate = $this->rate[$row_id] ?? ($current_price / (1 + ($tax_percent / 100)));
+        $rate_before_discount = $this->rate[$row_id] ?? ($cart_item->options->rate_before_discount ?? $rate);
 
         return [
             'sub_total'                => $current_price * $cart_item->qty,
@@ -927,34 +892,19 @@ class ProductCart extends Component
             'product_tax_per_unit'     => ($current_price - $rate),
             'unit_price'               => $current_price,
             'product_discount'         => $discount_amount,
-            'product_discount_type'    => $this->discount_type[$product_id] ?? $cart_item->options->product_discount_type ?? 'fixed',
+            'product_discount_type'    => $this->discount_type[$row_id] ?? $cart_item->options->product_discount_type ?? 'fixed',
             'product_discount_percent' => (float) ($cart_item->options->product_discount_percent ?? 0),
             'gst_percent'              => $cart_item->options->gst_percent ?? $tax_percent,
             'category'                 => $cart_item->options->category ?? '-',
             'tax_percent'              => $tax_percent,
             'mrp'                      => $cart_item->options->mrp ?? $current_price,
             'rate_before_discount'     => $rate_before_discount,
-            'cash_discount_percent'    => $this->cash_discount_percent[$product_id] ?? 0,
-            'cash_discount_amount'     => $this->cash_discount_amount[$product_id] ?? 0,
+            'cash_discount_percent'    => $this->cash_discount_percent[$row_id] ?? 0,
+            'cash_discount_amount'     => $this->cash_discount_amount[$row_id] ?? 0,
             'rate'                     => $rate
         ];
     }
 
-    /**
-     * Return the effective cash discount amount for an item: if a percent is set (>0)
-     * use percent * mrp / 100, otherwise use the explicit cash_discount_amount.
-     */
-    private function getEffectiveCashDiscountAmount($product_id, $base_price)
-    {
-        $percent = $this->cash_discount_percent[$product_id] ?? 0;
-        $amount  = $this->cash_discount_amount[$product_id]  ?? 0;
-
-        // Both percent-based and fixed amounts combine (either can be zero)
-        $percentAmt = (is_numeric($percent) && $percent > 0) ? ($base_price * (float)$percent / 100.0) : 0.0;
-        $amountVal  = (is_numeric($amount)  && $amount  > 0) ? (float)$amount : 0.0;
-
-        return $percentAmt + $amountVal;
-    }
 
     /**
      * Return true when the current mounted data represents a draft document.
@@ -995,24 +945,10 @@ class ProductCart extends Component
         return false;
     }
 
-    /**
-     * Compute the global effective discount as the sum of effective discounts for all cart items.
-     * Optimized for large carts using cached data.
-     */
-    private function computeGlobalEffectiveDiscount()
+    private function computeGlobalEffectiveDiscount(): float
     {
-        $total = 0;
-        $cart_items = $this->getCachedCartItems();
-
-        // Use array operations for better performance with large datasets
-        foreach ($cart_items as $item) {
-            $product_id = $item->id;
-            $mrp = $item->options->mrp ?? $item->price;
-            $perUnitDiscount = $this->getEffectiveCashDiscountAmount($product_id, $mrp);
-            $total += $perUnitDiscount * $item->qty;
-        }
-
-        return (float)$total;
+        // Discounts are removed from all transaction modules; always 0.
+        return 0.0;
     }
 
     /**
@@ -1025,44 +961,53 @@ class ProductCart extends Component
         $debugSnapshot = [];
         try {
             $cart_items = $this->getCachedCartItems();
-            foreach ($cart_items as $item) {
-                $product_id = $item->id;
-                $currentStock = (int) ($item->options->stock ?? (isset($this->check_quantity[$product_id]) ? $this->check_quantity[$product_id] : 0));
 
-                // By default use DB stock. When editing an existing document
-                // that reduces stock on save we add back the original saved qty
-                // so the user can increase up to the real available stock.
-                // When the document is a draft OR the `create_receipt` flag is set
-                // behave like create: do NOT add original_sale_quantity.
-                $effectiveAvailable = $currentStock;
-                if ($this->data && !$this->shouldTreatAsCreate() && isset($this->original_sale_quantity[$product_id])) {
-                    $effectiveAvailable += (int) $this->original_sale_quantity[$product_id];
+            // Step 1: aggregate total attempted qty and original qty per product_id
+            // across all rows (supports duplicate rows of the same product).
+            $totalQtyByProduct  = [];
+            $origQtyByProduct   = [];
+            $stockByProduct     = [];
+            foreach ($cart_items as $item) {
+                $pid = $item->id;
+                $rowQty = isset($this->quantity[$item->rowId]) ? (int) $this->quantity[$item->rowId] : (int) $item->qty;
+                $totalQtyByProduct[$pid] = ($totalQtyByProduct[$pid] ?? 0) + $rowQty;
+
+                if ($this->data && !$this->shouldTreatAsCreate() && isset($this->original_sale_quantity[$item->rowId])) {
+                    $origQtyByProduct[$pid] = ($origQtyByProduct[$pid] ?? 0) + (int) $this->original_sale_quantity[$item->rowId];
                 }
 
-                $attemptedQty = isset($this->quantity[$product_id]) ? (int) $this->quantity[$product_id] : (int) $item->qty;
+                if (!isset($stockByProduct[$pid])) {
+                    $stockByProduct[$pid] = (int) ($item->options->stock ?? ($this->check_quantity[$pid] ?? 0));
+                }
+            }
 
+            // Step 2: per product_id determine if over-stock, then mark all its rows invalid.
+            $invalidProductIds = [];
+            foreach ($stockByProduct as $pid => $stock) {
+                $effective = $stock + ($origQtyByProduct[$pid] ?? 0);
+                $attempted = $totalQtyByProduct[$pid] ?? 0;
+                if ($attempted > $effective) {
+                    $invalidProductIds[$pid] = true;
+                }
+            }
+
+            // Step 3: collect rowIds of invalid rows and build debug snapshot.
+            foreach ($cart_items as $item) {
+                $pid = $item->id;
                 $debugSnapshot[] = [
-                    'rowId' => $item->rowId,
-                    'product_id' => $product_id,
-                    'qty' => (int) $item->qty,
-                    'attemptedQty' => $attemptedQty,
-                    'stock_option' => (int) ($item->options->stock ?? 0),
-                    'check_quantity_map' => isset($this->check_quantity[$product_id]) ? (int) $this->check_quantity[$product_id] : null,
-                    'effectiveAvailable' => $effectiveAvailable,
+                    'rowId'           => $item->rowId,
+                    'product_id'      => $pid,
+                    'rowQty'          => isset($this->quantity[$item->rowId]) ? (int) $this->quantity[$item->rowId] : (int) $item->qty,
+                    'totalQty'        => $totalQtyByProduct[$pid] ?? 0,
+                    'effectiveStock'  => ($stockByProduct[$pid] ?? 0) + ($origQtyByProduct[$pid] ?? 0),
                 ];
-
-                    if ($attemptedQty > $effectiveAvailable) {
-                        // Only mark rows as invalid for modules that reduce stock
-                        // when saved (sale and purchase_return). For modules that
-                        // only add products (sale_return, purchase) do not
-                        // highlight rows even if attemptedQty > available.
-                        if (in_array($this->cart_instance, ['sale', 'sale_edit', 'purchase_return'])) {
-                            $invalidIds[] = (int) $product_id;
-                        }
+                if (isset($invalidProductIds[$pid])) {
+                    if (in_array($this->cart_instance, ['sale', 'sale_edit', 'purchase_return'])) {
+                        $invalidIds[] = $item->rowId;
                     }
+                }
             }
         } catch (\Exception $e) {
-            // On failure assume valid to avoid blocking form submits unexpectedly
             $invalidIds = [];
         }
 
@@ -1148,17 +1093,29 @@ class ProductCart extends Component
         if ($this->readonly) return;
         if ($this->cart_instance == 'sale' || $this->cart_instance == 'purchase_return') {
             $currentStock = isset($this->check_quantity[$product_id]) ? (int) $this->check_quantity[$product_id] : 0;
-            $desiredQty   = isset($this->quantity[$product_id]) ? (int) $this->quantity[$product_id] : 0;
 
-            // When editing an existing sale ($this->data is set), the DB stock
-            // has already been reduced by the original sale quantity.
-            // Add that fixed original qty back so the user can increase within
-            // the real available stock.  For new sales only the raw DB stock applies.
-            // For drafts or when `create_receipt` is set behave like a create page
-            // and do NOT add original qty back.
+            // Aggregate total qty across ALL rows of this product (supports duplicate rows).
+            $cart_items_all = $this->getCachedCartItems();
+            $totalDesiredQty = 0;
+            foreach ($cart_items_all as $_ci) {
+                if ($_ci->id == $product_id) {
+                    $totalDesiredQty += isset($this->quantity[$_ci->rowId]) ? (int) $this->quantity[$_ci->rowId] : (int) $_ci->qty;
+                }
+            }
+            $desiredQty = $totalDesiredQty;
+
             $effectiveAvailable = $currentStock;
-            if ($this->data && !$this->shouldTreatAsCreate() && isset($this->original_sale_quantity[$product_id])) {
-                $effectiveAvailable = $currentStock + (int) $this->original_sale_quantity[$product_id];
+            if ($this->data && !$this->shouldTreatAsCreate()) {
+                // Sum original qty across all saved rows of this product
+                $origTotal = 0;
+                foreach ($cart_items_all as $_ci) {
+                    if ($_ci->id == $product_id && isset($this->original_sale_quantity[$_ci->rowId])) {
+                        $origTotal += (int) $this->original_sale_quantity[$_ci->rowId];
+                    }
+                }
+                if ($origTotal > 0) {
+                    $effectiveAvailable = $currentStock + $origTotal;
+                }
             }
 
             if ($desiredQty > $effectiveAvailable) {
@@ -1196,8 +1153,7 @@ class ProductCart extends Component
             return;
         }
 
-        // Use safe update method to prevent item removal on zero quantity
-        $this->safeUpdateQuantity($cart, $actual_row_id, $this->quantity[$product_id]);
+        $this->safeUpdateQuantity($cart, $actual_row_id, $this->quantity[$row_id] ?? 1);
         // Invalidate cache so updateItemPrice reads the new qty
         $this->invalidateCartCache();
         // Full recalculation so sub_total, tax_amount, amount options are all in sync
@@ -1224,15 +1180,14 @@ class ProductCart extends Component
      * directly — eliminating the blur-before-change race condition that
      * existed when wire:blur was used instead.
      */
-    public function updatedQuantity($value, $productId)
+    public function updatedQuantity($value, $rowId)
     {
         if ($this->readonly) return;
 
-        // Use cached cart items (consistent with rest of codebase; avoids raw session read)
-        $item = $this->getCachedCartItems()->firstWhere('id', $productId);
+        $item = $this->getCachedCartItems()->firstWhere('rowId', $rowId);
         if (!$item) return;
 
-        $this->updateQuantity($item->rowId, $productId);
+        $this->updateQuantity($item->rowId, $item->id);
     }
 
     public function updatedDiscountType($value, $name) {
@@ -1247,22 +1202,13 @@ class ProductCart extends Component
         if ($this->readonly) return;
         $cart_item = $this->cart()->get($row_id);
         if (!$cart_item) return; // Prevent error if rowId not found
-        // Normalize user-provided discount input: empty strings or non-numeric values -> 0
-        $raw = $this->item_discount[$product_id] ?? 0;
-        if ($raw === '' || $raw === null || !is_numeric($raw)) {
-            $discountValue = 0.0;
-        } else {
-            $discountValue = (float) $raw;
-        }
+        $raw = $this->item_discount[$row_id] ?? 0;
+        $discountValue = (is_numeric($raw) && $raw !== '') ? (float) $raw : 0.0;
+        $discountType  = $this->discount_type[$row_id] ?? 'percentage';
 
-        $discountType = $this->discount_type[$product_id] ?? 'percentage'; // Default to percentage for Dis % column
-        
-        // Store the discount values but don't update price directly
-        // Let updateItemPrice handle the final price calculation
-        $this->item_discount[$product_id] = $discountValue;
-        $this->discount_type[$product_id] = $discountType;
-        
-        // Trigger price recalculation
+        $this->item_discount[$row_id]  = $discountValue;
+        $this->discount_type[$row_id]  = $discountType;
+
         $this->updateItemPrice($row_id);
 
         session()->flash('discount_message' . $product_id, 'Discount added to the product!');
@@ -1297,23 +1243,17 @@ class ProductCart extends Component
 
         // Mirror the blade @php block exactly so totals always match the per-row display.
         foreach ($cart_items as $item) {
-            $id  = $item->id;
+            $rId = $item->rowId;
             $qty = (float) $item->qty;
             $overall_quantity += $qty;
 
-            // Tax % (col 7) — drives Rate before Discount = MRP / (1 + tax%)
-            $_tax_pct = (float) ($this->tax_percent_edit[$id] ?? $item->options->tax_percent ?? 0);
-            // GST % — drives Tax Amount and Amount incl. GST (independent)
-            $_gst_pct = (float) ($this->gst_percent[$id] ?? $item->options->gst_percent ?? $_tax_pct);
+            $_tax_pct = (float) ($this->tax_percent_edit[$rId] ?? $item->options->tax_percent ?? 0);
+            $_gst_pct = (float) ($this->gst_percent[$rId] ?? $item->options->gst_percent ?? $_tax_pct);
 
-            $_mrp_val = (float) ($this->mrp[$id] ?? $item->options->mrp ?? 0);
+            $_mrp_val = (float) ($this->mrp[$rId] ?? $item->options->mrp ?? 0);
 
-            // Authoritative pre-tax rate (same priority as blade)
-            // If the component has an explicit rate entry (even if zero), treat
-            // that as authoritative. Else, if the cart options store a
-            // rate_before_discount (even if zero) use it. Otherwise derive from MRP.
-            if (is_array($this->rate) && array_key_exists($id, $this->rate)) {
-                $_rate_before_discount_precise = (float) $this->rate[$id];
+            if (is_array($this->rate) && array_key_exists($rId, $this->rate)) {
+                $_rate_before_discount_precise = (float) $this->rate[$rId];
             } elseif (isset($item->options->rate_before_discount)) {
                 $_rate_before_discount_precise = (float) $item->options->rate_before_discount;
             } else {
@@ -1363,60 +1303,12 @@ class ProductCart extends Component
     }
 
     public function applyCustomerAdditionalDiscount($data) {
-        if ($this->readonly) return;
-        $additionalDiscountPercent = $data['discount'];
-        $cart_items = $this->getCachedCartItems();
-
-        // Batch-apply the additional percent to internal state first to avoid
-        // repeated session writes/flash messages from `setProductDiscount`.
-        foreach ($cart_items as $cart_item) {
-            $product_id = $cart_item->id;
-            // Store as percentage discount type and value
-            $this->discount_type[$product_id] = 'percentage';
-            $this->item_discount[$product_id] = (float) $additionalDiscountPercent;
-        }
-
-        // Now recalculate prices for all items (single session updates per item)
-        foreach ($cart_items as $cart_item) {
-            $this->updateItemPrice($cart_item->rowId);
-        }
-
-        // Invalidate cache and refresh UI once
-        $this->invalidateCartCache();
-        $this->dispatch('$refresh');
+        // Discounts removed — stub kept because SalesReturn/PurchasesReturn blades emit this event.
     }
 
-    /**
-     * Apply customer cash discount percent to all cart items and recalc prices.
-     * Accepts either a numeric percent or an array with ['percent' => x] to be consistent.
-     */
     public function applyCustomerCashDiscount($payload)
     {
-        if ($this->readonly) return;
-        $percent = 0;
-        if (is_array($payload)) {
-            $percent = $payload['percent'] ?? ($payload['discount'] ?? 0);
-        } else {
-            $percent = $payload;
-        }
-
-        $percent = is_numeric($percent) ? (float)$percent : 0.0;
-
-        $cart_items = $this->getCachedCartItems();
-        foreach ($cart_items as $cart_item) {
-            $product_id = $cart_item->id;
-            // update stored cash discount percent for this product
-            $this->cash_discount_percent[$product_id] = intval($percent);
-            // ensure any explicit cash discount amount is cleared when percent is applied
-            $this->cash_discount_amount[$product_id] = 0;
-            // recalc item price
-            $this->updateItemPrice($cart_item->rowId);
-        }
-
-        // recompute global summary values
-        $this->global_discount_amount = $this->computeGlobalEffectiveDiscount();
-        $this->invalidateCartCache();
-        $this->dispatch('$refresh');
+        // Discounts removed — stub kept because SalesReturn blades emit this event.
     }
 
 }

@@ -147,64 +147,41 @@ class ProductController extends Controller
 
     public function store(StoreProductRequest $request) {
         // Exclude transient form-only fields that are not DB columns
-        $data = $request->except(['document', 'additional_codes']);
-        $data['buy_price'] = $request->input('buy_price');
-        $data['list_price'] = $request->input('list_price');
+        $data = $request->except(['document', 'additional_codes', 'product_code']);
 
         // Ensure numeric fields are integers where applicable
         $data['open_quantity'] = (int) $request->input('open_quantity', 0);
-        $data['purchase_quantity'] = 0; // Initialize to 0
+        $data['purchase_quantity'] = 0;
         $data['product_quantity'] = $data['open_quantity'] + $data['purchase_quantity'];
         $data['product_stock_alert'] = isset($data['product_stock_alert']) ? (int) $data['product_stock_alert'] : 0;
 
-        // Compute re_order as (alert - stock) when stock is less than alert
         $data['re_order'] = 0;
         if ($data['product_stock_alert'] > $data['product_quantity']) {
             $data['re_order'] = $data['product_stock_alert'] - $data['product_quantity'];
         }
 
-        // Collect all codes (primary + additional)
-        $primaryCode    = trim($data['product_code'] ?? '');
-        $additionalCodes = array_filter(
-            array_map('trim', $request->input('additional_codes', [])),
-            fn($c) => $c !== ''
-        );
-        $allCodes = array_unique(array_merge([$primaryCode], array_values($additionalCodes)));
-
-        // Check global uniqueness across product_codes table
-        $codeConflict = ProductCode::whereIn('code', $allCodes)->first();
-        if ($codeConflict) {
-            toast('Code "' . $codeConflict->code . '" already exists.', 'error');
-            return back()->withInput()->withErrors(['product_code' => 'One or more product codes already exist.']);
-        }
-
         try {
             $product = null;
 
-            DB::transaction(function () use (&$product, $data, $allCodes, $primaryCode) {
-                // Create product and insert product_codes atomically
+            DB::transaction(function () use (&$product, $data) {
                 $product = Product::create($data);
 
-                $now = now();
-                $rows = [];
-                foreach ($allCodes as $code) {
-                    $rows[] = [
-                        'product_id' => $product->id,
-                        'code'       => $code,
-                        'is_primary' => ($code === $primaryCode) ? 1 : 0,
-                        'created_at' => $now,
-                        'updated_at' => $now,
-                    ];
-                }
-                if (!empty($rows)) {
-                    ProductCode::insert($rows);
-                }
+                // Auto-generate product code from the assigned ID
+                $autoCode = 'P-' . str_pad($product->id, 5, '0', STR_PAD_LEFT);
+                $product->product_code = $autoCode;
+                $product->save();
+
+                ProductCode::insert([
+                    'product_id' => $product->id,
+                    'code'       => $autoCode,
+                    'is_primary' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
             });
 
-            // Handle media after successful DB transaction to avoid orphaned files on rollback
             if ($request->has('document')) {
                 foreach ($request->input('document', []) as $file) {
-                    // basename() prevents path traversal via user-supplied filenames
                     $product->addMedia(Storage::path('temp/dropzone/' . basename((string) $file)))->toMediaCollection('images');
                 }
             }
@@ -216,11 +193,6 @@ class ProductController extends Controller
             \Log::error('Error creating product: ' . $e->getMessage());
 
             $errors = [];
-            if (Product::where('product_code', $request->input('product_code'))->exists()) {
-                $errors['product_code'] = 'Product code already exists.';
-                // show specific toast like CategoriesController
-                toast('Product code already exists.', 'error');
-            }
             if (Product::where('product_name', $request->input('product_name'))->exists()) {
                 $errors['product_name'] = 'Product name already exists.';
                 toast('Product name already exists.', 'error');
@@ -251,95 +223,21 @@ class ProductController extends Controller
 
 
     public function update(UpdateProductRequest $request, Product $product) {
-        $data = $request->except(['document', 'additional_codes']);
-    $data['buy_price'] = $request->input('buy_price');
-    $data['list_price'] = $request->input('list_price');
-    $data['open_quantity'] = (int) $request->input('open_quantity', 0);
+        // Never overwrite the auto-generated product_code
+        $data = $request->except(['document', 'additional_codes', 'product_code']);
+        $data['open_quantity'] = (int) $request->input('open_quantity', 0);
 
-    // Normalize quantities to integers and recompute re_order to keep DB consistent
-    $data['purchase_quantity'] = $product->purchase_quantity ?? 0; // Keep existing
-    $data['product_quantity'] = $data['open_quantity'] + $data['purchase_quantity'];
-    $data['product_stock_alert'] = isset($data['product_stock_alert']) ? (int) $data['product_stock_alert'] : $product->product_stock_alert;
-    // Compute re_order as (alert - stock) when stock is less than alert
-    $data['re_order'] = 0;
-    if ($data['product_stock_alert'] > $data['product_quantity']) {
-        $data['re_order'] = $data['product_stock_alert'] - $data['product_quantity'];
-    }
-
-        // Collect all codes (primary + additional)
-        $primaryCodeUpd = trim($data['product_code'] ?? '');
-        $additionalCodesUpd = array_filter(
-            array_map('trim', $request->input('additional_codes', [])),
-            fn($c) => $c !== ''
-        );
-        $allCodesUpd = array_unique(array_merge([$primaryCodeUpd], array_values($additionalCodesUpd)));
-
-        // Ensure no code belongs to a DIFFERENT product
-        $conflict = ProductCode::whereIn('code', $allCodesUpd)
-            ->where('product_id', '!=', $product->id)
-            ->first();
-        if ($conflict) {
-            toast('Code "' . $conflict->code . '" is already used by another product.', 'error');
-            return back()->withInput()->withErrors(['product_code' => 'One or more product codes already belong to another product.']);
+        $data['purchase_quantity'] = $product->purchase_quantity ?? 0;
+        $data['product_quantity'] = $data['open_quantity'] + $data['purchase_quantity'];
+        $data['product_stock_alert'] = isset($data['product_stock_alert']) ? (int) $data['product_stock_alert'] : $product->product_stock_alert;
+        $data['re_order'] = 0;
+        if ($data['product_stock_alert'] > $data['product_quantity']) {
+            $data['re_order'] = $data['product_stock_alert'] - $data['product_quantity'];
         }
 
         try {
-            DB::transaction(function () use ($product, $data, $allCodesUpd, $primaryCodeUpd) {
+            DB::transaction(function () use ($product, $data) {
                 $product->update($data);
-
-                // Sync product_codes: reuse deleted rows for new codes where possible to preserve IDs
-                $existing = $product->productCodes()->get();
-                $existingCodes = $existing->pluck('code')->toArray();
-                $toDelete = array_values(array_diff($existingCodes, $allCodesUpd));
-                $toAdd    = array_values(array_diff($allCodesUpd, $existingCodes));
-
-                // Try to reuse rows that would be deleted for new codes (preserves product_code IDs)
-                if (!empty($toAdd) && !empty($toDelete)) {
-                    $deleteRows = ProductCode::where('product_id', $product->id)
-                        ->whereIn('code', $toDelete)
-                        ->get()
-                        ->values();
-
-                    foreach ($toAdd as $idx => $newCode) {
-                        $reusable = $deleteRows->shift();
-                        if ($reusable) {
-                            $reusable->code = $newCode;
-                            $reusable->is_primary = 0;
-                            $reusable->save();
-                            // remove one entry from toDelete so it's not deleted later
-                            array_shift($toDelete);
-                            unset($toAdd[$idx]);
-                        }
-                    }
-                    // reindex $toAdd
-                    $toAdd = array_values($toAdd);
-                }
-
-                // Any remaining toDelete should be removed
-                if (!empty($toDelete)) {
-                    ProductCode::where('product_id', $product->id)->whereIn('code', $toDelete)->delete();
-                }
-
-                // Insert any remaining new codes
-                if (!empty($toAdd)) {
-                    $now = now();
-                    $rows = array_map(function($code) use ($product, $now) {
-                        return [
-                            'product_id' => $product->id,
-                            'code'       => $code,
-                            'is_primary' => 0,
-                            'created_at' => $now,
-                            'updated_at' => $now,
-                        ];
-                    }, $toAdd);
-                    ProductCode::insert($rows);
-                }
-
-                // Reset then set is_primary
-                ProductCode::where('product_id', $product->id)->update(['is_primary' => false]);
-                ProductCode::where('product_id', $product->id)
-                    ->where('code', $primaryCodeUpd)
-                    ->update(['is_primary' => true]);
             });
 
             // Handle media after successful DB transaction to avoid orphaned files on rollback
@@ -369,10 +267,6 @@ class ProductController extends Controller
             \Log::error('Error updating product: ' . $e->getMessage());
 
             $errors = [];
-            if (Product::where('product_code', $request->input('product_code'))->where('id', '!=', $product->id)->exists()) {
-                $errors['product_code'] = 'Product code already exists.';
-                toast('Product code already exists.', 'error');
-            }
             if (Product::where('product_name', $request->input('product_name'))->where('id', '!=', $product->id)->exists()) {
                 $errors['product_name'] = 'Product name already exists.';
                 toast('Product name already exists.', 'error');

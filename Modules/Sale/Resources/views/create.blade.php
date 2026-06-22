@@ -1002,7 +1002,7 @@
             // Check if there's something worth saving (only consider the product-cart table)
             function hasContentToSave() {
                 // Only count rows inside the product cart table to avoid matching product-search results
-                var cartItems = document.querySelectorAll('.product-cart-table tbody tr[data-product-id]');
+                var cartItems = document.querySelectorAll('.product-cart-table tbody tr[data-row-id]');
                 return cartItems.length > 0;
             }
 

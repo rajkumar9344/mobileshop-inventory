@@ -21,48 +21,40 @@
                         <form id="sale-return-form" action="{{ route('sale-returns.store') }}" method="POST">
                             @csrf
 
+                            {{-- Row 1: Reference | Date | Customer | Area | Phone --}}
                             <div class="form-row">
-                                <div class="col-lg-4">
-                                    <div class="form-group">
-                                        <label for="reference">Reference <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="reference" required readonly value="SLRN">
-                                    </div>
+                                <div class="col-md-2 pr-1">
+                                    <label for="reference" class="mb-1">Reference <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="reference" required readonly value="SLRN">
                                 </div>
-                                <div class="col-lg-4">
-                                    <div class="from-group">
-                                        <div class="form-group">
-                                            <label for="customer_id">Customer <span class="text-danger">*</span></label>
-                                            <select class="form-control" name="customer_id" id="customer_id" required>
-                                                <option value="">-- Select customer --</option>
-                                                @php
-                                                    $selectedCustomer = old('customer_id') ?? request()->get('customer_id');
-                                                @endphp
-                                                @foreach(\Modules\People\Entities\Customer::where('is_active', true)->orderBy('customer_name', 'asc')->get() as $customer)
-                                                    <option value="{{ $customer->id }}" {{ ((string)$selectedCustomer === (string)$customer->id) ? 'selected' : '' }}>{{ $customer->customer_name }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    </div>
+                                <div class="col-md-2 pr-1">
+                                    <label for="date" class="mb-1">Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="date" required value="{{ now()->format('Y-m-d') }}">
                                 </div>
-                                <div class="col-lg-4">
-                                    <div class="from-group">
-                                        <div class="form-group">
-                                            <label for="date">Date <span class="text-danger">*</span></label>
-                                            <input type="date" class="form-control" name="date" required value="{{ now()->format('Y-m-d') }}">
-                                        </div>
-                                    </div>
+                                <div class="col-md-4 pr-1">
+                                    <label for="customer_id" class="mb-1">Customer <span class="text-danger">*</span></label>
+                                    <select class="form-control" name="customer_id" id="customer_id" required>
+                                        <option value="">-- Select customer --</option>
+                                        @php
+                                            $selectedCustomer = old('customer_id') ?? request()->get('customer_id');
+                                        @endphp
+                                        @foreach(\Modules\People\Entities\Customer::where('is_active', true)->orderBy('customer_name', 'asc')->get() as $customer)
+                                            <option value="{{ $customer->id }}" {{ ((string)$selectedCustomer === (string)$customer->id) ? 'selected' : '' }}>{{ $customer->customer_name }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
-                            </div>
-                            <div class="form-row mb-3">
-                                <div class="col-md-3 pr-1">
+                                <div class="col-md-2 pr-1">
                                     <label for="area" class="mb-1">Area</label>
                                     <input type="text" class="form-control" name="area" id="area" maxlength="30" placeholder="Area">
                                 </div>
-                                <div class="col-md-3 pr-1">
+                                <div class="col-md-2 pr-1">
                                     <label for="phone" class="mb-1">Phone No</label>
                                     <input type="tel" class="form-control" name="phone" id="phone" maxlength="15" pattern="\+?[0-9]{7,15}" title="Only numbers and + (UAE contact number, max 15)" oninput="validatePhone(this)" placeholder="+971501234567">
                                     <small id="phone-error" class="text-danger" style="display: none;"></small>
                                 </div>
+                            </div>
+                            {{-- Row 2: Open Balance | Bill Balance | Total Balance | Excess Amount --}}
+                            <div class="form-row mt-2 mb-3">
                                 <div class="col-md-3 pr-1">
                                     <label for="opening_balance" class="mb-1">Open Balance</label>
                                     <input type="text" class="form-control" name="opening_balance" id="opening_balance" maxlength="15" pattern="^-?\d+(?:\.\d{1,2})?$|^-?\d+(?:,\d{1,2})?$" placeholder="0.00" oninput="this.value = this.value.replace(/[^0-9.\-]/g,'').replace(/(?!^)-/g,'').slice(0,15)" readonly>

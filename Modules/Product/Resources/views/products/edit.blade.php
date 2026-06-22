@@ -22,13 +22,13 @@
                 <div class="col-lg-12">
                     <div class="card">
                         <div class="card-body">
-                            {{-- Row 1: Brand | Product Code --}}
+                            {{-- Row 1: Brand (optional) | Code (auto-generated, read-only) --}}
                             <div class="form-row">
                                 <div class="col-md-6">
-                                    <label for="category_id">Brand <span class="text-danger">*</span></label>
+                                    <label for="category_id">Brand</label>
                                     <div class="input-group">
-                                        <select class="form-control" name="category_id" id="category_id" required>
-                                            <option value="" selected disabled>Select Brand</option>
+                                        <select class="form-control" name="category_id" id="category_id">
+                                            <option value="">— None —</option>
                                             @php
                                                 $cats = \Modules\Product\Entities\Category::where('status', true)
                                                     ->orWhere('id', $product->category_id)
@@ -38,17 +38,15 @@
                                                     ->values();
                                             @endphp
                                             @foreach($cats as $category)
-                                                <option {{ $category->id == ($product->category->id ?? null) ? 'selected' : '' }} value="{{ $category->id }}">{{ $category->category_name }}</option>
+                                                <option {{ $category->id == ($product->category_id ?? null) ? 'selected' : '' }} value="{{ $category->id }}">{{ $category->category_name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="product_code">Code <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="product_code" id="product_code" required value="{{ $product->product_code }}" maxlength="50" title="Max 50 characters">
-                                        <small id="product_code_hint" class="form-text text-muted">Max 50 characters.</small>
-                                        <small id="product_code_error" class="form-text text-danger" style="display:none;"></small>
+                                        <label>Code</label>
+                                        <input type="text" class="form-control" value="{{ $product->product_code }}" readonly>
                                     </div>
                                 </div>
                             </div>
@@ -63,21 +61,32 @@
                                 </div>
                             </div>
 
-                            {{-- Row 3: VAT % | VAT Type --}}
+                            {{-- Row 3: VAT % | VAT Type | Unit --}}
                             <div class="form-row">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="product_order_tax">VAT (%)</label>
                                         <input type="number" class="form-control" name="product_order_tax" value="{{ $product->product_order_tax }}" min="0" max="99" oninput="this.value = this.value.replace(/[^0-9]/g,'').slice(0,2)">
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="product_tax_type">VAT Type</label>
                                         <select class="form-control" name="product_tax_type" id="product_tax_type">
                                             <option value="" {{ old('product_tax_type', $product->product_tax_type ?? 2) == '' ? 'selected' : '' }}>Select VAT Type</option>
                                             <option value="1" {{ old('product_tax_type', $product->product_tax_type ?? 2) == 1 ? 'selected' : '' }}>Exclusive</option>
                                             <option value="2" {{ old('product_tax_type', $product->product_tax_type ?? 2) == 2 ? 'selected' : '' }}>Inclusive</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="product_unit">Unit <span class="text-danger">*</span></label>
+                                        <select class="form-control" name="product_unit" id="product_unit" required>
+                                            <option value="" selected>Select Unit</option>
+                                            @foreach(\Modules\Setting\Entities\Unit::all() as $unit)
+                                                <option {{ $product->product_unit == $unit->short_name ? 'selected' : '' }} value="{{ $unit->short_name }}">{{ $unit->name . ' | ' . $unit->short_name }}</option>
+                                            @endforeach
                                         </select>
                                     </div>
                                 </div>
@@ -105,7 +114,7 @@
                                 </div>
                             </div>
 
-                            {{-- Row 5: Alert Quantity | Re-order | Unit --}}
+                            {{-- Row 5: Alert Quantity | Re-order | Status --}}
                             <div class="form-row">
                                 <div class="col-md-4">
                                     <div class="form-group">
@@ -120,49 +129,6 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="product_unit">Unit <span class="text-danger">*</span></label>
-                                        <select class="form-control" name="product_unit" id="product_unit" required>
-                                            <option value="" selected>Select Unit</option>
-                                            @foreach(\Modules\Setting\Entities\Unit::all() as $unit)
-                                                <option {{ $product->product_unit == $unit->short_name ? 'selected' : '' }} value="{{ $unit->short_name }}">{{ $unit->name . ' | ' . $unit->short_name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- Row 6: Purchase Rate | List Price | Buy Price --}}
-                            <div class="form-row">
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="product_cost">Purchase Rate <span class="text-danger">*</span></label>
-                                        <x-currency-input id="product_cost" name="product_cost" class="form-control" :display="old('product_cost', (isset($product) && $product->product_cost !== null) ? number_format($product->product_cost, 2, '.', '') : '')" aria-label="Purchase Rate" maxlength="13" required />
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="list_price">List Price</label>
-                                        <x-currency-input id="list_price" name="list_price" class="form-control" :display="old('list_price', (isset($product) && $product->list_price !== null) ? number_format($product->list_price, 2, '.', '') : '')" aria-label="List Price" maxlength="15" />
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label for="buy_price">Buy Price</label>
-                                        <x-currency-input id="buy_price" name="buy_price" class="form-control" :display="old('buy_price', (isset($product) && $product->buy_price !== null) ? number_format($product->buy_price, 2, '.', '') : '')" aria-label="Buy Price" maxlength="15" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- Row 7: Sell Rate | Status --}}
-                            <div class="form-row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="product_price">Sell Rate</label>
-                                        <x-currency-input id="product_price" name="product_price" class="form-control" :display="old('product_price', (isset($product) && $product->product_price !== null) ? number_format($product->product_price, 2, '.', '') : '')" aria-label="Sell Rate" maxlength="15" />
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="status">Status</label>
                                         <select class="form-control" name="status" id="status">
@@ -186,11 +152,9 @@
                     </div>
                 </div>
 
-                <div class="row mt-3">
-                    <div class="col-12 d-flex justify-content-end">
-                        <a href="{{ route('products.index') }}" class="btn btn-secondary mr-2">Back</a>
-                        <button type="submit" class="btn btn-primary">Update Product <i class="bi bi-check"></i></button>
-                    </div>
+                <div class="col-12 mt-3 d-flex justify-content-end">
+                    <a href="{{ route('products.index') }}" class="btn btn-secondary mr-2">Back</a>
+                    <button type="submit" class="btn btn-primary">Update Product <i class="bi bi-check"></i></button>
                 </div>
         </form>
     </div>
@@ -208,21 +172,6 @@
 
             $('#product_quantity, #product_stock_alert').on('input change', calculateReOrder);
 
-            var codeCheckTimeout = null;
-            $('#product_code').on('blur', function () {
-                clearTimeout(codeCheckTimeout);
-                codeCheckTimeout = setTimeout(function () {
-                    var code = $('#product_code').val() || '';
-                    if (!code) return;
-                    $.getJSON('{{ route('products.checkCode') }}', { codes: [code], exclude_id: '{{ $product->id }}' }, function (res) {
-                        $('#product_code_error').hide().text('');
-                        if (res.exists && res.conflicts && res.conflicts.length) {
-                            var c = res.conflicts[0];
-                            $('#product_code_error').show().text('Product code already exists' + (c.name ? (' — ' + c.name) : '') + '.');
-                        }
-                    });
-                }, 150);
-            });
         });
     </script>
 @endpush

@@ -20,60 +20,36 @@
                         @include('utils.alerts')
                         <form id="purchase-return-form" action="{{ route('purchase-returns.store') }}" method="POST">
                             @csrf
+                            {{-- Row 1: Reference | Date | Supplier | Area | Open Balance --}}
                             <div class="form-row">
-                                <div class="col-lg-2">
-                                    <div class="form-group">
-                                        <label for="reference">Reference <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="reference" required readonly value="PRRN">
-                                    </div>
+                                <div class="col-md-2 pr-1">
+                                    <label for="reference" class="mb-1">Reference <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="reference" required readonly value="PRRN">
                                 </div>
-                                <div class="col-lg-2">
-                                    <div class="from-group">
-                                        <div class="form-group">
-                                            <label for="date">Date <span class="text-danger">*</span></label>
-                                            <input type="date" class="form-control" name="date" required value="{{ now()->format('Y-m-d') }}">
-                                        </div>
-                                    </div>
+                                <div class="col-md-2 pr-1">
+                                    <label for="date" class="mb-1">Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="date" required value="{{ now()->format('Y-m-d') }}">
                                 </div>
-                                <div class="col-lg-3">
-                                    <div class="from-group">
-                                        <div class="form-group">
-                                            <label for="supplier_id">Supplier <span class="text-danger">*</span></label>
-                                            <select class="form-control select2-supplier" name="supplier_id" id="supplier_id" required>
-                                                <option value="">-- Select supplier --</option>
-                                                @foreach(\Modules\People\Entities\Supplier::where('status', 'active')->orderBy('supplier_name', 'asc')->get() as $supplier)
-                                                    <option value="{{ $supplier->id }}" data-area="{{ $supplier->area }}" data-balance="{{ $supplier->open_balance ?? 0 }}" data-excess="{{ $supplier->excess_amount ?? 0 }}">{{ $supplier->supplier_name }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    </div>
+                                <div class="col-md-4 pr-1">
+                                    <label for="supplier_id" class="mb-1">Supplier <span class="text-danger">*</span></label>
+                                    <select class="form-control select2-supplier" name="supplier_id" id="supplier_id" required>
+                                        <option value="">-- Select supplier --</option>
+                                        @foreach(\Modules\People\Entities\Supplier::where('status', 'active')->orderBy('supplier_name', 'asc')->get() as $supplier)
+                                            <option value="{{ $supplier->id }}" data-area="{{ $supplier->area }}" data-balance="{{ $supplier->open_balance ?? 0 }}" data-excess="{{ $supplier->excess_amount ?? 0 }}">{{ $supplier->supplier_name }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
-                                <div class="col-lg-3">
-                                    <div class="form-group">
-                                        <label for="area">Area</label>
-                                        <input type="text" class="form-control" name="area" id="area" maxlength="30" readonly placeholder="Area">
-                                    </div>
+                                <div class="col-md-2 pr-1">
+                                    <label for="area" class="mb-1">Area</label>
+                                    <input type="text" class="form-control" name="area" id="area" maxlength="30" readonly placeholder="Area">
                                 </div>
-                                <div class="col-lg-2">
-                                    <div class="form-group">
-                                        <label for="balance">Open Balance</label>
-                                        <input type="text" class="form-control" name="balance" id="balance" maxlength="15" pattern="^\d+(\.\d{1,2})?$|^\d+(,\d{1,2})?$" readonly placeholder="0.00" value="0.00">
-                                    </div>
-                                </div>
-                                <div class="col-lg-2">
-                                    <div class="form-group">
-                                        <label for="bill_balance_display">Bill Balance</label>
-                                        <input type="text" class="form-control" id="bill_balance_display" readonly placeholder="0.00" value="0.00">
-                                    </div>
-                                </div>
-                                <div class="col-lg-2">
-                                    <div class="form-group">
-                                        <label for="total_balance_display">Total Balance</label>
-                                        <input type="text" class="form-control" id="total_balance_display" readonly placeholder="0.00" value="0.00">
-                                    </div>
+                                <div class="col-md-2 pr-1">
+                                    <label for="balance" class="mb-1">Open Balance</label>
+                                    <input type="text" class="form-control" name="balance" id="balance" maxlength="15" pattern="^\d+(\.\d{1,2})?$|^\d+(,\d{1,2})?$" readonly placeholder="0.00" value="0.00">
                                 </div>
                             </div>
-                            <div class="form-row  mb-3">
+                            {{-- Row 2: Invoice No | Invoice Date | Bill Balance | Total Balance | Excess --}}
+                            <div class="form-row mt-2 mb-3">
                                 <div class="col-md-3 pr-1">
                                     <label for="invoice_no" class="mb-1">Invoice No <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="invoice_no" id="invoice_no" maxlength="20" required placeholder="Invoice Number">
@@ -82,7 +58,15 @@
                                     <label for="invoice_date" class="mb-1">Invoice Date <span class="text-danger">*</span></label>
                                     <input type="date" class="form-control" name="invoice_date" id="invoice_date" required value="{{ now()->format('Y-m-d') }}">
                                 </div>
-                                <div class="col-md-3 pr-1">
+                                <div class="col-md-2 pr-1">
+                                    <label for="bill_balance_display" class="mb-1">Bill Balance</label>
+                                    <input type="text" class="form-control" id="bill_balance_display" readonly placeholder="0.00" value="0.00">
+                                </div>
+                                <div class="col-md-2 pr-1">
+                                    <label for="total_balance_display" class="mb-1">Total Balance</label>
+                                    <input type="text" class="form-control" id="total_balance_display" readonly placeholder="0.00" value="0.00">
+                                </div>
+                                <div class="col-md-2 pr-1">
                                     <label for="excess_amount" class="mb-1">Excess</label>
                                     <input type="text" class="form-control" name="excess_amount" id="excess_amount" maxlength="15" readonly placeholder="0.00" value="0.00">
                                 </div>

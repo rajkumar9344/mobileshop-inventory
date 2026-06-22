@@ -26,17 +26,8 @@ class ProductDataTable extends DataTable
             ->addColumn('category_name', function ($data) {
                 return $data->category_name ?? '';
             })
-            ->addColumn('product_price', function ($data) {
-                return format_currency($data->product_price);
-            })
-            ->addColumn('product_cost', function ($data) {
-                return format_currency($data->product_cost);
-            })
             ->addColumn('product_unit', function ($data) {
                 return $data->product_unit ?? '';
-            })
-            ->addColumn('list_price', function ($data) {
-                return format_currency($data->list_price ?? 0);
             })
             ->addColumn('product_order_tax', function ($data) {
                 return $data->product_order_tax !== null ? $data->product_order_tax . '%' : 'N/A';
@@ -158,19 +149,6 @@ class ProductDataTable extends DataTable
 
             Column::make('product_unit')
                 ->title('Unit')
-                ->className('text-center align-middle'),
-
-            Column::computed('product_cost')
-                ->title('Purchase Rate')
-                ->className('text-center align-middle'),
-
-            Column::computed('list_price')
-                ->title('List Price')
-                ->className('text-center align-middle'),
-
-
-            Column::computed('product_price')
-                ->title('Sell Rate')
                 ->className('text-center align-middle'),
 
             Column::computed('open_quantity')

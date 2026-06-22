@@ -77,22 +77,20 @@ class ReportQueryService
     /**
      * Profit / Loss per sales bill.
      *
-     * Profit = bill total WITHOUT VAT − sum of purchase rate (products.product_cost)
-     * × quantity for every product on that bill. All amounts are stored in
-     * minor units (paise); the SELECT below keeps them in paise — divide by 100
-     * for display.
+     * Profit = bill total WITHOUT VAT − sum of snapshotted purchase_rate
+     * × quantity for every line on that bill. purchase_rate is stored on
+     * sales_details at sale time so it reflects the actual cost paid,
+     * even when the same product was bought at different rates.
+     * All amounts are stored in minor units; divide by 100 for display.
      *
-     * Selected computed columns (paise): amount_incl_vat, amount_excl_vat,
+     * Selected computed columns (minor units): amount_incl_vat, amount_excl_vat,
      * purchase_total, profit_amount.
      */
     public function buildProfitLossQuery(array $filters): Builder
     {
-        // Per-bill purchase cost: sum of (quantity × product purchase rate).
-        // LEFT JOIN products so details whose product was deleted count as 0
-        // instead of silently dropping the whole row.
+        // Per-bill purchase cost: sum of (quantity × snapshotted purchase rate).
         $purchaseTotals = \Illuminate\Support\Facades\DB::table('sales_details as sd')
-            ->leftJoin('products as p', 'p.id', '=', 'sd.product_id')
-            ->select('sd.sale_id', \Illuminate\Support\Facades\DB::raw('SUM(sd.quantity * COALESCE(p.product_cost, 0)) as purchase_total'))
+            ->select('sd.sale_id', \Illuminate\Support\Facades\DB::raw('SUM(sd.quantity * COALESCE(sd.purchase_rate, 0)) as purchase_total'))
             ->groupBy('sd.sale_id');
 
         $inclVat = 'COALESCE(sales.overall_amount, sales.total_amount, 0)';
