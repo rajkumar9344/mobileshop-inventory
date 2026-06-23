@@ -66,6 +66,13 @@ class DailyOperationsReport extends Component
         $this->loadReportData();
     }
 
+    public function resetFilters()
+    {
+        $this->report_date = today()->format('Y-m-d');
+        $this->loadReportData();
+        $this->loadMonthwiseSummary();
+    }
+
     public function updatedSummaryYear()
     {
         $this->loadMonthwiseSummary();

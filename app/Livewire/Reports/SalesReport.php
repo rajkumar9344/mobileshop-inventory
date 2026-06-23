@@ -57,4 +57,13 @@ class SalesReport extends Component
         $this->validate();
         $this->render();
     }
+
+    public function resetFilters() {
+        $this->start_date = today()->subDays(30)->format('Y-m-d');
+        $this->end_date = today()->format('Y-m-d');
+        $this->customer_id = '';
+        $this->sale_status = '';
+        $this->payment_status = '';
+        $this->resetPage();
+    }
 }

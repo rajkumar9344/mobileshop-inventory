@@ -93,8 +93,6 @@
                                         <div class="col-md-6 text-right">
                                             <span class="sp-meta">
                                                 Brand: {{ $result->category ?? '-' }} |
-                                                Purchase Rate: {{ format_currency($result->product_cost ?? 0, true, false) }} |
-                                                Sell Rate: {{ format_currency($result->product_price ?? 0, true, false) }} |
                                                 {{ $stockLabel }}: {{ $result->stock ?? $result->product_quantity }}
                                             </span><br>
                                             <span class="sp-meta">VAT: {{ $result->product_order_tax ?? 0 }}% | Unit: {{ $result->product_unit ?? '-' }}</span>

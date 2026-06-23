@@ -64,6 +64,15 @@ class PaymentsReport extends Component
         $this->resetPage();
     }
 
+    public function resetFilters() {
+        $this->start_date = today()->subDays(30)->format('Y-m-d');
+        $this->end_date = today()->format('Y-m-d');
+        $this->payments = '';
+        $this->payment_method = '';
+        $this->query = null;
+        $this->resetPage();
+    }
+
     public function getQuery() {
         if ($this->payments == 'sale') {
             $this->query = SalePayment::query()->with('sale');

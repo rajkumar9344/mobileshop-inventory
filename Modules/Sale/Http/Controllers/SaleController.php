@@ -235,7 +235,10 @@ class SaleController extends Controller
                         ?? optional($product->category)->name;
                     $pcId = $resolver->resolve($cart_item->id, $options->code ?? null);
                     $_sale_gst_pct       = (float)($options->gst_percent ?? $vals['tax_percent']);
-                    $_sale_purchase_rate = (float)($options->product_cost ?? 0);
+                    $_submittedPR = $request->input("submitted_purchase_rates.{$cart_item->rowId}", null);
+                    $_sale_purchase_rate = ($_submittedPR !== null && $_submittedPR !== '')
+                        ? floatval(str_replace([',', settings()->currency->symbol], '', (string)$_submittedPR))
+                        : (float)($options->product_cost ?? 0);
                     $_sale_tax_amt       = round($vals['sub_total'] * $_sale_gst_pct / 100, 2);
 
                     SaleDetails::create([
@@ -434,7 +437,10 @@ class SaleController extends Controller
                     ?? optional($product->category)->name;
                 $pcId = $resolver->resolve($cart_item->id, $options->code ?? null);
                 $_sale_gst_pct       = (float)($options->gst_percent ?? $vals['tax_percent']);
-                $_sale_purchase_rate = (float)($options->product_cost ?? 0);
+                $_submittedPR = $request->input("submitted_purchase_rates.{$cart_item->rowId}", null);
+                $_sale_purchase_rate = ($_submittedPR !== null && $_submittedPR !== '')
+                    ? floatval(str_replace([',', settings()->currency->symbol], '', (string)$_submittedPR))
+                    : (float)($options->product_cost ?? 0);
                 $_sale_tax_amt       = round($vals['sub_total'] * $_sale_gst_pct / 100, 2);
 
                 SaleDetails::create([
@@ -849,7 +855,10 @@ class SaleController extends Controller
                     ?? optional($product->category)->name;
                 $pcId = $resolver->resolve($cart_item->id, $options->code ?? null);
                 $_sale_gst_pct       = (float)($options->gst_percent ?? $vals['tax_percent']);
-                $_sale_purchase_rate = (float)($options->product_cost ?? 0);
+                $_submittedPR = $request->input("submitted_purchase_rates.{$cart_item->rowId}", null);
+                $_sale_purchase_rate = ($_submittedPR !== null && $_submittedPR !== '')
+                    ? floatval(str_replace([',', settings()->currency->symbol], '', (string)$_submittedPR))
+                    : (float)($options->product_cost ?? 0);
                 $_sale_tax_amt       = round($vals['sub_total'] * $_sale_gst_pct / 100, 2);
 
                 SaleDetails::create([
@@ -931,7 +940,7 @@ class SaleController extends Controller
                     'mrp'                      => $mrp,
                     'rate'                     => round($mrp, 2),
                     'rate_before_discount'     => $mrp,
-                    'product_cost'             => (float)($product->product_cost ?? 0),
+                    'product_cost'             => (float)($sale_detail->purchase_rate ?? $product->product_cost ?? 0),
                 ]
             ]);
         }

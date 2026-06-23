@@ -290,8 +290,7 @@
                                 data-product-id="{{ $cart_item->id }}"
                                 class="{{ $_isInvalidRow ? 'table-danger invalid-row' : '' }}">
                                 <td class="align-middle product-name col-product-name">
-                                    @if(!$isReadOnly && $isSaleGroup)
-                                        {{-- Sale group: product name is editable. Purchase: read-only (BRD). --}}
+                                    @if(!$isReadOnly && ($isSaleGroup || $isPurchaseGroup))
                                         <input type="text"
                                             class="form-control form-control-sm"
                                             wire:model.blur="custom_product_names.{{ $cart_item->rowId }}"
@@ -374,15 +373,22 @@
 
                                 @if($isSaleGroup)
                                 @php
-                                    $_purchase_rate = (float)($cart_item->options->product_cost ?? 0);
+                                    $_purchase_rate = (float)($purchase_rate_override[$cart_item->rowId] ?? $cart_item->options->product_cost ?? 0);
                                     $_unit_price    = $_rate_before_discount;
                                     $_sale_amount   = round($_unit_price * $cart_item->qty, 2);
                                     $_vat_amount    = round($_sale_amount * $_gst_pct / 100, 2);
                                     $_sale_total    = round($_sale_amount + $_vat_amount, 2);
                                 @endphp
                                 <td class="align-middle text-center col-amount">
-                                    <input type="text" class="form-control form-control-sm autosize"
-                                           value="{{ format_currency($_purchase_rate, true, false) }}" readonly>
+                                    <x-currency-input
+                                        id="{{ 'purchase_rate_'.$cart_item->rowId }}"
+                                        wireModel="{{ 'purchase_rate_override.'.$cart_item->rowId }}"
+                                        class="form-control form-control-sm autosize"
+                                        display="{{ format_currency($_purchase_rate, true, false) }}"
+                                        maxlength="15"
+                                        wire:key="purchase-rate-{{ $cart_item->rowId }}"
+                                        :disabled="$isReadOnly"
+                                    />
                                 </td>
                                 <td class="align-middle text-center col-small">
                                     @include('livewire.includes.product-cart-quantity')

@@ -44,7 +44,7 @@
 
                 <div class="col-lg-2 col-md-12 mb-2">
                     <label class="d-block mb-1">&nbsp;</label>
-                    <button type="button" wire:click="resetFilters" class="btn btn-outline-danger btn-block"><i class="bi bi-arrow-clockwise"></i> Reset Filters</button>
+                    <button type="button" wire:click="resetFilters" class="btn btn-outline-danger btn-block" title="Clear all filters"><i class="bi bi-x-lg"></i></button>
                 </div>
             </form>
         </div>
@@ -68,7 +68,13 @@
                 </div>
             </div>
 
-            <div class="card-body p-0">
+            <div class="card-body p-0 position-relative" style="min-height:120px;">
+                <div wire:loading.flex class="position-absolute justify-content-center align-items-center" style="top:0;left:0;right:0;bottom:0;z-index:10;background:rgba(255,255,255,0.8);">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>
+                        <div class="small text-muted mt-2">Loading...</div>
+                    </div>
+                </div>
                 @forelse($data as $block)
                 <div class="p-3 border-bottom">
                     <h6 class="mb-3">{{ $block['supplier']->supplier_name }}</h6>

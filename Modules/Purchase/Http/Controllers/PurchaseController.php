@@ -323,13 +323,22 @@ class PurchaseController extends Controller
                 // This makes purchase stock updates consistent with sales (which always decrement stock).
                 $product = Product::lockForUpdate()->findOrFail($cart_item->id);
 
+                // Capture stock and cost BEFORE adding new quantity (needed for WAC calculation).
+                $stockBefore = max(0, (int)($product->product_quantity ?? 0));
+                $costBefore  = (float)($product->product_cost ?? 0);
+
                 // Use helper to increment purchase stock
                 $product->addPurchaseStock($cart_item->qty);
 
-                // BRD: the entered Purchase Rate updates the product's cost in the Product Master.
+                // Weighted Average Cost: blend existing stock cost with new purchase rate.
+                // WAC = (stock_before × cost_before + new_qty × new_rate) / (stock_before + new_qty)
                 $newCost = round(floatval($_rateBeforeDiscount ?? 0), 2);
-                if ($newCost > 0 && abs($newCost - round(floatval($product->product_cost ?? 0), 2)) >= 0.005) {
-                    $product->product_cost = $newCost;
+                if ($newCost > 0) {
+                    $totalQty = $stockBefore + $cart_item->qty;
+                    $wac = $totalQty > 0
+                        ? round(($stockBefore * $costBefore + $cart_item->qty * $newCost) / $totalQty, 2)
+                        : $newCost;
+                    $product->product_cost = $wac;
                     $product->save();
                 }
 
@@ -948,13 +957,24 @@ class PurchaseController extends Controller
                 if ($purchase->status !== 'Draft') {
                     $product = Product::lockForUpdate()->findOrFail($cart_item->id);
 
+                    // Capture stock and cost BEFORE adding new quantity (needed for WAC calculation).
+                    // Note: old purchase stock was already removed above (removePurchaseStock),
+                    // so $product->product_quantity reflects inventory from all OTHER purchases only.
+                    $stockBefore = max(0, (int)($product->product_quantity ?? 0));
+                    $costBefore  = (float)($product->product_cost ?? 0);
+
                     // Use helper to increment purchase stock
                     $product->addPurchaseStock($cart_item->qty);
 
-                    // BRD: the entered Purchase Rate updates the product's cost in the Product Master.
+                    // Weighted Average Cost: blend existing stock cost with new purchase rate.
+                    // WAC = (stock_before × cost_before + new_qty × new_rate) / (stock_before + new_qty)
                     $newCost = round(floatval($_rateBeforeDiscount ?? 0), 2);
-                    if ($newCost > 0 && abs($newCost - round(floatval($product->product_cost ?? 0), 2)) >= 0.005) {
-                        $product->product_cost = $newCost;
+                    if ($newCost > 0) {
+                        $totalQty = $stockBefore + $cart_item->qty;
+                        $wac = $totalQty > 0
+                            ? round(($stockBefore * $costBefore + $cart_item->qty * $newCost) / $totalQty, 2)
+                            : $newCost;
+                        $product->product_cost = $wac;
                         $product->save();
                     }
 

@@ -98,7 +98,9 @@ class ReportQueryService
         $profit  = '(' . $exclVat . ') - COALESCE(pt.purchase_total, 0)';
 
         $query = Sale::query()
-            ->where('sales.status', '!=', 'Draft')
+            ->where(function ($q) {
+                $q->whereNull('sales.status')->orWhere('sales.status', '!=', 'Draft');
+            })
             ->leftJoinSub($purchaseTotals, 'pt', 'pt.sale_id', '=', 'sales.id')
             ->select(
                 'sales.*',

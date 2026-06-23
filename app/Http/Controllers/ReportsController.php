@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Gate;
 use Modules\Product\Entities\Product;
 use Modules\Product\Entities\Category;
 use Modules\Sale\Entities\Sale;
@@ -32,6 +33,14 @@ use Modules\Expense\Entities\Expense;
 
 class ReportsController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            abort_if(Gate::denies('access_reports'), 403);
+            return $next($request);
+        });
+    }
+
     /**
      * Maximum records allowed for PDF export. Beyond this, suggest Excel.
      */

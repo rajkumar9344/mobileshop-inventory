@@ -55,7 +55,7 @@
                     <div class="col-lg-1">
                         <div class="form-group">
                             <label class="d-block">&nbsp;</label>
-                            <button type="button" onclick="clearGstrDateRangeUI()" wire:click="resetFilters" class="btn btn-outline-danger btn-block" title="Reset Filters"><i class="bi bi-arrow-clockwise"></i></button>
+                            <button type="button" onclick="clearGstrDateRangeUI()" wire:click="resetFilters" class="btn btn-outline-danger btn-block" title="Clear all filters"><i class="bi bi-x-lg"></i></button>
                         </div>
                     </div>
                 </div>
@@ -75,7 +75,13 @@
                     </div>
             </div>
 
-            <div class="table-responsive">
+            <div class="table-responsive position-relative" style="min-height:120px;">
+                <div wire:loading.flex class="position-absolute justify-content-center align-items-center" style="top:0;left:0;right:0;bottom:0;z-index:10;background:rgba(255,255,255,0.8);">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>
+                        <div class="small text-muted mt-2">Loading...</div>
+                    </div>
+                </div>
                 <table class="table table-bordered table-striped text-center mb-0">
                     <thead>
                         <tr>

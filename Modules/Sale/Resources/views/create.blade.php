@@ -434,6 +434,17 @@
                 // Ensure hidden fields are updated before submission
                 updateHiddenFields();
 
+                // Collect purchase rate overrides from DOM (bypasses Livewire race condition)
+                $('#sale-form input[name^="submitted_purchase_rates"]').remove();
+                document.querySelectorAll('.product-cart-table tr[data-row-id]').forEach(function(row) {
+                    var rowId = row.getAttribute('data-row-id');
+                    if (!rowId) return;
+                    var hiddenInput = document.getElementById('purchase_rate_' + rowId + '_raw');
+                    if (hiddenInput && hiddenInput.value !== '') {
+                        $('<input>').attr({ type: 'hidden', name: 'submitted_purchase_rates[' + rowId + ']', value: hiddenInput.value }).appendTo('#sale-form');
+                    }
+                });
+
                 // Validate paid amount and payment method
                 var hasError = false;
                 var netRate = getNetRate();

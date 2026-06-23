@@ -12,18 +12,19 @@
                         </div>
 
                         <div class="d-flex align-items-center flex-wrap" style="gap:0.5rem;">
-                            <a href="{{ route('reports.daily-operations-excel', ['date' => $report_date]) }}" 
+                            <a href="{{ route('reports.daily-operations-excel', ['date' => $report_date]) }}"
                                class="btn btn-success" target="_blank">
                                 <i class="bi bi-file-earmark-excel"></i> Export Excel
                             </a>
-                            <a href="{{ route('reports.daily-operations-pdf', ['date' => $report_date]) }}" 
+                            <a href="{{ route('reports.daily-operations-pdf', ['date' => $report_date]) }}"
                                class="btn btn-danger" target="_blank">
                                 <i class="bi bi-file-earmark-pdf"></i> Export PDF
                             </a>
-                            <a href="{{ route('reports.daily-operations-print', ['date' => $report_date]) }}" 
+                            <a href="{{ route('reports.daily-operations-print', ['date' => $report_date]) }}"
                                class="btn btn-secondary" target="_blank">
                                 <i class="bi bi-printer"></i> Print
                             </a>
+                            <button wire:click="resetFilters" type="button" class="btn btn-outline-danger" title="Clear all filters"><i class="bi bi-x-lg"></i></button>
                         </div>
                     </div>
                 </div>
@@ -50,10 +51,11 @@
     @endif
 
     {{-- Loading Indicator --}}
-    <div wire:loading.flex class="position-fixed w-100 h-100 justify-content-center align-items-center rm-loading-overlay"
-         style="top:0;left:0;z-index:9999;">
-        <div class="spinner-border text-primary" role="status">
-            <span class="sr-only">Loading...</span>
+    <div wire:loading.flex class="position-fixed justify-content-center align-items-center"
+         style="top:0;left:0;right:0;bottom:0;z-index:9999;background:rgba(255,255,255,0.8);">
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>
+            <div class="small text-muted mt-2">Loading...</div>
         </div>
     </div>
 

@@ -60,12 +60,14 @@
                 </div>
             </div>
 
-            <div wire:loading class="text-center py-2">
-                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-            </div>
-
             {{-- Listing --}}
-            <div class="table-responsive mt-2">
+            <div class="table-responsive mt-2 position-relative" style="min-height:120px;">
+                <div wire:loading.flex class="position-absolute justify-content-center align-items-center" style="top:0;left:0;right:0;bottom:0;z-index:10;background:rgba(255,255,255,0.8);">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>
+                        <div class="small text-muted mt-2">Loading...</div>
+                    </div>
+                </div>
                 <table class="table table-bordered table-striped table-sm mb-0">
                     <thead class="thead-light">
                     <tr>

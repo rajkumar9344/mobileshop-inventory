@@ -69,6 +69,7 @@
                                 <i wire:target="generateReport" wire:loading.remove class="bi bi-shuffle"></i>
                                 Filter Report
                             </button>
+                            <button wire:click="resetFilters" type="button" class="btn btn-outline-danger ml-2" title="Clear all filters"><i class="bi bi-x-lg"></i></button>
                         </div>
                     </form>
                 </div>
@@ -85,9 +86,10 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive position-relative">
-                        <div wire:loading.flex class="col-12 position-absolute justify-content-center align-items-center rm-loading-overlay" style="top:0;right:0;left:0;bottom:0;z-index: 99;">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="sr-only">Loading...</span>
+                        <div wire:loading.flex class="position-absolute justify-content-center align-items-center" style="top:0;left:0;right:0;bottom:0;z-index:10;background:rgba(255,255,255,0.8);">
+                            <div class="text-center">
+                                <div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>
+                                <div class="small text-muted mt-2">Loading...</div>
                             </div>
                         </div>
                         <table class="table table-bordered table-striped text-center mb-0">

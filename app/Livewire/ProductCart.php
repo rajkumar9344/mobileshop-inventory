@@ -41,7 +41,8 @@ class ProductCart extends Component
     // Multiple-codes support: keyed by product_id
     public $product_codes  = []; // all available codes per product
     public $selected_code  = []; // the currently selected code per product
-    public $custom_product_names = []; // editable names for silicon mobile cover items (keyed by rowId)
+    public $custom_product_names = []; // editable names (keyed by rowId)
+    public $purchase_rate_override = []; // override purchase rate per row for P&L (keyed by rowId, sale group only)
 
     public function updatedCustomProductNames($value, $rowId) {
         if ($this->readonly || trim($value) === '') {
@@ -293,6 +294,7 @@ class ProductCart extends Component
                 $this->selected_code[$rId] = $savedCode ?? ($allCodes[0] ?? '');
 
                 $this->custom_product_names[$rId] = $cart_item->name;
+                $this->purchase_rate_override[$rId] = (float)($cart_item->options->product_cost ?? 0);
             }
         } else {
             $this->global_discount_amount = 0;
@@ -316,6 +318,7 @@ class ProductCart extends Component
             $this->product_codes = [];
             $this->selected_code = [];
             $this->custom_product_names = [];
+            $this->purchase_rate_override = [];
         }
 
         // (debug logging removed)
@@ -593,9 +596,9 @@ class ProductCart extends Component
                 '_uid'                  => \Illuminate\Support\Str::random(8),
             ]
         ]);
-        // Allow the product name to be edited for every added item
         $rowId = $newCartItem->rowId;
         $this->custom_product_names[$rowId] = $fullProduct['product_name'];
+        $this->purchase_rate_override[$rowId] = (float)($fullProduct['product_cost'] ?? 0);
 
         $this->check_quantity[$fullProduct['id']] = $stock; // stock is per-product, keyed by product_id
         $this->quantity[$rowId] = $initialQty;
