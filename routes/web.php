@@ -18,6 +18,13 @@ Route::get('/', function () {
 Auth::routes(['register' => false]);
 
 Route::group(['middleware' => 'auth'], function () {
+    // Session keep-alive — called by the client every 5 minutes to prevent
+    // session expiry on active pages. The StartSession middleware automatically
+    // saves the session on every request, which resets its expiry timer.
+    Route::get('/ping', function () {
+        return response()->json(['ok' => true]);
+    })->name('ping');
+
     Route::get('/home', [HomeController::class, 'index'])
         ->name('home');
 
