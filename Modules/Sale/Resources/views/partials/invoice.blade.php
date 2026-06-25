@@ -59,10 +59,10 @@
                                 <div style="margin-top:3px; color:#1a5276;">{{ settings()->company_address }}</div>
                             @endif
                             @if(settings()->company_phone)
-                                <div style="margin-top:2px;">Tel No.: {{ settings()->company_phone }}</div>
+                                <div style="margin-top:2px;">Tel No.: {{ settings()->company_phone }}{{ settings()->company_phone_2 ? ' / ' . settings()->company_phone_2 : '' }}</div>
                             @endif
                             @if(settings()->company_email ?? '')
-                                <div style="margin-top:2px; color:#1a5276;">E-mail: {{ settings()->company_email }}</div>
+                                <div style="margin-top:2px; color:#1a5276;">E-mail: {{ settings()->company_email }}{{ settings()->company_email_2 ? ' / ' . settings()->company_email_2 : '' }}</div>
                             @endif
                             @if($vatNo)
                                 <div style="margin-top:2px;">VAT No: {{ $vatNo }}</div>

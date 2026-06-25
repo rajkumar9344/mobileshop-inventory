@@ -48,6 +48,23 @@
                             <div class="form-row">
                                 <div class="col-lg-4">
                                     <div class="form-group">
+                                        <label for="company_email_2">Company Email 2 <small class="text-muted">(optional)</small></label>
+                                        <input type="email" class="form-control" name="company_email_2" id="company_email_2" value="{{ old('company_email_2', $settings->company_email_2) }}" maxlength="255" oninput="validateEmail(this, 'company-email2-error');">
+                                        <small id="company-email2-error" class="text-danger" style="display: none;"></small>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="form-group">
+                                        <label for="company_phone_2">Company Phone 2 <small class="text-muted">(optional)</small></label>
+                                        <input type="tel" class="form-control" name="company_phone_2" id="company_phone_2" value="{{ old('company_phone_2', $settings->company_phone_2) }}" maxlength="15" pattern="\+?[0-9]{7,15}" title="Only numbers and + (UAE contact number, max 15)" oninput="validatePhone(this, 'company-phone2-error');">
+                                        <small id="company-phone2-error" class="text-danger" style="display: none;"></small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="col-lg-4">
+                                    <div class="form-group">
                                         <label for="default_currency_id">Default Currency <span class="text-danger">*</span></label>
                                         <select name="default_currency_id" id="default_currency_id" class="form-control" required>
                                             @foreach(\Modules\Currency\Entities\Currency::all() as $currency)
