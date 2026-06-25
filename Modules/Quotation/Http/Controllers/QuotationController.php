@@ -502,6 +502,7 @@ class QuotationController extends Controller
                     'cash_discount_amount' => $quotation_detail->cash_discount_amount,
                     'discount_amount' => $quotation_detail->discount_amount,
                     'discount_type' => $quotation_detail->discount_type,
+                    '_uid'          => \Illuminate\Support\Str::random(8),
                 ]
             ]);
         }

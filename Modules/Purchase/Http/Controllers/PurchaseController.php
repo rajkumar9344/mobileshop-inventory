@@ -723,7 +723,8 @@ class PurchaseController extends Controller
                 'tax_amount' => $purchase_detail->tax_amount ?? $purchase_detail->product_tax_amount,
                 'amount' => $purchase_detail->amount ?? $purchase_detail->sub_total,
                 'product_cost' => (float)($product->product_cost ?? 0),
-                'rate_type' => $purchase_detail->rate_type ?? 'N'
+                'rate_type' => $purchase_detail->rate_type ?? 'N',
+                '_uid'      => \Illuminate\Support\Str::random(8),
             ];
 
             // (debug logging removed)

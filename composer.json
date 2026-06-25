@@ -8,8 +8,9 @@
         "php": "^8.1",
         "anayarojo/shoppingcart": "^4.2",
         "barryvdh/laravel-dompdf": "^3.1",
+        "cweagans/composer-patches": "^1.7",
         "doctrine/dbal": "^3.10",
-        "dompdf/dompdf": "*",
+        "dompdf/dompdf": "^3.1",
         "guzzlehttp/guzzle": "^7.0.1",
         "h4cc/wkhtmltopdf-amd64": "^0.12.4",
         "laravel/framework": "^10.0",
@@ -65,6 +66,12 @@
     "extra": {
         "laravel": {
             "dont-discover": []
+        },
+        "composer-exit-on-patch-failure": true,
+        "patches": {
+            "anayarojo/shoppingcart": {
+                "Fix generateRowId to use _uid for stable row IDs on cart()->update()": "patches/cartitem-uid-rowid.patch"
+            }
         }
     },
     "config": {
@@ -75,6 +82,9 @@
             "ignore": {
                 "CVE-2026-48019": "CRLF injection in default email rule is only fixed in Laravel 12.60+/13.10+; no Laravel 10.x patch exists. Mitigated app-side by enforcing email:rfc,strict validation everywhere."
             }
+        },
+        "allow-plugins": {
+            "cweagans/composer-patches": true
         }
     },
     "minimum-stability": "stable",

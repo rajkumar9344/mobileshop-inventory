@@ -286,6 +286,7 @@ class PurchasesReturnController extends Controller
                     'gst_percent'              => $d->tax_percent ?? 0,
                     'tax_amount'               => $d->tax_amount ?? $d->product_tax_amount,
                     'amount'                   => $d->amount ?? $d->sub_total,
+                    '_uid'                     => \Illuminate\Support\Str::random(8),
                 ]
             ]);
         }

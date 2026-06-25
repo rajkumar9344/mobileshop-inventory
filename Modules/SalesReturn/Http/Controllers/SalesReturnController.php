@@ -280,6 +280,7 @@ class SalesReturnController extends Controller
                     'tax_amount'               => $sale_return_detail->tax_amount ?? $sale_return_detail->product_tax_amount,
                     'amount'                   => $sale_return_detail->amount ?? $sale_return_detail->sub_total,
                     'product_cost'             => (float)($product?->product_cost ?? 0),
+                    '_uid'                     => \Illuminate\Support\Str::random(8),
                 ]
             ]);
         }

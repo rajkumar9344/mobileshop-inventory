@@ -941,6 +941,7 @@ class SaleController extends Controller
                     'rate'                     => round($mrp, 2),
                     'rate_before_discount'     => $mrp,
                     'product_cost'             => (float)($sale_detail->purchase_rate ?? $product->product_cost ?? 0),
+                    '_uid'                     => \Illuminate\Support\Str::random(8),
                 ]
             ]);
         }

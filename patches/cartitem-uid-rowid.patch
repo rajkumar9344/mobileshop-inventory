@@ -1,0 +1,13 @@
+--- a/src/CartItem.php
++++ b/src/CartItem.php
+@@ -483,6 +483,10 @@
+     protected function generateRowId($id, array $options)
+     {
++        if (array_key_exists('_uid', $options) && (string) $options['_uid'] !== '') {
++            return md5($id . $options['_uid']);
++        }
++
+         ksort($options);
+
+         return md5($id.serialize($options));
+     }
