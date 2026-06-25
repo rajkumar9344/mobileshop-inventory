@@ -107,7 +107,9 @@ class SettingController extends Controller
         $settings = Setting::firstOrFail();
 
         $data = [
-            'company_name'    => $request->company_name,
+            'company_name'       => $request->company_name,
+            'company_name_ar'    => $request->company_name_ar ?: null,
+            'company_address_ar' => $request->company_address_ar ?: null,
             'company_email'   => $request->company_email,
             'company_email_2' => $request->company_email_2 ?: null,
             'company_phone'   => $request->company_phone,

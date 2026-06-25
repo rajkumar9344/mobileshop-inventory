@@ -27,7 +27,13 @@
                 </a>
             @endif
         @endcan
-        {{-- Invoice generation removed per request: hide Invoice option in list actions --}}
+        @can('show_purchases')
+            @if(isset($data->status) && $data->status !== 'Draft')
+                <a target="_blank" href="{{ route('purchases.pdf', $data->id) }}" class="dropdown-item">
+                    <i class="bi bi-receipt mr-2 text-info" style="line-height: 1;"></i> Invoice
+                </a>
+            @endif
+        @endcan
         @can('view_purchases')
             <a href="{{ route('purchases.view', $data->id) }}" class="dropdown-item">
                 <i class="bi bi-eye mr-2 text-info" style="line-height: 1;"></i> View

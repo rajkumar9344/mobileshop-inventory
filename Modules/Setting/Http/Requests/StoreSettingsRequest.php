@@ -15,7 +15,9 @@ class StoreSettingsRequest extends FormRequest
     public function rules()
     {
         return [
-            'company_name' => 'required|string|max:255',
+            'company_name'    => 'required|string|max:255',
+            'company_name_ar' => 'nullable|string|max:255',
+            'company_address_ar' => 'nullable|string|max:500',
             'company_email' => 'required|email|max:255',
             'company_email_2' => ['nullable', 'email:rfc,strict', 'max:255'],
             'company_phone'   => ['required', 'string', 'max:15', 'regex:/^\+?[0-9]+$/'],

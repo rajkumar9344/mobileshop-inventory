@@ -22,11 +22,9 @@
                         <button type="button" class="btn btn-sm btn-secondary mfs-auto mfe-1 d-print-none" onclick="openInvoicePrint()">
                             <i class="bi bi-printer"></i> Print
                         </button>
-                        @if(isset($purchase->payment_status) && ($purchase->payment_status === 'Paid' || $purchase->payment_status === 'Partial'))
-                            <a href="{{ route('purchases.pdf', $purchase->id) }}" class="btn btn-sm btn-primary mfe-1 d-print-none" target="_blank">
-                                <i class="bi bi-file-earmark-pdf"></i> PDF
-                            </a>
-                        @endif
+                        <a href="{{ route('purchases.pdf', $purchase->id) }}" class="btn btn-sm btn-primary mfe-1 d-print-none" target="_blank">
+                            <i class="bi bi-file-earmark-pdf"></i> PDF
+                        </a>
                     </div>
                     <div class="card-body">
                         <div class="invoice-print-content">

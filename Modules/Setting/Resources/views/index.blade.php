@@ -31,6 +31,12 @@
                                 </div>
                                 <div class="col-lg-4">
                                     <div class="form-group">
+                                        <label for="company_name_ar">Company Name (Arabic) <small class="text-muted">(optional)</small></label>
+                                        <input type="text" class="form-control" name="company_name_ar" id="company_name_ar" value="{{ old('company_name_ar', $settings->company_name_ar) }}" dir="rtl" maxlength="255" placeholder="اسم الشركة بالعربية">
+                                    </div>
+                                </div>
+                                <div class="col-lg-4">
+                                    <div class="form-group">
                                         <label for="company_email">Company Email <span class="text-danger">*</span></label>
                                         <input type="email" class="form-control" name="company_email" id="company_email" value="{{ old('company_email', $settings->company_email) }}" required maxlength="50" oninput="validateEmail(this, 'company-email-error');">
                                         <small id="company-email-error" class="text-danger" style="display: none;"></small>
@@ -118,10 +124,16 @@
                                         <small id="company-gst-error" class="text-danger" style="display: none;"></small>
                                     </div>
                                 </div>
-                                <div class="col-lg-12">
+                                <div class="col-lg-6">
                                     <div class="form-group">
                                         <label for="company_address">Company Address <span class="text-danger">*</span></label>
                                         <input type="text" class="form-control" name="company_address" value="{{ old('company_address', $settings->company_address) }}">
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label for="company_address_ar">Company Address (Arabic) <small class="text-muted">(optional)</small></label>
+                                        <input type="text" class="form-control" name="company_address_ar" id="company_address_ar" value="{{ old('company_address_ar', $settings->company_address_ar) }}" dir="rtl" maxlength="500" placeholder="عنوان الشركة بالعربية">
                                     </div>
                                 </div>
                             </div>
