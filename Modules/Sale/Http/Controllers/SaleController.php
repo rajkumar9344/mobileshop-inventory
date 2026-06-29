@@ -161,23 +161,18 @@ class SaleController extends Controller
                 foreach ($cartContent as $item) {
                     $overall_quantity += $item->qty;
                     $_opts          = $item->options;
-                    $_mrp           = (float) ($_opts->mrp ?? $item->price);
-                    $_taxPct        = (float) ($_opts->tax_percent ?? 0);
-                    $_discPct       = (float) ($_opts->product_discount_percent ?? 0);
-                    $_cashDiscPct   = (float) ($_opts->cash_discount_percent ?? 0);
-                    $_cashDiscAmt   = (float) ($_opts->cash_discount_amount  ?? 0);
-                    $_afterPct      = $_mrp * (1 - $_discPct / 100);
-                    $_cashTotal     = $_afterPct * ($_cashDiscPct / 100) + $_cashDiscAmt;
-                    $_netRate       = max(0.0, round($_afterPct - $_cashTotal, 2));
+                    // For sale-group items mrp=0; use rate_before_discount as the actual selling rate.
+                    $_mrp           = (float) ($_opts->mrp ?: ($_opts->rate_before_discount ?? $_opts->rate ?? $item->price));
+                    $_taxPct        = (float) ($_opts->gst_percent ?? $_opts->tax_percent ?? 0);
+                    $_netRate       = max(0.0, round($_mrp, 2));
                     $_rowTaxable    = round($_netRate * $item->qty, 2);
                     $_rowTax        = round($_rowTaxable * $_taxPct / 100, 2);
-                    // Gross = MRP × qty (mirrors the display "Gross(Amount)" column)
-                    $overall_gross_amount  += round($_mrp * $item->qty, 2);
                     $overall_taxable_amount += $_rowTaxable;
                     $overall_tax_amount    += $_rowTax;
                 }
                 $overall_taxable_amount = round($overall_taxable_amount, 2);
-                $overall_amount = $overall_taxable_amount;
+                $overall_amount         = round($overall_taxable_amount + $overall_tax_amount, 2);
+                $overall_gross_amount   = $overall_amount;
 
                 // Use calculated values, fallback to request values only if calculated is 0
                 $base_total = $overall_amount > 0 ? $overall_amount : ($request->overall_amount ?? $request->total_amount ?? 0);
@@ -915,14 +910,16 @@ class SaleController extends Controller
             $product = $sale_detail->product ?? null;
 
             $taxPercent = $sale_detail->tax_percentage ?? ($product->product_order_tax ?? 0);
-            $mrp = $sale_detail->mrp ?? ($product->mrp ?? 0);
-            $rate = $sale_detail->rate ?? ($taxPercent ? $mrp / (1 + ($taxPercent / 100)) : $mrp);
+            $mrp  = $sale_detail->mrp ?? ($product->mrp ?? 0);
+            // Use saved rate (pre-tax selling price) as the authoritative value; mrp is 0 for
+            // sale-group items so using it would blank every field on the edit page.
+            $rate = (float) ($sale_detail->rate ?: ($taxPercent ? $mrp / (1 + ($taxPercent / 100)) : $mrp));
 
             $cart->add([
                 'id'      => $sale_detail->product_id,
                 'name'    => $sale_detail->product_name,
                 'qty'     => $sale_detail->quantity,
-                'price'   => $mrp,
+                'price'   => $rate,
                 'weight'  => 1,
                 'options' => [
                     'product_discount'         => 0,
@@ -933,13 +930,13 @@ class SaleController extends Controller
                     'stock'                    => $product->product_quantity ?? null,
                     'unit'                     => $product->product_unit ?? 'Nos',
                     'product_tax'              => $sale_detail->product_tax_amount,
-                    'unit_price'               => $mrp,
+                    'unit_price'               => $rate,
                     'category'                 => $sale_detail->category ?: optional($product->category)->category_name,
                     'tax_percent'              => $taxPercent,
                     'gst_percent'              => $taxPercent,
                     'mrp'                      => $mrp,
-                    'rate'                     => round($mrp, 2),
-                    'rate_before_discount'     => $mrp,
+                    'rate'                     => round($rate, 2),
+                    'rate_before_discount'     => round($rate, 2),
                     'product_cost'             => (float)($sale_detail->purchase_rate ?? $product->product_cost ?? 0),
                     '_uid'                     => \Illuminate\Support\Str::random(8),
                 ]

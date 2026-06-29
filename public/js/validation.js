@@ -23,23 +23,17 @@ function validateEmail(input, errorId = 'email-error') {
     }
 }
 
-function validateGST(input, errorId = 'gst-error') {
-    // Clean input: remove non-alphanumeric and convert to uppercase
-    const cleanValue = input.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-    input.value = cleanValue;
+function validateTRN(input, errorId = 'trn-error') {
+    // UAE TRN: digits only, exactly 15 characters
+    input.value = input.value.replace(/[^0-9]/g, '').slice(0, 15);
 
-    // GSTIN format: 2 digits + 5 letters + 4 digits + 1 letter + 1 alphanumeric + Z + 1 alphanumeric
-    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
-
-    if (cleanValue.length === 0) {
+    if (input.value.length === 0) {
         hideError(errorId);
         return;
     }
 
-    if (cleanValue.length !== 15) {
-        showError(errorId, 'GST number must be exactly 15 characters');
-    } else if (!gstRegex.test(cleanValue)) {
-        showError(errorId, 'Please enter a valid GST number format (e.g., 22AAAAA0000A1Z5)');
+    if (input.value.length !== 15) {
+        showError(errorId, 'TRN must be exactly 15 digits (e.g. 100123456700003)');
     } else {
         hideError(errorId);
     }

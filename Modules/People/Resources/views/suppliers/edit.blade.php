@@ -44,6 +44,18 @@
                                 </div>
                                 <div class="col-lg-4">
                                     <div class="form-group">
+                                        <label>TRN (Tax Registration No.)</label>
+                                        <input type="text" class="form-control" name="trn" maxlength="30"
+                                            value="{{ old('trn', $supplier->trn) }}"
+                                            placeholder="e.g. 100123456700003">
+                                        @error('trn')<small class="text-danger">{{ $message }}</small>@enderror
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="col-lg-4">
+                                    <div class="form-group">
                                         <label>Email</label>
                                         <input type="email" class="form-control" name="supplier_email" id="supplier_email" maxlength="50"
                                             value="{{ old('supplier_email', $supplier->supplier_email) }}"

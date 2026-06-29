@@ -342,16 +342,18 @@
             });
 
             // Collect per-item Rate before Discount values and add them as submitted_rates[...] hidden inputs
+            // x-currency-input uses rowId for element IDs; submitted_rates key uses productId for server.
             try {
                 document.querySelectorAll('tr[id^="cart-row-"]').forEach(function(row) {
                     const productId = row.dataset.productId;
-                    if (!productId) return;
-                    const rawHidden = document.getElementById('rate_' + productId + '_raw');
+                    const rowId = row.dataset.rowId;
+                    if (!productId || !rowId) return;
+                    const rawHidden = document.getElementById('rate_' + rowId + '_raw');
                     let rateVal = null;
                     if (rawHidden && rawHidden.value !== undefined) {
                         rateVal = rawHidden.value;
                     } else {
-                        const vis = document.getElementById('rate_' + productId);
+                        const vis = document.getElementById('rate_' + rowId);
                         if (vis) rateVal = String(vis.value || vis.getAttribute('value') || '').replace(/[^0-9\.\-]/g, '') || null;
                     }
                     if (rateVal !== null) {

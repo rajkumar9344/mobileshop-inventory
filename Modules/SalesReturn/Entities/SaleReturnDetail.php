@@ -74,6 +74,8 @@ class SaleReturnDetail extends Model
     // Mutators for monetary fields so assigning rupee values stores paise
     public function setMrpAttribute($value) { $this->attributes['mrp'] = $this->toMinor($value); }
     public function setRateAttribute($value) { $this->attributes['rate'] = $this->toMinor($value); }
+    public function getPurchaseRateAttribute($value) { return $value !== null ? $value / 100 : null; }
+    public function setPurchaseRateAttribute($value) { $this->attributes['purchase_rate'] = $this->toMinor($value); }
     public function setProductTaxAmountAttribute($value) { $this->attributes['product_tax_amount'] = $this->toMinor($value); }
     public function setCashDiscountAmountAttribute($value) { $this->attributes['cash_discount_amount'] = $this->toMinor($value); }
     public function setProductDiscountAmountAttribute($value) { $this->attributes['product_discount_amount'] = $this->toMinor($value); }

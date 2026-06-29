@@ -80,6 +80,8 @@ class QuotationDetails extends Model
     public function setProductTaxAmountAttribute($value) { $this->attributes['product_tax_amount'] = $this->toMinor($value); }
     public function setMrpAttribute($value) { $this->attributes['mrp'] = $this->toMinor($value); }
     public function setRateAttribute($value) { $this->attributes['rate'] = $this->toMinor($value); }
+    public function getPurchaseRateAttribute($value) { return $value !== null ? $value / 100 : null; }
+    public function setPurchaseRateAttribute($value) { $this->attributes['purchase_rate'] = $this->toMinor($value); }
     public function setTaxAmountAttribute($value) { $this->attributes['tax_amount'] = $this->toMinor($value); }
     public function setCashDiscountAmountAttribute($value) { $this->attributes['cash_discount_amount'] = $this->toMinor($value); }
     public function setDiscountAmountAttribute($value) { $this->attributes['discount_amount'] = $this->toMinor($value); }

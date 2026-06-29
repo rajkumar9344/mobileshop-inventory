@@ -2,7 +2,7 @@
     <div style="padding:8px 0;">
         <div style="display:flex; align-items:flex-start; justify-content:space-between;">
             <div style="width:30%; font-size:10px; padding-left:6px;">
-                <div style="font-weight:700;">GST NO: {{ settings()->company_gst ?? '' }}</div>
+                <div style="font-weight:700;">TRN: {{ settings()->company_gst ?? '' }}</div>
             </div>
             <div style="width:40%; text-align:center;">
                 <div style="font-weight:800; font-size:16px;">{{ strtoupper(settings()->company_name) }}</div>

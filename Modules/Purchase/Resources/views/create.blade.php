@@ -31,7 +31,7 @@
                             {{-- Row 1: Reference No | Ref Date | Supplier Name | Area | Open Balance --}}
                             <div class="form-row">
                                 <div class="col-md-2 pr-1">
-                                    <label for="reference" class="mb-1">Purchase Reference No <span class="text-danger">*</span></label>
+                                    <label for="reference" class="mb-1">Purchase Ref No <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="reference" id="reference" readonly maxlength="7" pattern="[A-Za-z0-9]+" value="" placeholder="Auto-generated">
                                 </div>
                                 <div class="col-md-2 pr-1">

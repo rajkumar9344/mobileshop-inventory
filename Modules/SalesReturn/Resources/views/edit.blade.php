@@ -165,8 +165,59 @@
             });
         }
 
+        // Capture per-row unit price from DOM before form submit to avoid Livewire async race condition.
+        // x-currency-input uses rowId for element IDs; submitted_rates key uses productId for server.
+        function collectSubmittedRates(formId) {
+            try {
+                document.querySelectorAll('tr[id^="cart-row-"]').forEach(function(row) {
+                    const productId = row.dataset.productId;
+                    const rowId = row.dataset.rowId;
+                    if (!productId || !rowId) return;
+                    const rawHidden = document.getElementById('rate_' + rowId + '_raw');
+                    let rateVal = null;
+                    if (rawHidden && rawHidden.value !== undefined) {
+                        rateVal = rawHidden.value;
+                    } else {
+                        const vis = document.getElementById('rate_' + rowId);
+                        if (vis) rateVal = String(vis.value || vis.getAttribute('value') || '').replace(/[^0-9\.\-]/g, '') || null;
+                    }
+                    if (rateVal !== null) {
+                        let existing = document.querySelector('input[name="submitted_rates[' + productId + ']"]');
+                        if (!existing) {
+                            existing = document.createElement('input');
+                            existing.type = 'hidden';
+                            existing.name = 'submitted_rates[' + productId + ']';
+                            document.getElementById(formId).appendChild(existing);
+                        }
+                        existing.value = rateVal;
+                    }
+                });
+            } catch (e) { /* ignore */ }
+        }
+
+        // Capture per-row Purchase Rate from DOM before submit (sale group has purchase_rate_{rowId} input).
+        function collectSubmittedPurchaseRates(formId) {
+            try {
+                document.querySelectorAll('input[name^="submitted_purchase_rates"]').forEach(function(el) { el.remove(); });
+                document.querySelectorAll('tr[id^="cart-row-"]').forEach(function(row) {
+                    var rowId = row.dataset.rowId;
+                    if (!rowId) return;
+                    var hiddenInput = document.getElementById('purchase_rate_' + rowId + '_raw');
+                    if (hiddenInput && hiddenInput.value !== '') {
+                        var inp = document.createElement('input');
+                        inp.type = 'hidden';
+                        inp.name = 'submitted_purchase_rates[' + rowId + ']';
+                        inp.value = hiddenInput.value;
+                        document.getElementById(formId).appendChild(inp);
+                    }
+                });
+            } catch (e) { /* ignore */ }
+        }
+
         // Expose globally
         window.updateHiddenFields = updateHiddenFields;
+        window.collectSubmittedRates = collectSubmittedRates;
+        window.collectSubmittedPurchaseRates = collectSubmittedPurchaseRates;
 
         // Wire up update calls
         $(document).ready(function () {
@@ -176,6 +227,8 @@
             // Ensure hidden fields are up-to-date before submit
             $('#sale-return-form').submit(function () {
                 if (typeof updateHiddenFields === 'function') updateHiddenFields();
+                collectSubmittedRates('sale-return-form');
+                collectSubmittedPurchaseRates('sale-return-form');
             });
 
             // Watch product cart area for DOM changes and refresh hidden fields

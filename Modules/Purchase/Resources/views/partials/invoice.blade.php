@@ -68,11 +68,11 @@
             </td>
             <td style="vertical-align:middle; padding:6px 12px;">
                 @if($nameAr)
-                    <div style="font-size:14px; font-weight:700; font-family:'Arial Unicode MS',Arial,sans-serif; margin-bottom:2px;">{{ $nameAr }}</div>
+                    <div style="font-size:16px; font-weight:bold; font-family:'Arial Unicode MS',Arial,sans-serif; margin-bottom:2px; direction:rtl; text-align:left; unicode-bidi:bidi-override;">{{ $nameAr }}</div>
                 @endif
                 <div style="font-size:15px; font-weight:800; letter-spacing:0.5px;">{{ strtoupper(settings()->company_name) }}</div>
                 @if($addressAr)
-                    <div style="font-size:9px; margin-top:2px; font-family:'Arial Unicode MS',Arial,sans-serif; color:#333;">{{ $addressAr }}</div>
+                    <div style="font-size:11px; margin-top:2px; font-family:'Arial Unicode MS',Arial,sans-serif; color:#333; direction:rtl; text-align:left; unicode-bidi:bidi-override;">{{ $addressAr }}</div>
                 @endif
                 @if(settings()->company_address)
                     <div style="font-size:9px; margin-top:2px; color:#333;">{{ settings()->company_address }}</div>
@@ -111,15 +111,18 @@
                 @if(!empty(optional($supplier)->address))
                     <div style="margin-top:3px; font-size:9px; color:#555;">{{ $supplier->address }}</div>
                 @endif
-                @if(!empty(optional($supplier)->phone))
-                    <div style="margin-top:3px; font-size:9px; color:#555;">{{ $supplier->phone }}</div>
+                @if(!empty(optional($supplier)->supplier_phone))
+                    <div style="margin-top:3px; font-size:9px; color:#555;">{{ $supplier->supplier_phone }}</div>
+                @endif
+                @if(!empty(optional($supplier)->trn))
+                    <div style="margin-top:3px; font-size:9px; color:#555; font-weight:700;">TRN: {{ $supplier->trn }}</div>
                 @endif
             </td>
             <td style="width:2%;"></td>
             <td style="width:49%; vertical-align:top; border:1px solid #ccc; border-radius:8px; padding:0;">
                 <table style="width:100%; border-collapse:collapse; font-size:10px;">
                     <tr style="border-bottom:1px solid #eee;">
-                        <td style="padding:8px 12px; font-weight:700; width:45%; color:#555;">Reference No</td>
+                        <td style="padding:8px 12px; font-weight:700; width:45%; color:#555;">Ref No</td>
                         <td style="padding:8px 4px; width:5%; color:#999;">:</td>
                         <td style="padding:8px 12px; font-weight:700;">{{ $purchase->reference }}</td>
                     </tr>

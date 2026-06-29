@@ -76,11 +76,11 @@
             </td>
             <td style="vertical-align:middle; padding:6px 12px;">
                 @if($nameAr)
-                    <div style="font-size:14px; font-weight:700; font-family:'Arial Unicode MS',Arial,sans-serif; margin-bottom:2px;">{{ $nameAr }}</div>
+                    <div style="font-size:16px; font-weight:bold; font-family:'Arial Unicode MS',Arial,sans-serif; margin-bottom:2px; direction:rtl; text-align:left; unicode-bidi:bidi-override;">{{ $nameAr }}</div>
                 @endif
                 <div style="font-size:15px; font-weight:800; letter-spacing:0.5px;">{{ strtoupper(settings()->company_name) }}</div>
                 @if($addressAr)
-                    <div style="font-size:9px; margin-top:2px; font-family:'Arial Unicode MS',Arial,sans-serif; color:#333;">{{ $addressAr }}</div>
+                    <div style="font-size:11px; margin-top:2px; font-family:'Arial Unicode MS',Arial,sans-serif; color:#333; direction:rtl; text-align:left; unicode-bidi:bidi-override;">{{ $addressAr }}</div>
                 @endif
                 @if(settings()->company_address)
                     <div style="font-size:9px; margin-top:2px; color:#333;">{{ settings()->company_address }}</div>

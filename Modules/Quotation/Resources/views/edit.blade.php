@@ -304,14 +304,35 @@
             document.getElementById('hidden_overall_net_rate').value = overallNetRate;
         }
 
+        // Capture per-row Purchase Rate from DOM before submit (sale group has purchase_rate_{rowId} input).
+        function collectSubmittedPurchaseRates(formId) {
+            try {
+                document.querySelectorAll('input[name^="submitted_purchase_rates"]').forEach(function(el) { el.remove(); });
+                document.querySelectorAll('tr[id^="cart-row-"]').forEach(function(row) {
+                    var rowId = row.dataset.rowId;
+                    if (!rowId) return;
+                    var hiddenInput = document.getElementById('purchase_rate_' + rowId + '_raw');
+                    if (hiddenInput && hiddenInput.value !== '') {
+                        var inp = document.createElement('input');
+                        inp.type = 'hidden';
+                        inp.name = 'submitted_purchase_rates[' + rowId + ']';
+                        inp.value = hiddenInput.value;
+                        document.getElementById(formId).appendChild(inp);
+                    }
+                });
+            } catch (e) { /* ignore */ }
+        }
+
         // Make function globally accessible
         window.updateHiddenFields = updateHiddenFields;
+        window.collectSubmittedPurchaseRates = collectSubmittedPurchaseRates;
         // Ensure hidden fields are synced just before form submit
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('quotation-form');
             if (form) {
                 form.addEventListener('submit', function () {
                     updateHiddenFields();
+                    collectSubmittedPurchaseRates('quotation-form');
                 });
             }
 

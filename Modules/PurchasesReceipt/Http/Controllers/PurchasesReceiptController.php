@@ -539,8 +539,11 @@ class PurchasesReceiptController extends Controller
 
         $receipt = PurchasesReceipt::with(['lines.purchase', 'supplier'])->findOrFail($id);
 
-        // If this receipt was applied to opening balance (lineless), synthesize a display line for the view
-        if ($receipt->applied_to_supplier > 0) {
+        // If this receipt was applied to opening balance (lineless), synthesize a display line for the view.
+        // Guard: only add the synthetic line when no persisted lineless row already exists in the DB —
+        // otherwise it renders twice and makes the balance go negative (mirrors SalesReceiptController::view).
+        $hasPersistedLineless = $receipt->lines->contains(function ($l) { return empty($l->purchase_id); });
+        if ($receipt->applied_to_supplier > 0 && ! $hasPersistedLineless) {
             $applied = $receipt->applied_to_supplier / 100;
             $syntheticLine = new \stdClass();
             $syntheticLine->bill_ref = 'Opening Balance';

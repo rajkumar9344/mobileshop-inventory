@@ -255,12 +255,9 @@ class ProductCart extends Component
                     $storedRt  = $cart_item->options->has('rate') ? $cart_item->options->get('rate') : null;
                     $this->rate[$rId] = (float) ($storedRbd ?? $storedRt ?? $original_mrp);
                 } else {
-                    $storedRateBeforeDiscount = array_key_exists('rate_before_discount', (array)$cart_item->options) ? $cart_item->options->rate_before_discount : null;
-                    $storedRate = array_key_exists('rate', (array)$cart_item->options) ? $cart_item->options->rate : null;
-                    if ($storedRateBeforeDiscount !== null) {
-                        $this->rate[$rId] = (float)$storedRateBeforeDiscount;
-                    } elseif ($storedRate !== null) {
-                        $this->rate[$rId] = (float)$storedRate;
+                    $storedRate = $cart_item->options->has('rate') ? (float)$cart_item->options->get('rate') : null;
+                    if ($storedRate !== null && $storedRate > 0) {
+                        $this->rate[$rId] = $storedRate;
                     } else {
                         $cost = (float) ($cart_item->options->product_cost ?? 0);
                         $this->rate[$rId] = $cost > 0
@@ -1284,16 +1281,13 @@ class ProductCart extends Component
         $overall_tax_amount        = round($overall_tax_amount, 2);
         $overall_amount            = round($overall_amount, 2);
 
-        // For sale-like modules show Gross as sum(MRP × qty) and make Amount equal to taxable total
-        if (in_array($this->cart_instance, ['sale', 'sale_edit', 'sale_return', 'quotation', 'quotation_edit', 'sale_view', 'sale_return_view', 'quotation_view'])) {
-            $overall_gross_amount   = round($overall_mrp_amount, 2); // sum of MRPs
-            $overall_taxable_amount = $overall_total_without_gst;   // pre-tax total
-            // Grand Total for sale flows = taxable + VAT
-            $overall_amount = round($overall_total_without_gst + $overall_tax_amount, 2);
-        } else {
-            $overall_gross_amount   = $overall_amount; // total incl. GST
-            $overall_taxable_amount = $overall_total_without_gst;
-        }
+        // Grand Total (taxable + VAT) — consistent across sale and purchase groups.
+        $overall_amount         = round($overall_total_without_gst + $overall_tax_amount, 2);
+        // Gross Amount = Grand Total for all groups (same meaning: total amount due incl. VAT).
+        // Previously, sale-group used sum(MRP×qty) which is always 0 because MRP is not stored
+        // for UAE sale items — this showed 0 instead of the correct total.
+        $overall_gross_amount   = $overall_amount;
+        $overall_taxable_amount = $overall_total_without_gst;
 
         return [
             'overall_nos'           => $overall_nos,

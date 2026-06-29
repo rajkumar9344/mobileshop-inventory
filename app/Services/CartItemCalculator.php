@@ -73,7 +73,9 @@ class CartItemCalculator
     {
         $options = $cartItem->options;
 
-        $mrp                 = (float) ($options->mrp ?? $cartItem->price ?? 0);
+        // For sale-group items mrp is stored as 0 (no MRP concept in UAE); fall back to
+        // rate_before_discount so sub_total and rate are computed from the actual selling price.
+        $mrp                 = (float) ($options->mrp ?: ($options->rate_before_discount ?? $options->rate ?? $cartItem->price ?? 0));
         $taxPercent          = (float) ($options->tax_percent ?? ($product?->product_order_tax ?? 0));
         $cashDiscountPercent = (float) ($options->cash_discount_percent ?? 0);
         $cashDiscountAmount  = (float) ($options->cash_discount_amount  ?? 0);

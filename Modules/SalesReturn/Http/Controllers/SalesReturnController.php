@@ -112,6 +112,23 @@ class SalesReturnController extends Controller
                 $options  = $cart_item->options;
                 $vals     = CartItemCalculator::compute($cart_item, $product);
 
+                // DOM-submitted rate overrides compute() to avoid Livewire async race condition.
+                $_submittedRateRaw = $request->input("submitted_rates.{$cart_item->id}", null);
+                if ($_submittedRateRaw !== null && $_submittedRateRaw !== '') {
+                    $domRate = (float) str_replace([',', settings()->currency->symbol], '', (string) $_submittedRateRaw);
+                    $vals['rate']       = $domRate;
+                    $vals['mrp']        = $domRate;
+                    $vals['unit_price'] = $domRate;
+                    $vals['sub_total']  = round($domRate * $cart_item->qty, 2);
+                }
+
+                // Capture submitted purchase rate override (keyed by rowId, same as Sale module).
+                $_submittedPurchaseRateRaw = $request->input("submitted_purchase_rates.{$cart_item->rowId}", null);
+                $purchaseRateToSave = null;
+                if ($_submittedPurchaseRateRaw !== null && $_submittedPurchaseRateRaw !== '') {
+                    $purchaseRateToSave = (float) str_replace([',', settings()->currency->symbol], '', (string) $_submittedPurchaseRateRaw);
+                }
+
                 $pcId = $resolver->resolve($cart_item->id, $options->code ?? null);
                 // VAT% comes from the BRD VAT% input (gst_percent).
                 $_sr_gst_pct = (float)($options->gst_percent ?? $vals['tax_percent']);
@@ -127,6 +144,7 @@ class SalesReturnController extends Controller
                     'unit'                     => $options->unit ?? null,
                     'mrp'                      => $vals['mrp'],
                     'rate'                     => $vals['rate'],
+                    'purchase_rate'            => $purchaseRateToSave,
                     'tax_percent'              => intval($_sr_gst_pct),
                     'product_tax_amount'       => $_sr_tax_amt,
                     'tax_amount'               => $_sr_tax_amt,
@@ -279,7 +297,7 @@ class SalesReturnController extends Controller
                     'unit'                     => $sale_return_detail->unit ?? 'Nos',
                     'tax_amount'               => $sale_return_detail->tax_amount ?? $sale_return_detail->product_tax_amount,
                     'amount'                   => $sale_return_detail->amount ?? $sale_return_detail->sub_total,
-                    'product_cost'             => (float)($product?->product_cost ?? 0),
+                    'product_cost'             => $sale_return_detail->purchase_rate ?? (float)($product?->product_cost ?? 0),
                     '_uid'                     => \Illuminate\Support\Str::random(8),
                 ]
             ]);
@@ -371,6 +389,23 @@ class SalesReturnController extends Controller
                 $options  = $cart_item->options;
                 $vals     = CartItemCalculator::compute($cart_item, $product);
 
+                // DOM-submitted rate overrides compute() to avoid Livewire async race condition.
+                $_submittedRateRaw = $request->input("submitted_rates.{$cart_item->id}", null);
+                if ($_submittedRateRaw !== null && $_submittedRateRaw !== '') {
+                    $domRate = (float) str_replace([',', settings()->currency->symbol], '', (string) $_submittedRateRaw);
+                    $vals['rate']       = $domRate;
+                    $vals['mrp']        = $domRate;
+                    $vals['unit_price'] = $domRate;
+                    $vals['sub_total']  = round($domRate * $cart_item->qty, 2);
+                }
+
+                // Capture submitted purchase rate override (keyed by rowId, same as Sale module).
+                $_submittedPurchaseRateRaw = $request->input("submitted_purchase_rates.{$cart_item->rowId}", null);
+                $purchaseRateToSave = null;
+                if ($_submittedPurchaseRateRaw !== null && $_submittedPurchaseRateRaw !== '') {
+                    $purchaseRateToSave = (float) str_replace([',', settings()->currency->symbol], '', (string) $_submittedPurchaseRateRaw);
+                }
+
                 $pcId = $resolver->resolve($cart_item->id, $options->code ?? null);
                 // VAT% comes from the BRD VAT% input (gst_percent).
                 $_sr_gst_pct = (float)($options->gst_percent ?? $vals['tax_percent']);
@@ -386,6 +421,7 @@ class SalesReturnController extends Controller
                     'unit'                     => $options->unit ?? null,
                     'mrp'                      => $vals['mrp'],
                     'rate'                     => $vals['rate'],
+                    'purchase_rate'            => $purchaseRateToSave,
                     'tax_percent'              => intval($_sr_gst_pct),
                     'product_tax_amount'       => $_sr_tax_amt,
                     'tax_amount'               => $_sr_tax_amt,

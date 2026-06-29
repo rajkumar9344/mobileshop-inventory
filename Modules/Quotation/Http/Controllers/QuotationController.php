@@ -149,6 +149,12 @@ class QuotationController extends Controller
 
                 $pcId = $resolver->resolve($cart_item->id, $options->code ?? null);
 
+                $_submittedPurchaseRateRaw = $request->input("submitted_purchase_rates.{$cart_item->rowId}", null);
+                $purchaseRateToSave = null;
+                if ($_submittedPurchaseRateRaw !== null && $_submittedPurchaseRateRaw !== '') {
+                    $purchaseRateToSave = (float) str_replace([',', settings()->currency->symbol], '', (string) $_submittedPurchaseRateRaw);
+                }
+
                 QuotationDetails::create([
                     'quotation_id' => $quotation->id,
                     'product_id' => $cart_item->id,
@@ -167,6 +173,7 @@ class QuotationController extends Controller
                     'hsn' => $options->hsn ?? null,
                     'mrp' => $vals['mrp'],
                     'rate' => $vals['rate'],
+                    'purchase_rate' => $purchaseRateToSave,
                     'tax_percentage' => $vals['tax_percentage'],
                     'tax_amount' => $vals['tax_amount'],
                     'cash_discount_percentage' => $vals['cash_discount_percentage'],
@@ -433,6 +440,7 @@ class QuotationController extends Controller
                     'gst_percent' => $quotation_detail->tax_percentage ?? 0,
                     'tax_amount' => $quotation_detail->tax_amount ?? 0,
                     'amount' => $quotation_detail->sub_total ?? 0,
+                    'product_cost' => $quotation_detail->purchase_rate ?? (float)($product?->product_cost ?? 0),
                 ]
             ]);
         }
@@ -502,6 +510,7 @@ class QuotationController extends Controller
                     'cash_discount_amount' => $quotation_detail->cash_discount_amount,
                     'discount_amount' => $quotation_detail->discount_amount,
                     'discount_type' => $quotation_detail->discount_type,
+                    'product_cost' => $quotation_detail->purchase_rate ?? (float)($product?->product_cost ?? 0),
                     '_uid'          => \Illuminate\Support\Str::random(8),
                 ]
             ]);
@@ -625,6 +634,12 @@ class QuotationController extends Controller
 
                     $pcId = $resolver->resolve($cart_item->id, $cart_item->options->code ?? null);
 
+                    $_submittedPurchaseRateRaw = $request->input("submitted_purchase_rates.{$cart_item->rowId}", null);
+                    $purchaseRateToSave = null;
+                    if ($_submittedPurchaseRateRaw !== null && $_submittedPurchaseRateRaw !== '') {
+                        $purchaseRateToSave = (float) str_replace([',', settings()->currency->symbol], '', (string) $_submittedPurchaseRateRaw);
+                    }
+
                     QuotationDetails::create([
                         'quotation_id' => $quotation->id,
                         'product_id' => $cart_item->id,
@@ -643,6 +658,7 @@ class QuotationController extends Controller
                         'hsn' => $cart_item->options->hsn ?? null,
                         'mrp' => $vals['mrp'],
                         'rate' => $vals['rate'],
+                        'purchase_rate' => $purchaseRateToSave,
                         'tax_percentage' => $vals['tax_percentage'],
                         'tax_amount' => $vals['tax_amount'],
                         'cash_discount_percentage' => $vals['cash_discount_percentage'],
