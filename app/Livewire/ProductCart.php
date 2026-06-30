@@ -322,7 +322,7 @@ class ProductCart extends Component
     }
 
     public function render() {
-        $cart_items = $this->cart_items;
+        $cart_items = $this->getCachedCartItems();
 
         return view('livewire.product-cart', [
             'cart_items' => $cart_items

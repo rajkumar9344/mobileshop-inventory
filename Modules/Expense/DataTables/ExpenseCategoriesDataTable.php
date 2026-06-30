@@ -17,6 +17,7 @@ class ExpenseCategoriesDataTable extends DataTable
             ->addColumn('action', function ($data) {
                 return view('expense::categories.partials.actions', compact('data'));
             })
+            ->rawColumns(['action'])
             ->filterColumn('expenses_count', function($query, $keyword) {
                 if (!is_numeric($keyword)) {
                     return;
@@ -68,6 +69,7 @@ class ExpenseCategoriesDataTable extends DataTable
             Column::computed('action')
                 ->exportable(false)
                 ->printable(false)
+                ->orderable(false)
                 ->addClass('text-center'),
 
             Column::make('created_at')

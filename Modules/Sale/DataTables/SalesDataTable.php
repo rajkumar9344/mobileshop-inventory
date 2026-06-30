@@ -216,6 +216,7 @@ class SalesDataTable extends DataTable
 
             Column::computed('customer_name')
                 ->title('Customer Name')
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::make('area')
@@ -225,10 +226,12 @@ class SalesDataTable extends DataTable
 
             Column::computed('overall_tax_amount')
                 ->title('VAT Amount')
+                ->orderable(false)
                 ->className('text-end align-middle'),
 
             Column::computed('overall_amount')
                 ->title('Overall Amount')
+                ->orderable(false)
                 ->className('text-end align-middle'),
 
             Column::make('paid_amount')
@@ -237,6 +240,7 @@ class SalesDataTable extends DataTable
 
             Column::computed('due_amount')
                 ->title('Balance Amount')
+                ->orderable(false)
                 ->className('text-end align-middle'),
 
             Column::make('payment_method')
@@ -245,11 +249,13 @@ class SalesDataTable extends DataTable
 
             Column::computed('status')
                 ->title('Payment Status')
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::computed('action')
                 ->exportable(false)
                 ->printable(false)
+                ->orderable(false)
                 ->className('text-center align-middle not-export')
         ];
     }

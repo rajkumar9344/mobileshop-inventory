@@ -136,7 +136,7 @@ class PurchaseDataTable extends DataTable
                                 'tr' .
                                 <'row'<'col-md-5'i><'col-md-7 mt-2'p>>")
             ->lengthMenu([5, 10, 25, 50, 100])
-            ->orderBy(0, 'desc')
+            ->orderBy(1, 'desc')
             ->buttons(
                 Button::make('excel')
                     ->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel'),
@@ -155,6 +155,7 @@ class PurchaseDataTable extends DataTable
         return [
             Column::computed('reference')
                 ->title('Bill No')
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::make('date')
@@ -167,6 +168,7 @@ class PurchaseDataTable extends DataTable
 
             Column::computed('invoice_date_formatted')
                 ->title('Invoice Date')
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::make('supplier_name')
@@ -179,31 +181,38 @@ class PurchaseDataTable extends DataTable
 
             Column::computed('overall_tax_amount')
                 ->title('VAT Amount')
+                ->orderable(false)
                 ->className('text-end align-middle'),
 
             Column::computed('overall_bill_amount')
                 ->title('Bill Amount')
+                ->orderable(false)
                 ->className('text-end align-middle'),
 
             Column::computed('paid_amount')
                 ->title('Paid')
+                ->orderable(false)
                 ->className('text-end align-middle'),
 
             Column::computed('balance_amount')
                 ->title('Balance')
+                ->orderable(false)
                 ->className('text-end align-middle'),
 
             Column::computed('payment_method')
                 ->title('Payment Method')
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::computed('status')
                 ->title('Status')
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::computed('action')
                 ->exportable(false)
                 ->printable(false)
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::make('created_at')

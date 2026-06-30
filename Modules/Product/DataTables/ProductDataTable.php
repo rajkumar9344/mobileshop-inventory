@@ -153,14 +153,17 @@ class ProductDataTable extends DataTable
 
             Column::computed('open_quantity')
                 ->title('Open Qty')
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::computed('purchase_quantity')
                 ->title('Purchase Qty')
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::computed('product_quantity')
                 ->title('Overall Quantity')
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::make('product_order_tax')
@@ -174,6 +177,7 @@ class ProductDataTable extends DataTable
             Column::computed('action')
                 ->exportable(false)
                 ->printable(false)
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::make('created_at')

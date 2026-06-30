@@ -19,7 +19,8 @@ class PurchasePaymentsDataTable extends DataTable
             })
             ->addColumn('action', function ($data) {
                 return view('purchase::payments.partials.actions', compact('data'));
-            });
+            })
+            ->rawColumns(['action']);
     }
 
     public function query(PurchasePayment $model) {
@@ -57,6 +58,7 @@ class PurchasePaymentsDataTable extends DataTable
                 ->className('align-middle text-center'),
 
             Column::computed('amount')
+                ->orderable(false)
                 ->className('align-middle text-center'),
 
             Column::make('payment_method')
@@ -65,6 +67,7 @@ class PurchasePaymentsDataTable extends DataTable
             Column::computed('action')
                 ->exportable(false)
                 ->printable(false)
+                ->orderable(false)
                 ->className('align-middle text-center'),
 
             Column::make('created_at')

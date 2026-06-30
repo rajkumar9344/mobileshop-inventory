@@ -132,6 +132,7 @@ class QuotationsDataTable extends DataTable
             Column::computed('action')
                 ->exportable(false)
                 ->printable(false)
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::make('created_at')

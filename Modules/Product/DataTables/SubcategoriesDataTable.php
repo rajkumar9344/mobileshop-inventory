@@ -58,8 +58,8 @@ class SubcategoriesDataTable extends DataTable
             ->dom("<'row'<'col-md-3'l><'col-md-5 mb-2'B><'col-md-4'f>> .
                                 'tr' .
                                 <'row'<'col-md-5'i><'col-md-7 mt-2'p>>")
-            // Default order: created_at desc (newest first). created_at is the hidden column at index 5
-            ->orderBy(5, 'desc')
+            // Default order: created_at desc (newest first). created_at is the hidden column at index 6
+            ->orderBy(6, 'desc')
             ->buttons(
                 Button::make('excel')
                     ->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel'),
@@ -95,6 +95,7 @@ class SubcategoriesDataTable extends DataTable
             Column::computed('action')
                 ->exportable(false)
                 ->printable(false)
+                ->orderable(false)
                 ->addClass('text-center'),
 
             Column::make('created_at')

@@ -19,7 +19,8 @@ class ExpensesDataTable extends DataTable
             })
             ->addColumn('action', function ($data) {
                 return view('expense::expenses.partials.actions', compact('data'));
-            });
+            })
+            ->rawColumns(['action']);
     }
 
     public function query(Expense $model) {
@@ -64,6 +65,7 @@ class ExpensesDataTable extends DataTable
                 ->className('text-center align-middle'),
 
             Column::computed('amount')
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::make('payment_mode')
@@ -73,6 +75,7 @@ class ExpensesDataTable extends DataTable
             Column::computed('action')
                 ->exportable(false)
                 ->printable(false)
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::make('created_at')

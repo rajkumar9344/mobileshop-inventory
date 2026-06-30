@@ -24,7 +24,8 @@ class SaleReturnsDataTable extends DataTable
             })
             ->addColumn('action', function ($data) {
                 return view('salesreturn::partials.actions', compact('data'));
-            });
+            })
+            ->rawColumns(['action']);
     }
 
     public function query(SaleReturn $model) {
@@ -67,14 +68,17 @@ class SaleReturnsDataTable extends DataTable
 
             Column::computed('area')
                 ->title('Area')
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::computed('total_amount')
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::computed('action')
                 ->exportable(false)
                 ->printable(false)
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::make('created_at')

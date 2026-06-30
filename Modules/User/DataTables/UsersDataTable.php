@@ -37,7 +37,7 @@ class UsersDataTable extends DataTable
 
                 return '<img src="' . $url . '" style="width:50px;height:50px;" class="img-thumbnail rounded-circle"/>';
             })
-            ->rawColumns(['image', 'status']);
+            ->rawColumns(['image', 'status', 'role', 'action']);
     }
 
     public function query(User $model) {
@@ -73,6 +73,7 @@ class UsersDataTable extends DataTable
     protected function getColumns() {
         return [
             Column::computed('image')
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::make('name')
@@ -82,14 +83,17 @@ class UsersDataTable extends DataTable
                 ->className('text-center align-middle'),
 
             Column::computed('role')
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::computed('status')
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::computed('action')
                 ->exportable(false)
                 ->printable(false)
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::make('created_at')

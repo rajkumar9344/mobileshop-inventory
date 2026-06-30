@@ -17,7 +17,8 @@ class CurrencyDataTable extends DataTable
             ->eloquent($query)
             ->addColumn('action', function ($data) {
                 return view('currency::partials.actions', compact('data'));
-            });
+            })
+            ->rawColumns(['action']);
     }
 
     public function query(Currency $model) {
@@ -66,6 +67,7 @@ class CurrencyDataTable extends DataTable
             Column::computed('action')
                 ->exportable(false)
                 ->printable(false)
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::make('created_at')

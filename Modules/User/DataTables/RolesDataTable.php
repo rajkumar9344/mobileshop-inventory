@@ -22,7 +22,8 @@ class RolesDataTable extends DataTable
                 return view('user::roles.partials.permissions', [
                     'data' => $data
                 ]);
-            });
+            })
+            ->rawColumns(['action', 'permissions']);
 
     }
 
@@ -65,6 +66,7 @@ class RolesDataTable extends DataTable
                 ->addClass('align-middle'),
 
             Column::computed('permissions')
+                ->orderable(false)
                 ->addClass('text-center')
                 ->addClass('align-middle')
                 ->width('700px'),
@@ -72,6 +74,7 @@ class RolesDataTable extends DataTable
             Column::computed('action')
                 ->exportable(false)
                 ->printable(false)
+                ->orderable(false)
                 ->addClass('text-center')
                 ->addClass('align-middle'),
 

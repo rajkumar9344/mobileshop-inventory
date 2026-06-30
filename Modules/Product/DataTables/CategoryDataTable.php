@@ -38,8 +38,8 @@ class CategoryDataTable extends DataTable
             ->minifiedAjax()
             ->parameters(['stateSave' => true])
             ->dom("<'row'<'col-md-3'l><'col-md-5 mb-2'B><'col-md-4'f>> . 'tr' . <'row'<'col-md-5'i><'col-md-7 mt-2'p>>")
-            // Default order: created_at desc (newest first). created_at is the hidden column at index 4
-            ->orderBy(4, 'desc')
+            // Default order: created_at desc (newest first). created_at is the hidden column at index 5
+            ->orderBy(5, 'desc')
             ->buttons(
                 Button::make('excel')->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel'),
                 Button::make('pdf')->text('<i class="bi bi-file-earmark-pdf-fill"></i> PDF'),
@@ -55,7 +55,7 @@ class CategoryDataTable extends DataTable
             Column::make('category_name')->title('Brand Name')->addClass('text-center'),
             Column::make('status')->title('Status')->addClass('text-center'),
             Column::make('products_count')->addClass('text-center'),
-            Column::computed('action')->exportable(false)->printable(false)->addClass('text-center'),
+            Column::computed('action')->exportable(false)->printable(false)->orderable(false)->addClass('text-center'),
             Column::make('created_at')->visible(false)->exportable(false)->printable(false),
         ];
     }

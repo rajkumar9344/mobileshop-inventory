@@ -25,6 +25,7 @@ class ProductCategoriesDataTable extends DataTable
             ->addColumn('action', function ($data) {
                 return view('product::categories.partials.actions', compact('data'));
             })
+            ->rawColumns(['action'])
             ->filterColumn('products_count', function($query, $keyword) {
                 $query->having('products_count', '=', (int)$keyword);
             });
@@ -43,7 +44,7 @@ class ProductCategoriesDataTable extends DataTable
             ->dom("<'row'<'col-md-3'l><'col-md-5 mb-2'B><'col-md-4'f>> .
                                 'tr' .
                                 <'row'<'col-md-5'i><'col-md-7 mt-2'p>>")
-            ->orderBy(4)
+            ->orderBy(5)
             ->buttons(
                 Button::make('excel')
                     ->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel'),
@@ -75,6 +76,7 @@ class ProductCategoriesDataTable extends DataTable
             Column::computed('action')
                 ->exportable(false)
                 ->printable(false)
+                ->orderable(false)
                 ->addClass('text-center'),
 
             Column::make('created_at')

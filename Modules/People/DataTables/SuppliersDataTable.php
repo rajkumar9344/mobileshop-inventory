@@ -92,6 +92,7 @@ class SuppliersDataTable extends DataTable
             ->addColumn('action', function ($data) {
                 return view('people::suppliers.partials.actions', compact('data'));
             })
+            ->rawColumns(['action'])
             ->with([
                 'summary' => [
                     'suppliers_count' => $summary->suppliers_count ?? 0,
@@ -162,7 +163,7 @@ class SuppliersDataTable extends DataTable
                                        'tr' .
                                 <'row'<'col-md-5'i><'col-md-7 mt-2'p>>")
             ->lengthMenu([5, 10, 25, 50, 100])
-            ->orderBy(4)
+            ->orderBy(9, 'desc')
             ->buttons(
                 Button::make('excel')
                     ->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel'),
@@ -188,31 +189,38 @@ class SuppliersDataTable extends DataTable
 
             Column::computed('total_amount')
                 ->title('Total Bill Amount')
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::computed('paid_amount')
                 ->title('Paid Amount')
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::computed('balance_amount')
                 ->title('Bill Balance Amount')
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::computed('open_balance')
                 ->title('Open Balance')
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::computed('total_balance')
                 ->title('Total Balance')
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::computed('excess_amount')
                 ->title('Excess Amount')
+                ->orderable(false)
                 ->className('text-center align-middle'),
 
             Column::computed('action')
                 ->exportable(false)
                 ->printable(false)
+                ->orderable(false)
                 ->className('text-center align-middle')
                 ->width('120px'),
 

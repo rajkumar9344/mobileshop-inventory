@@ -20,7 +20,8 @@ class SaleReturnPaymentsDataTable extends DataTable
             })
             ->addColumn('action', function ($data) {
                 return view('salesreturn::payments.partials.actions', compact('data'));
-            });
+            })
+            ->rawColumns(['action']);
     }
 
     public function query(SaleReturnPayment $model) {
@@ -58,6 +59,7 @@ class SaleReturnPaymentsDataTable extends DataTable
                 ->className('align-middle text-center'),
 
             Column::computed('amount')
+                ->orderable(false)
                 ->className('align-middle text-center'),
 
             Column::make('payment_method')
@@ -66,6 +68,7 @@ class SaleReturnPaymentsDataTable extends DataTable
             Column::computed('action')
                 ->exportable(false)
                 ->printable(false)
+                ->orderable(false)
                 ->className('align-middle text-center'),
 
             Column::make('created_at')

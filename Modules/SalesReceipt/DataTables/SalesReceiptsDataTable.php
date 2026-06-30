@@ -184,7 +184,7 @@ class SalesReceiptsDataTable extends DataTable
             ->minifiedAjax()
             ->parameters(['stateSave' => true])
             ->dom("<'row'<'col-md-3'l><'col-md-5 mb-2'B><'col-md-4'f>> . 'tr' . <'row'<'col-md-5'i><'col-md-7 mt-2'p>>")
-            ->orderBy(2)
+            ->orderBy(1, 'desc')
             ->buttons(
                 Button::make('excel')->text('<i class="bi bi-file-earmark-excel-fill"></i> Excel'),
                 Button::make('pdf')->text('<i class="bi bi-file-earmark-pdf-fill"></i> PDF'),
@@ -199,12 +199,12 @@ class SalesReceiptsDataTable extends DataTable
         return [
             Column::make('reference')->title('Ref.No')->className('text-center align-middle'),
             Column::make('date')->title('Ref.Date')->className('text-center align-middle'),
-            Column::computed('customer')->title('Name')->className('text-center align-middle'),
-            Column::computed('area')->title('Area')->className('text-center align-middle'),
+            Column::computed('customer')->title('Name')->orderable(false)->className('text-center align-middle'),
+            Column::computed('area')->title('Area')->orderable(false)->className('text-center align-middle'),
             Column::make('payment_mode')->title('Payment Mode')->className('text-center align-middle'),
-            Column::computed('total_amount_formatted')->title('Receipt Amount')->className('text-center align-middle'),
-                Column::computed('settled')->title('Settled')->className('text-center align-middle'),
-            Column::computed('action')->exportable(false)->printable(false)->className('text-center align-middle not-export'),
+            Column::computed('total_amount_formatted')->title('Receipt Amount')->orderable(false)->className('text-center align-middle'),
+            Column::computed('settled')->title('Settled')->orderable(false)->className('text-center align-middle'),
+            Column::computed('action')->exportable(false)->printable(false)->orderable(false)->className('text-center align-middle not-export'),
             // hide created_at from display, export and print (used internally only)
             Column::make('created_at')->visible(false)->exportable(false)->printable(false)
         ];
