@@ -45,7 +45,6 @@ class ProfitLossReport extends Component
         // Page totals (computed columns are in paise — divide by 100 for display)
         $pageTotals = [
             'incl_vat'       => $sales->sum('amount_incl_vat') / 100,
-            'excl_vat'       => $sales->sum('amount_excl_vat') / 100,
             'purchase_total' => $sales->sum('purchase_total') / 100,
             'profit'         => $sales->sum('profit_amount') / 100,
         ];

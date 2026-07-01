@@ -77,14 +77,13 @@ class ReportQueryService
     /**
      * Profit / Loss per sales bill.
      *
-     * Profit = bill total WITHOUT VAT − sum of snapshotted purchase_rate
-     * × quantity for every line on that bill. purchase_rate is stored on
-     * sales_details at sale time so it reflects the actual cost paid,
-     * even when the same product was bought at different rates.
-     * All amounts are stored in minor units; divide by 100 for display.
+     * Profit = sale total (incl. VAT) − sum of snapshotted purchase_rate (incl. VAT)
+     * × quantity for every line on that bill. Both sides are VAT-inclusive so the
+     * comparison is consistent. purchase_rate is stored on sales_details at sale time
+     * so it reflects the actual cost paid, even when the same product was bought at
+     * different rates. All amounts are stored in minor units; divide by 100 for display.
      *
-     * Selected computed columns (minor units): amount_incl_vat, amount_excl_vat,
-     * purchase_total, profit_amount.
+     * Selected computed columns (minor units): amount_incl_vat, purchase_total, profit_amount.
      */
     public function buildProfitLossQuery(array $filters): Builder
     {
@@ -94,8 +93,9 @@ class ReportQueryService
             ->groupBy('sd.sale_id');
 
         $inclVat = 'COALESCE(sales.overall_amount, sales.total_amount, 0)';
-        $exclVat = $inclVat . ' - COALESCE(sales.overall_tax_amount, 0)';
-        $profit  = '(' . $exclVat . ') - COALESCE(pt.purchase_total, 0)';
+        // Profit on incl-VAT basis: sale total (incl. VAT) − purchase total (incl. VAT).
+        // Both sides are VAT-inclusive so the comparison is consistent.
+        $profit  = $inclVat . ' - COALESCE(pt.purchase_total, 0)';
 
         $query = Sale::query()
             ->where(function ($q) {
@@ -105,7 +105,6 @@ class ReportQueryService
             ->select(
                 'sales.*',
                 \Illuminate\Support\Facades\DB::raw($inclVat . ' as amount_incl_vat'),
-                \Illuminate\Support\Facades\DB::raw($exclVat . ' as amount_excl_vat'),
                 \Illuminate\Support\Facades\DB::raw('COALESCE(pt.purchase_total, 0) as purchase_total'),
                 \Illuminate\Support\Facades\DB::raw($profit . ' as profit_amount')
             )

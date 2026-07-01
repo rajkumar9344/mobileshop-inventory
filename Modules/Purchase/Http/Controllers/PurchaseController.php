@@ -335,7 +335,9 @@ class PurchaseController extends Controller
 
                 // Weighted Average Cost across actual purchases only:
                 // WAC = (purchase_qty_before × cost_before + new_qty × new_rate) / (purchase_qty_before + new_qty)
-                $newCost = round(floatval($_rateBeforeDiscount ?? 0), 2);
+                // new_rate is grossed up by the line's VAT% so product_cost stores the
+                // incl-VAT average — matching what is shown on Sale / Sale Return / Quotation.
+                $newCost = round(floatval($_rateBeforeDiscount ?? 0) * (1 + ($taxPercent / 100)), 2);
                 if ($newCost > 0) {
                     $totalQty = $purchaseQtyBefore + $cart_item->qty;
                     $wac = $totalQty > 0
@@ -974,7 +976,9 @@ class PurchaseController extends Controller
 
                     // Weighted Average Cost across actual purchases only:
                     // WAC = (purchase_qty_before × cost_before + new_qty × new_rate) / (purchase_qty_before + new_qty)
-                    $newCost = round(floatval($_rateBeforeDiscount ?? 0), 2);
+                    // new_rate is grossed up by the line's VAT% so product_cost stores the
+                    // incl-VAT average — matching what is shown on Sale / Sale Return / Quotation.
+                    $newCost = round(floatval($_rateBeforeDiscount ?? 0) * (1 + ($taxPercent / 100)), 2);
                     if ($newCost > 0) {
                         $totalQty = $purchaseQtyBefore + $cart_item->qty;
                         $wac = $totalQty > 0

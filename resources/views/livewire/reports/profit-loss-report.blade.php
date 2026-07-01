@@ -76,8 +76,7 @@
                         <th>Bill Ref No</th>
                         <th>Bill Date</th>
                         <th class="text-right">Overall Amount (Incl. VAT)</th>
-                        <th class="text-right">Overall Amount (Without VAT)</th>
-                        <th class="text-right">Purchased Rate Total</th>
+                        <th class="text-right">Purchased Rate Total (Incl. VAT)</th>
                         <th class="text-right">Profit / Loss Amount</th>
                         <th class="text-center">Status</th>
                     </tr>
@@ -93,7 +92,6 @@
                             <td>{{ $sale->reference }}</td>
                             <td>{{ \Carbon\Carbon::parse($sale->date)->format('d-m-Y') }}</td>
                             <td class="text-right">{{ format_currency($sale->amount_incl_vat / 100) }}</td>
-                            <td class="text-right">{{ format_currency($sale->amount_excl_vat / 100) }}</td>
                             <td class="text-right">{{ format_currency($sale->purchase_total / 100) }}</td>
                             <td class="text-right {{ $profit >= 0 ? 'text-success' : 'text-danger' }} font-weight-bold">
                                 {{ format_currency(abs($profit)) }}
@@ -108,7 +106,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center text-muted py-3">No sales bills found for the selected filters.</td>
+                            <td colspan="8" class="text-center text-muted py-3">No sales bills found for the selected filters.</td>
                         </tr>
                     @endforelse
                     </tbody>
@@ -117,7 +115,6 @@
                     <tr class="font-weight-bold">
                         <td colspan="4" class="text-right">Page Total</td>
                         <td class="text-right">{{ format_currency($pageTotals['incl_vat']) }}</td>
-                        <td class="text-right">{{ format_currency($pageTotals['excl_vat']) }}</td>
                         <td class="text-right">{{ format_currency($pageTotals['purchase_total']) }}</td>
                         <td class="text-right {{ $pageTotals['profit'] >= 0 ? 'text-success' : 'text-danger' }}">
                             {{ format_currency(abs($pageTotals['profit'])) }} {{ $pageTotals['profit'] >= 0 ? '(Profit)' : '(Loss)' }}

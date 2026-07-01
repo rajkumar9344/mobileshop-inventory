@@ -48,24 +48,22 @@
             <th>Bill Ref No</th>
             <th>Bill Date</th>
             <th class="text-right">Amount (Incl. VAT)</th>
-            <th class="text-right">Amount (Without VAT)</th>
-            <th class="text-right">Purchased Rate Total</th>
+            <th class="text-right">Purchased Rate Total (Incl. VAT)</th>
             <th class="text-right">Profit / Loss</th>
             <th class="text-center">Status</th>
         </tr>
         </thead>
         <tbody>
         @php
-            $t_incl = 0; $t_excl = 0; $t_purchase = 0; $t_profit = 0;
+            $t_incl = 0; $t_purchase = 0; $t_profit = 0;
         @endphp
         @forelse($sales as $i => $sale)
             @php
                 // Computed columns are in paise
                 $incl     = $sale->amount_incl_vat / 100;
-                $excl     = $sale->amount_excl_vat / 100;
                 $purchase = $sale->purchase_total / 100;
                 $profit   = $sale->profit_amount / 100;
-                $t_incl += $incl; $t_excl += $excl; $t_purchase += $purchase; $t_profit += $profit;
+                $t_incl += $incl; $t_purchase += $purchase; $t_profit += $profit;
             @endphp
             <tr>
                 <td>{{ $i + 1 }}</td>
@@ -73,13 +71,12 @@
                 <td>{{ $sale->reference }}</td>
                 <td>{{ \Carbon\Carbon::parse($sale->date)->format('d-m-Y') }}</td>
                 <td class="text-right">{{ number_format($incl, 2) }}</td>
-                <td class="text-right">{{ number_format($excl, 2) }}</td>
                 <td class="text-right">{{ number_format($purchase, 2) }}</td>
                 <td class="text-right {{ $profit >= 0 ? 'profit' : 'loss' }}">{{ number_format(abs($profit), 2) }}</td>
                 <td class="text-center {{ $profit >= 0 ? 'profit' : 'loss' }}">{{ $profit >= 0 ? 'Profit' : 'Loss' }}</td>
             </tr>
         @empty
-            <tr><td colspan="9" class="no-data">No sales bills found for the selected filters.</td></tr>
+            <tr><td colspan="8" class="no-data">No sales bills found for the selected filters.</td></tr>
         @endforelse
         </tbody>
         @if(count($sales))
@@ -87,7 +84,6 @@
         <tr>
             <td colspan="4" class="text-right">Total</td>
             <td class="text-right">{{ number_format($t_incl, 2) }}</td>
-            <td class="text-right">{{ number_format($t_excl, 2) }}</td>
             <td class="text-right">{{ number_format($t_purchase, 2) }}</td>
             <td class="text-right {{ $t_profit >= 0 ? 'profit' : 'loss' }}">{{ number_format(abs($t_profit), 2) }} {{ $t_profit >= 0 ? '(Profit)' : '(Loss)' }}</td>
             <td></td>

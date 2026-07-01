@@ -33,7 +33,6 @@ class ProfitLossReportExport implements FromQuery, WithMapping, WithHeadings, Wi
             $sale->reference,
             optional(\Carbon\Carbon::parse($sale->date))->format('d-m-Y'),
             round($sale->amount_incl_vat / 100, 2),
-            round($sale->amount_excl_vat / 100, 2),
             round($sale->purchase_total / 100, 2),
             round($profit, 2),
             $profit >= 0 ? 'Profit' : 'Loss',
@@ -47,8 +46,7 @@ class ProfitLossReportExport implements FromQuery, WithMapping, WithHeadings, Wi
             'Sales Bill Ref No',
             'Sales Bill Date',
             'Overall Amount (Incl. VAT)',
-            'Overall Amount (Without VAT)',
-            'Purchased Rate Total',
+            'Purchased Rate Total (Incl. VAT)',
             'Profit/Loss Amount',
             'Profit/Loss Status',
         ];
