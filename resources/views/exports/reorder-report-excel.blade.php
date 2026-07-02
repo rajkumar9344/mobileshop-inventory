@@ -4,8 +4,7 @@
             <th>Product Category</th>
             <th>Product Name</th>
             <th>Product Code</th>
-            <th>Compatibility</th>
-            <th>Shop Name (Supplier)</th>
+            <th>Comments</th>
             <th>Reorder Quantity</th>
             <th>Generated Date</th>
         </tr>
@@ -17,7 +16,6 @@
                 <td>{{ $product->product_name }}</td>
                 <td>{{ $product->product_code }}</td>
                 <td>{{ $product->product_note ?? '-' }}</td>
-                <td>{{ $product->supplier->supplier_name ?? '-' }}</td>
                 <td>
                     @if($product->product_quantity < $product->product_stock_alert)
                         {{ $product->product_stock_alert - $product->product_quantity }}
@@ -29,7 +27,7 @@
             </tr>
         @empty
             <tr>
-                <td colspan="7">No products found matching the criteria.</td>
+                <td colspan="6">No products found matching the criteria.</td>
             </tr>
         @endforelse
     </tbody>

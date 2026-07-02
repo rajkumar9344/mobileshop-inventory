@@ -63,7 +63,6 @@ class ReportsController extends Controller
         try {
             $filters = $request->only([
                 'category_id',
-                'supplier_id',
                 'compatibility',
                 'generated_date_from',
                 'generated_date_to',
@@ -101,7 +100,6 @@ class ReportsController extends Controller
     {
         $filters = $request->only([
             'category_id',
-            'supplier_id',
             'compatibility',
             'generated_date_from',
             'generated_date_to',
@@ -240,18 +238,16 @@ class ReportsController extends Controller
      */
     public function reorderPrint(Request $request)
     {
-        $filters = $request->only(['category_id', 'supplier_id', 'compatibility', 'generated_date_from', 'generated_date_to', 'search']);
+        $filters = $request->only(['category_id', 'compatibility', 'generated_date_from', 'generated_date_to', 'search']);
 
         if (!empty($filters['category_id'])) {
             $cat = Category::find((int) $filters['category_id']);
             $filters['category_name'] = $cat ? $cat->category_name : '';
         }
 
-        if (!empty($filters['supplier_id'])) {
-            $sup = Supplier::find((int) $filters['supplier_id']);
-            $filters['supplier_name'] = $sup ? $sup->supplier_name : '';
-        }
-
+        // Match the screen listing and PDF export, which both include products
+        // that already have an active purchase in progress.
+        $filters['include_active_purchases'] = true;
         $products = app(\App\Services\ReportQueryService::class)->buildReorderQuery($filters)->get();
 
         return view('reports.reorder-print', compact('products', 'filters'));

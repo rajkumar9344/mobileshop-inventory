@@ -143,7 +143,7 @@ class ReportQueryService
         // Products in such purchases are already being ordered — exclude from reorder report.
         $activePurchaseStatuses = ['Ordered', 'Pending', 'Partial'];
 
-        $query = Product::with(['category', 'supplier'])
+        $query = Product::with(['category'])
             ->where('status', 'active')
             ->whereColumn('product_quantity', '<', 'product_stock_alert');
 
@@ -160,10 +160,6 @@ class ReportQueryService
 
         if (!empty($filters['category_id'])) {
             $query->where('category_id', $filters['category_id']);
-        }
-
-        if (!empty($filters['supplier_id'])) {
-            $query->where('supplier_id', $filters['supplier_id']);
         }
 
         if (!empty($filters['compatibility'])) {

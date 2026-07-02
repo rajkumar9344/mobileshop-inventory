@@ -26,7 +26,7 @@ class ReorderReportExport implements FromQuery, WithMapping, WithHeadings, WithC
         $this->filters['include_active_purchases'] = $this->filters['include_active_purchases'] ?? true;
         return app(ReportQueryService::class)
             ->buildReorderQuery($this->filters)
-            ->with(['category', 'supplier', 'productCodes']);
+            ->with(['category', 'productCodes']);
     }
 
     public function map($product): array
@@ -45,7 +45,6 @@ class ReorderReportExport implements FromQuery, WithMapping, WithHeadings, WithC
             $product->product_name,
             $code,
             $product->product_note ?? '-',
-            $product->supplier->supplier_name ?? '-',
             $reorderQty !== null ? $reorderQty : '-',
             optional($product->created_at)->format('d-m-Y'),
         ];
@@ -57,8 +56,7 @@ class ReorderReportExport implements FromQuery, WithMapping, WithHeadings, WithC
             'Product Category',
             'Product Name',
             'Product Code',
-            'Compatibility',
-            'Shop Name (Supplier)',
+            'Comments',
             'Reorder Quantity',
             'Generated Date',
         ];

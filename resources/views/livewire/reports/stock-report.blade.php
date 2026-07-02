@@ -9,7 +9,7 @@
                 <div class="card-body">
                     <form wire:submit.prevent="$refresh">
                         <div class="form-row align-items-end">
-                            <div class="col-lg-3">
+                            <div class="col-lg-4">
                                 <div class="form-group">
                                     <label>Product Category</label>
                                     <select wire:model.live="category_id" class="form-control">
@@ -20,24 +20,13 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-lg-3">
+                            <div class="col-lg-4">
                                 <div class="form-group">
-                                    <label>Shop Name (Supplier)</label>
-                                    <select wire:model.live="supplier_id" class="form-control">
-                                        <option value="">All Suppliers</option>
-                                        @foreach($suppliers as $supplier)
-                                            <option value="{{ $supplier->id }}">{{ $supplier->supplier_name }}</option>
-                                        @endforeach
-                                    </select>
+                                    <label>Comments</label>
+                                    <input wire:model.live.debounce.300ms="compatibility" type="text" class="form-control" placeholder="Enter Comments">
                                 </div>
                             </div>
-                            <div class="col-lg-3">
-                                <div class="form-group">
-                                    <label>Compatibility</label>
-                                    <input wire:model.live.debounce.300ms="compatibility" type="text" class="form-control" placeholder="Enter Compatibility">
-                                </div>
-                            </div>
-                            <div class="col-lg-3">
+                            <div class="col-lg-4">
                                 <div class="form-group">
                                     <label>Search Product</label>
                                     <input wire:model.live.debounce.300ms="search" type="text" class="form-control" placeholder="Product name or code">
@@ -45,23 +34,23 @@
                             </div>
                         </div>
                         <div class="form-row align-items-end">
-                            <div class="col-lg-3">
+                            <div class="col-lg-4">
                                 <div class="form-group">
                                     <label>Generated Date From</label>
                                     <input wire:model.live="generated_date_from" type="date" class="form-control">
                                 </div>
                             </div>
-                            <div class="col-lg-3">
+                            <div class="col-lg-4">
                                 <div class="form-group">
                                     <label>Generated Date To</label>
                                     <input wire:model.live="generated_date_to" type="date" class="form-control">
                                 </div>
                             </div>
-                            <div class="col-lg-3">
+                            <div class="col-lg-4">
                                 <div class="form-group">
                                     <label class="d-block">&nbsp;</label>
                                     <button type="button" wire:click="resetFilters" class="btn btn-outline-danger btn-block" title="Clear all filters">
-                                        <i class="bi bi-x-lg"></i>
+                                        <i class="bi bi-x-lg"></i> Clear Filters
                                     </button>
                                 </div>
                             </div>
@@ -81,7 +70,6 @@
                         <div>
                             <a href="{{ route('reports.reorder-excel', [
                                 'category_id' => $category_id,
-                                'supplier_id' => $supplier_id,
                                 'compatibility' => $compatibility,
                                 'generated_date_from' => $generated_date_from,
                                 'generated_date_to' => $generated_date_to,
@@ -91,7 +79,6 @@
                             </a>
                             <a href="{{ route('reports.reorder-pdf', [
                                 'category_id' => $category_id,
-                                'supplier_id' => $supplier_id,
                                 'compatibility' => $compatibility,
                                 'generated_date_from' => $generated_date_from,
                                 'generated_date_to' => $generated_date_to,
@@ -101,7 +88,6 @@
                             </a>
                             <a href="{{ route('reports.reorder-print', [
                                 'category_id' => $category_id,
-                                'supplier_id' => $supplier_id,
                                 'compatibility' => $compatibility,
                                 'generated_date_from' => $generated_date_from,
                                 'generated_date_to' => $generated_date_to,
@@ -124,8 +110,7 @@
                                     <tr>
                                         <th>Product Category</th>
                                         <th>Product Name (Code)</th>
-                                        <th>Compatibility</th>
-                                        <th>Shop Name (Supplier)</th>
+                                        <th>Comments</th>
                                         <th>Alert Quantity</th>
                                         <th>Current Overall Stock</th>
                                         <th>Reorder Quantity</th>
@@ -141,7 +126,6 @@
                                         <td class="text-left">{{ $product->category->category_name ?? '-' }}</td>
                                         <td class="text-left">{{ $product->product_name }} ({{ $product->product_code }})</td>
                                         <td>{{ $product->product_note ?? '-' }}</td>
-                                        <td class="text-left">{{ $product->supplier->supplier_name ?? '-' }}</td>
                                         <td>{{ $product->product_stock_alert }}</td>
                                         <td class="{{ $stockClass }}">{{ $product->product_quantity }}</td>
                                         <td class="font-weight-bold text-primary">
@@ -155,7 +139,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8">
+                                        <td colspan="7">
                                             <span class="text-success"><i class="bi bi-check-circle"></i> No Products Below Re-order Level!</span>
                                         </td>
                                     </tr>

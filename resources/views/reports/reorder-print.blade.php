@@ -8,13 +8,12 @@
     <style>
         table { table-layout: fixed; }
         colgroup col.col-no   { width: 4%; }
-        colgroup col.col-cat  { width: 13%; }
-        colgroup col.col-prod { width: 20%; }
-        colgroup col.col-code { width: 10%; }
-        colgroup col.col-comp { width: 14%; }
-        colgroup col.col-sup  { width: 15%; }
-        colgroup col.col-reor { width: 9%; }
-        colgroup col.col-date { width: 11%; }
+        colgroup col.col-cat  { width: 15%; }
+        colgroup col.col-prod { width: 26%; }
+        colgroup col.col-code { width: 12%; }
+        colgroup col.col-comp { width: 20%; }
+        colgroup col.col-reor { width: 11%; }
+        colgroup col.col-date { width: 12%; }
     </style>
 </head>
 <body>
@@ -32,7 +31,7 @@
     </div>
 
     @php
-        $hasFilters = !empty($filters['category_id']) || !empty($filters['supplier_id']) || !empty($filters['compatibility']) || !empty($filters['generated_date_from']) || !empty($filters['generated_date_to']) || !empty($filters['search']);
+        $hasFilters = !empty($filters['category_id']) || !empty($filters['compatibility']) || !empty($filters['generated_date_from']) || !empty($filters['generated_date_to']) || !empty($filters['search']);
     @endphp
     @if($hasFilters)
     <div class="filters-bar">
@@ -40,11 +39,8 @@
         @if(!empty($filters['category_id']))
             <span>Category: <strong>{{ $filters['category_name'] ?? $filters['category_id'] }}</strong></span>
         @endif
-        @if(!empty($filters['supplier_id']))
-            <span>Supplier: <strong>{{ $filters['supplier_name'] ?? $filters['supplier_id'] }}</strong></span>
-        @endif
         @if(!empty($filters['compatibility']))
-            <span>Compatibility: <strong>{{ $filters['compatibility'] }}</strong></span>
+            <span>Comments: <strong>{{ $filters['compatibility'] }}</strong></span>
         @endif
         @if(!empty($filters['generated_date_from']) || !empty($filters['generated_date_to']))
             <span>Date Range: <strong>{{ $filters['generated_date_from'] ?? '-' }} to {{ $filters['generated_date_to'] ?? '-' }}</strong></span>
@@ -62,7 +58,6 @@
             <col class="col-prod">
             <col class="col-code">
             <col class="col-comp">
-            <col class="col-sup">
             <col class="col-reor">
             <col class="col-date">
         </colgroup>
@@ -72,8 +67,7 @@
                 <th>Product Category</th>
                 <th>Product Name</th>
                 <th>Product Code</th>
-                <th>Compatibility</th>
-                <th>Shop Name (Supplier)</th>
+                <th>Comments</th>
                 <th>Reorder Qty</th>
                 <th>Generated Date</th>
             </tr>
@@ -86,7 +80,6 @@
                 <td class="t-left">{{ $product->product_name }}</td>
                 <td class="t-center">{{ $product->product_code }}</td>
                 <td class="t-left">{{ $product->product_note ?? '-' }}</td>
-                <td class="t-left">{{ $product->supplier->supplier_name ?? '-' }}</td>
                 <td class="t-center">
                     @if($product->product_quantity < $product->product_stock_alert)
                         {{ $product->product_stock_alert - $product->product_quantity }}
@@ -98,7 +91,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="8" class="t-center" style="padding:20px;color:#888;">No products found matching the criteria.</td>
+                <td colspan="7" class="t-center" style="padding:20px;color:#888;">No products found matching the criteria.</td>
             </tr>
             @endforelse
         </tbody>

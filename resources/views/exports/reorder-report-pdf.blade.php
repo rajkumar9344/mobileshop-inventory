@@ -59,17 +59,14 @@
         <p>Generated on: {{ now()->format('d-m-Y h:i:s A') }}</p>
     </div>
 
-    @if(isset($filters) && (!empty($filters['category_id']) || !empty($filters['supplier_id']) || !empty($filters['compatibility']) || !empty($filters['generated_date_from']) || !empty($filters['generated_date_to']) || !empty($filters['search'])))
+    @if(isset($filters) && (!empty($filters['category_id']) || !empty($filters['compatibility']) || !empty($filters['generated_date_from']) || !empty($filters['generated_date_to']) || !empty($filters['search'])))
     <div class="filters">
         <h4>Applied Filters:</h4>
         @if(!empty($filters['category_id']))
             <p><strong>Category:</strong> {{ \Modules\Product\Entities\Category::find($filters['category_id'])->category_name ?? 'N/A' }}</p>
         @endif
-        @if(!empty($filters['supplier_id']))
-            <p><strong>Shop Name (Supplier):</strong> {{ \Modules\People\Entities\Supplier::find($filters['supplier_id'])->supplier_name ?? 'N/A' }}</p>
-        @endif
         @if(!empty($filters['compatibility']))
-            <p><strong>Compatibility:</strong> {{ $filters['compatibility'] }}</p>
+            <p><strong>Comments:</strong> {{ $filters['compatibility'] }}</p>
         @endif
         @if(!empty($filters['generated_date_from']) || !empty($filters['generated_date_to']))
             <p><strong>Date Range:</strong>
@@ -89,8 +86,7 @@
                 <th>Product Category</th>
                 <th>Product Name</th>
                 <th>Product Code</th>
-                <th>Compatibility</th>
-                <th>Shop Name (Supplier)</th>
+                <th>Comments</th>
                 <th class="text-center">Reorder Quantity</th>
                 <th class="text-center">Generated Date</th>
             </tr>
@@ -102,7 +98,6 @@
                     <td>{{ $product->product_name }}</td>
                     <td>{{ $product->product_code }}</td>
                     <td>{{ $product->product_note ?? '-' }}</td>
-                    <td>{{ $product->supplier->supplier_name ?? '-' }}</td>
                     <td class="text-center">
                         @if($product->product_quantity < $product->product_stock_alert)
                             {{ $product->product_stock_alert - $product->product_quantity }}
@@ -114,7 +109,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" class="no-data">No products found matching the criteria.</td>
+                    <td colspan="6" class="no-data">No products found matching the criteria.</td>
                 </tr>
             @endforelse
         </tbody>
