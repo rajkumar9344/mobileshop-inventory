@@ -4,6 +4,7 @@ namespace Modules\Purchase\Entities;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\QueryException;
 use App\Traits\HasStatusBadge;
 use Modules\People\Entities\Supplier;
 
@@ -49,9 +50,76 @@ class Purchase extends Model
         parent::boot();
 
         static::creating(function ($model) {
-            $number = Purchase::max('id') + 1;
-            $model->reference = make_reference_id('PU', $number);
+            $number = self::getNextPurchaseNumber();
+            $model->reference = self::generatePurchaseReference($number);
         });
+    }
+
+    /**
+     * Next purchase number, based on the highest existing reference NUMBER (not id).
+     * Deleted/test rows advance the id auto-increment counter but must not cause the
+     * visible bill numbering to jump — mirrors Sale::getNextSaleNumber().
+     */
+    public static function getNextPurchaseNumber(): int {
+        $maxNumber = self::query()
+            ->pluck('reference')
+            ->reduce(function ($max, $reference) {
+                if (preg_match('/^PU-?(\d+)$/', (string) $reference, $matches)) {
+                    return max($max, (int) $matches[1]);
+                }
+                return $max;
+            }, 0);
+
+        return $maxNumber + 1;
+    }
+
+    /**
+     * Canonical "PU00001" format (no dash) — matches the on-page preview and the
+     * majority of existing data. Kept as a dedicated method (rather than the shared
+     * dash-style make_reference_id() used by sibling modules) so every code path that
+     * assigns a purchase reference stays in sync.
+     */
+    public static function generatePurchaseReference(int $number): string {
+        return 'PU' . str_pad($number, 5, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Retry creation on duplicate reference collisions (see Sale::createWithRetry).
+     * A unique DB constraint on `reference` makes collisions impossible to persist;
+     * this just regenerates a fresh number and retries instead of surfacing a 500.
+     */
+    public static function createWithRetry(array $attributes, int $maxAttempts = 3): self
+    {
+        $attempt = 1;
+
+        while (true) {
+            try {
+                return self::create($attributes);
+            } catch (QueryException $e) {
+                if (!self::isDuplicateReferenceException($e) || $attempt >= $maxAttempts) {
+                    throw $e;
+                }
+
+                usleep(50000 * $attempt);
+                $attempt++;
+            }
+        }
+    }
+
+    protected static function isDuplicateReferenceException(QueryException $e): bool
+    {
+        $sqlState = (string) $e->getCode();
+        $errorInfo = $e->errorInfo ?? [];
+        $driverCode = (int) ($errorInfo[1] ?? 0);
+        $message = strtolower((string) ($errorInfo[2] ?? $e->getMessage()));
+
+        if ($sqlState !== '23000' && $driverCode !== 1062) {
+            return false;
+        }
+
+        return str_contains($message, 'purchases_reference_unique')
+            || str_contains($message, 'purchases.reference')
+            || str_contains($message, "for key 'reference'");
     }
 
     // public function getStatusBadgeAttribute()

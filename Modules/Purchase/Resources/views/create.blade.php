@@ -304,7 +304,23 @@
                     $('#paid_amount').val(paid_amount);
                 }
 
+                var $form = $(this);
 
+                // Wait for any in-flight autosave to finish before submitting, so the
+                // draft_id hidden field reflects the latest saved draft. Without this,
+                // an autosave that is mid-flight when Submit is clicked can race the
+                // real submit — both create a new Purchase row with no draft_id, which
+                // is how duplicate bill numbers were created.
+                var pendingSave = (window.__purchaseDraftState && window.__purchaseDraftState.currentSavePromise)
+                    ? window.__purchaseDraftState.currentSavePromise
+                    : $.Deferred().resolve().promise();
+
+                Promise.resolve(pendingSave).catch(function () {}).then(function () {
+                    submitPurchaseForm($form, submitBtn, draftBtn);
+                });
+            });
+
+            function submitPurchaseForm($form, submitBtn, draftBtn) {
                 // Update hidden fields before submission
                 updateHiddenFields();
 
@@ -314,7 +330,6 @@
                 $('.invalid-feedback').remove();
 
                 // Submit form via AJAX
-                var $form = $(this);
                 $.ajax({
                     url: $form.attr('action'),
                     method: $form.attr('method'),
@@ -381,7 +396,7 @@
                         }
                     }
                 });
-            });
+            }
 
             // Update hidden fields on page load
             updateHiddenFields();
@@ -545,8 +560,15 @@
                 lastActivity: Date.now(),
                 hasUnsavedChanges: false,
                 cartObserver: null,
-                isFormSubmitting: false
+                isFormSubmitting: false,
+                currentSavePromise: null
             };
+
+            // Exposed so the form's submit handler can wait for an in-flight autosave
+            // to finish (and pick up its draft_id) before submitting the real purchase —
+            // otherwise a race between an in-flight autosave and Submit can create two
+            // separate Purchase rows for the same click.
+            window.__purchaseDraftState = state;
 
             // DOM elements
             const elements = {
@@ -651,8 +673,8 @@
                 return false;
             }
 
-            // Save draft
-            async function saveDraft(isManual = false) {
+            // Save draft (wrapped below so in-flight saves are trackable via state.currentSavePromise)
+            async function saveDraftImpl(isManual = false) {
                 if (state.isSaving || state.isFormSubmitting) {
                     return;
                 }
@@ -729,6 +751,17 @@
                 } finally {
                     state.isSaving = false;
                 }
+            }
+
+            function saveDraft(isManual = false) {
+                const promise = saveDraftImpl(isManual);
+                state.currentSavePromise = promise;
+                promise.finally(() => {
+                    if (state.currentSavePromise === promise) {
+                        state.currentSavePromise = null;
+                    }
+                });
+                return promise;
             }
 
             // Debounced save

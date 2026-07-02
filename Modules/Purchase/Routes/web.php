@@ -29,11 +29,12 @@ Route::group(['middleware' => 'auth'], function () {
         return $pdf->stream('purchase-'. $purchase->reference .'.pdf');
     })->name('purchases.pdf');
 
-    // Generate reference number
+    // Generate reference number (preview only — the authoritative value is assigned
+    // atomically by Purchase::createWithRetry() at save time; this uses the exact same
+    // number source so the preview never diverges from what actually gets saved).
     Route::get('/purchases/generate-reference', function () {
-        $lastPurchase = \Modules\Purchase\Entities\Purchase::latest('id')->first();
-        $nextNumber = $lastPurchase ? $lastPurchase->id + 1 : 1;
-        $reference = 'PU' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+        $nextNumber = \Modules\Purchase\Entities\Purchase::getNextPurchaseNumber();
+        $reference = \Modules\Purchase\Entities\Purchase::generatePurchaseReference($nextNumber);
 
         return response()->json(['reference' => $reference]);
     })->name('purchases.generate-reference');

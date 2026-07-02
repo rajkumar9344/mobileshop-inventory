@@ -174,10 +174,13 @@ class PurchaseController extends Controller
                 : 0;
 
             if ($existingDraft) {
-                // Update existing draft to completed purchase
+                // Update existing draft to completed purchase.
+                // Reference is intentionally NOT overwritten here — it was already
+                // assigned atomically when the draft was created. Trusting the
+                // client-submitted reference instead would reintroduce the same
+                // non-atomic "max(id)+1" race that caused duplicate bill numbers.
                 $existingDraft->update([
                     'date' => $request->ref_date,
-                    'reference' => $request->reference,
                     'supplier_id' => $request->supplier_id,
                     'supplier_name' => Supplier::findOrFail($request->supplier_id)->supplier_name,
                     'area' => $request->area,
@@ -212,10 +215,11 @@ class PurchaseController extends Controller
                 // Delete existing purchase details and recreate
                 $purchase->purchaseDetails()->delete();
             } else {
-                // Create new purchase
-                $purchase = Purchase::create([
+                // Create new purchase. Reference is assigned atomically inside the
+                // model's creating hook (see Purchase::createWithRetry) — the
+                // client-submitted reference is a display-only preview and is ignored.
+                $purchase = Purchase::createWithRetry([
                     'date' => $request->ref_date,
-                    'reference' => $request->reference,
                     'supplier_id' => $request->supplier_id,
                     'supplier_name' => Supplier::findOrFail($request->supplier_id)->supplier_name,
                     'area' => $request->area,
@@ -526,9 +530,13 @@ class PurchaseController extends Controller
                     $supplier_name = $supplier ? $supplier->supplier_name : '';
                 }
 
+                // Note: 'reference' is intentionally omitted here. On create, the model's
+                // creating hook assigns it atomically (Purchase::createWithRetry). On
+                // update, omitting it preserves the reference already assigned to this
+                // draft — trusting the client-submitted value would reintroduce the
+                // non-atomic "max(id)+1" race that caused duplicate bill numbers.
                 $purchaseData = [
                     'date' => $request->ref_date ?? now()->format('Y-m-d'),
-                    'reference' => $request->reference ?? 'DRAFT',
                     'supplier_id' => $request->supplier_id,
                     'supplier_name' => $supplier_name,
                     'area' => $request->area,
@@ -566,7 +574,7 @@ class PurchaseController extends Controller
                     $purchase->purchaseDetails()->delete();
                 } else {
                     // Create new draft
-                    $purchase = Purchase::create($purchaseData);
+                    $purchase = Purchase::createWithRetry($purchaseData);
                 }
 
                 // Create purchase details
@@ -1156,10 +1164,9 @@ class PurchaseController extends Controller
         // Supplier's current Open Balance snapshot (so the edit page shows it correctly).
         $supplierOpenBalance = optional($purchase->supplier)->open_balance ?? 0;
 
-        // Create a new Draft purchase copying header from original.
-        // NOTE: the Purchase `creating` hook sets a dashed reference (PU-xxxxx); we override
-        // it below with the plain "PUxxxxx" format used by normal purchases.
-        $newPurchase = Purchase::create([
+        // Create a new Draft purchase copying header from original. Reference is
+        // assigned atomically by the model's creating hook (Purchase::createWithRetry).
+        $newPurchase = Purchase::createWithRetry([
             'date'             => now()->format('Y-m-d'),
             'supplier_id'      => $purchase->supplier_id,
             'supplier_name'    => $purchase->supplier_name,
@@ -1182,10 +1189,6 @@ class PurchaseController extends Controller
             'payment_status'   => 'Unpaid',
             'note'             => 'Reorder from ' . $purchase->reference,
         ]);
-
-        // Use the plain "PUxxxxx" reference format (no dash), matching normal purchases.
-        $newPurchase->reference = 'PU' . str_pad($newPurchase->id, 5, '0', STR_PAD_LEFT);
-        $newPurchase->save();
 
         // Copy line items (no stock change — draft)
         // attributesToArray() returns only DB column values via getters (rupees, not raw paise)
