@@ -75,9 +75,6 @@ class LedgerService
     protected static function buildCustomerLedger(Customer $customer, string $start, string $end): array
     {
         // Opening balance derived from transactions before the report period.
-        // NOTE: We do NOT use customer.opening_balance because the system updates
-        // that field dynamically with each sale/receipt (it's a "current balance").
-        // Using it would double-count sales that already appear in the ledger.
         // sum() bypasses model accessors — DB stores values as paise (×100), so divide by 100.
         $salesBefore = Sale::where('customer_id', $customer->id)
             ->where('status', '!=', 'Draft')
@@ -107,26 +104,30 @@ class LedgerService
             })
             ->sum();
 
-        // Keep opening continuity with ledger closing logic:
-        // receipts applied to opening balance (sale_id = null) are mirrored as debit
-        // rows in the report, so include the same amount in pre-period opening.
-        $openingAppliedFromLinesBeforePaise = (int) DB::table('sales_receipt_lines')
+        // customer.opening_balance is a running scalar: it decreases in place every time a
+        // receipt applies part of its payment directly to it (sale_id = null lines), and has
+        // no date of its own — it can't be sliced "as of $start" directly. But since
+        // $receiptsBefore already includes the full amount of any such application dated
+        // before $start (it doesn't distinguish bill-payments from opening-balance-payments),
+        // the customer's ORIGINAL (fixed, date-independent) legacy balance is what's needed
+        // here: current opening_balance plus every reduction ever applied to it, of any date.
+        // Recovering the original figure and subtracting the full $receiptsBefore nets out
+        // correctly without double-counting reductions that happened before $start.
+        $openingAppliedEverPaise = (int) DB::table('sales_receipt_lines')
             ->join('sales_receipts', 'sales_receipt_lines.sales_receipt_id', '=', 'sales_receipts.id')
             ->where('sales_receipts.customer_id', $customer->id)
-            ->whereDate('sales_receipts.date', '<', $start)
             ->whereNull('sales_receipt_lines.sale_id')
             ->sum(DB::raw('COALESCE(sales_receipt_lines.payment_amount,0) + COALESCE(sales_receipt_lines.discount_amount,0)'));
 
         // Backward compatibility for older lineless opening receipts.
-        $openingAppliedLegacyBeforePaise = (int) SalesReceipt::where('customer_id', $customer->id)
-            ->whereDate('date', '<', $start)
+        $openingAppliedLegacyEverPaise = (int) SalesReceipt::where('customer_id', $customer->id)
             ->whereNotNull('applied_to_customer')
             ->whereDoesntHave('lines')
             ->sum('applied_to_customer');
 
-        $openingAppliedBefore = ($openingAppliedFromLinesBeforePaise + $openingAppliedLegacyBeforePaise) / 100;
+        $originalLegacyBalance = max(0, (float) ($customer->opening_balance ?? 0) + ($openingAppliedEverPaise + $openingAppliedLegacyEverPaise) / 100);
 
-        $opening = $salesBefore + $openingAppliedBefore - $receiptsBefore;
+        $opening = $salesBefore + $originalLegacyBalance - $receiptsBefore;
 
         // Fetch transactions in period
         $sales = Sale::where('customer_id', $customer->id)
@@ -152,19 +153,6 @@ class LedgerService
                 $lineSumPaise = (int) $r->lines()->sum(DB::raw('COALESCE(payment_amount,0) + COALESCE(discount_amount,0)'));
                 $lineSum = $lineSumPaise / 100;
 
-                // Portion of this receipt that was applied directly to opening balance
-                // (synthetic line with sale_id = null).
-                $openingLinePaise = (int) $r->lines()
-                    ->whereNull('sale_id')
-                    ->sum(DB::raw('COALESCE(payment_amount,0) + COALESCE(discount_amount,0)'));
-                $openingApplied = $openingLinePaise / 100;
-
-                // Backward compatibility: older lineless opening receipts may not have
-                // persisted lines, but do store applied_to_customer.
-                if ($openingApplied <= 0 && $lineSumPaise <= 0 && isset($r->applied_to_customer) && $r->applied_to_customer !== null) {
-                    $openingApplied = $r->applied_to_customer / 100;
-                }
-
                 if ($lineSum > 0) {
                     $amount = $lineSum;
                 } else {
@@ -181,7 +169,6 @@ class LedgerService
                     'reference' => $r->reference ?? $r->id,
                     'payment_mode' => $r->payment_mode ?? '',
                     'amount' => $amount,
-                    'opening_applied' => max(0, $openingApplied),
                 ];
             });
 
@@ -217,22 +204,6 @@ class LedgerService
                 'debit' => $debit,
                 'credit' => $credit,
             ];
-
-            // If a receipt is applied to opening balance (no sale bill), add a
-            // mirrored debit entry so ledger totals remain balanced.
-            if ($t['type'] === 'receipt' && !empty($t['opening_applied']) && $t['opening_applied'] > 0) {
-                $openingDebit = (float) $t['opening_applied'];
-                $txnDebit += $openingDebit;
-
-                $txRows[] = [
-                    'type' => 'opening balance adjustment',
-                    'date' => $t['date'],
-                    'reference' => $t['reference'],
-                    'payment_mode' => '',
-                    'debit' => $openingDebit,
-                    'credit' => 0,
-                ];
-            }
         }
 
         // Pre-calculate totals for views.
@@ -306,9 +277,6 @@ class LedgerService
     protected static function buildSupplierLedger(Supplier $supplier, string $start, string $end): array
     {
         // Opening balance derived from transactions before the report period.
-        // NOTE: We do NOT use supplier.open_balance because the system updates
-        // that field dynamically with each purchase/payment (it's a "current balance").
-        // Using it would double-count purchases that already appear in the ledger.
         // sum() bypasses model accessors — DB stores values as paise (×100), so divide by 100.
         $purchasesBefore = Purchase::where('supplier_id', $supplier->id)
             ->where('status', '!=', 'Draft')
@@ -338,7 +306,29 @@ class LedgerService
             })
             ->sum();
 
-        $opening = $purchasesBefore - $paymentsBefore;
+        // supplier.open_balance is a running scalar: it decreases in place every time a
+        // payment applies part of its amount directly to it (purchase_id = null lines), and
+        // has no date of its own — it can't be sliced "as of $start" directly. But since
+        // $paymentsBefore already includes the full amount of any such application dated
+        // before $start, the supplier's ORIGINAL (fixed, date-independent) legacy balance is
+        // what's needed here: current open_balance plus every reduction ever applied to it,
+        // of any date. Recovering the original figure and subtracting the full $paymentsBefore
+        // nets out correctly without double-counting reductions that happened before $start.
+        $openingAppliedEverPaise = (int) DB::table('purchases_receipt_lines')
+            ->join('purchases_receipts', 'purchases_receipt_lines.purchases_receipt_id', '=', 'purchases_receipts.id')
+            ->where('purchases_receipts.supplier_id', $supplier->id)
+            ->whereNull('purchases_receipt_lines.purchase_id')
+            ->sum(DB::raw('COALESCE(purchases_receipt_lines.payment_amount,0) + COALESCE(purchases_receipt_lines.discount_amount,0)'));
+
+        // Backward compatibility for older lineless opening payments.
+        $openingAppliedLegacyEverPaise = (int) PurchasesReceipt::where('supplier_id', $supplier->id)
+            ->whereNotNull('applied_to_supplier')
+            ->whereDoesntHave('lines')
+            ->sum('applied_to_supplier');
+
+        $originalLegacyBalance = max(0, (float) ($supplier->open_balance ?? 0) + ($openingAppliedEverPaise + $openingAppliedLegacyEverPaise) / 100);
+
+        $opening = $purchasesBefore - $paymentsBefore + $originalLegacyBalance;
 
         // Fetch transactions in period
         $purchases = Purchase::where('supplier_id', $supplier->id)
